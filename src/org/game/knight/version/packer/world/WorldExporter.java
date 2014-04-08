@@ -1051,6 +1051,39 @@ public class WorldExporter extends AbsExporter
 						GamePacker.error("与刀光关联的装扮命名错误：" + attire.getRefKey() + "   (应该为：6_职业ID_名称)");
 					}
 				}
+				else if(params[0]==7)
+				{
+					//伙伴
+					if (params.length >= 2)
+					{
+						roles.append(String.format("\t\t<partner id=\"%s\" name=\"%s\">\n", params[1], attire.getRefKey()));
+						for (AttireAction action : attire.getActions())
+						{
+							if (action.getAnims().size() > 0)
+							{
+								roles.append(String.format("\t\t\t<action id=\"%s\" size=\"%s\" files=\"%s\"/>\n", action.getID(), attireManager.getActionSize(action), attireManager.getActionPaths(action)));
+
+								String[] urls = attireManager.getActionPaths(action).split("\\,");
+								for (String url : urls)
+								{
+									if (!actionFileUrls.containsKey(url))
+									{
+										File actionFile = new File(getDestDir().getParentFile().getPath() + url);
+										if (actionFile.exists())
+										{
+											actionFileUrls.put(url, actionFile.length());
+										}
+									}
+								}
+							}
+						}
+						roles.append(String.format("\t\t</partner>\n"));
+					}
+					else
+					{
+						GamePacker.error("与伙伴关联的装扮命名错误：" + attire.getRefKey() + "   (应该为：7_伙伴ID_名称)");
+					}
+				}
 			}
 		}
 

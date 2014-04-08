@@ -60,6 +60,7 @@ public class UIAvatarExport
 		StringBuilder json_role = new StringBuilder();
 		StringBuilder json_role_light = new StringBuilder();
 		StringBuilder json_equip = new StringBuilder();
+		StringBuilder json_partner = new StringBuilder();
 
 		StringBuilder json_attires = new StringBuilder();
 		for (Attire attire : attireList)
@@ -84,8 +85,8 @@ public class UIAvatarExport
 
 					ArrayList<Region> regions = new ArrayList<Region>();
 					ArrayList<String> regionIDs = new ArrayList<String>();
-					ArrayList<Integer> regionTimes=new ArrayList<Integer>();
-					
+					ArrayList<Integer> regionTimes = new ArrayList<Integer>();
+
 					int regionCount = rowCount * colCount;
 					for (int i = 0; i < regionCount; i++)
 					{
@@ -231,10 +232,19 @@ public class UIAvatarExport
 					}
 					json_role_light.append(String.format("\"%s\":\"%s\"", params[1], attire.getRefKey()));
 				}
+				else if (params[0] == 7 && params.length >= 2)
+				{
+					// »ï°é
+					if (json_partner.length() > 0)
+					{
+						json_partner.append(",");
+					}
+					json_partner.append(String.format("\"%s\":\"%s\"", params[1], attire.getRefKey()));
+				}
 			}
 		}
 
-		String content = String.format("{\"classPackageName\":\"%s\",\"roleMap\":{%s},\"roleLightMap\":{%s},\"equipMap\":{%s},\"attires\":{%s}}", UI_AVATAR_FRAME_PACK, json_role.toString(), json_role_light.toString(), json_equip.toString(), json_attires.toString());
+		String content = String.format("{\"classPackageName\":\"%s\",\"roleMap\":{%s},\"roleLightMap\":{%s},\"equipMap\":{%s},\"partnerMap\":{%s},\"attires\":{%s}}", UI_AVATAR_FRAME_PACK, json_role.toString(), json_role_light.toString(), json_equip.toString(), json_partner.toString(), json_attires.toString());
 
 		byte[] contentBytes = content.getBytes("UTF-8");
 		if (zip)
@@ -294,6 +304,11 @@ public class UIAvatarExport
 				else if (params[0] == 6 && params.length >= 2)
 				{
 					// µ¶¹â
+					canOutput = true;
+				}
+				else if (params[0] == 7 && params.length >= 2)
+				{
+					// »ï°é
 					canOutput = true;
 				}
 
