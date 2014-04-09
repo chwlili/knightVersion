@@ -440,7 +440,6 @@ public class WorldExporter extends AbsExporter
 	 */
 	private void exportUIAttires() throws IOException
 	{
-		GamePacker.log("输出UI用Avatar数据。");
 		avatarFileKey = new UIAvatarExport(this).exportUIAttires(attires, attireManager, zip);
 	}
 
