@@ -12,7 +12,7 @@ public class Attire
 	private String key;
 	private String refKey;
 	private int type;
-	private Integer[] params;
+	private String[] params;
 
 	private HitRect hitRect;
 	private int nameX;
@@ -37,37 +37,54 @@ public class Attire
 	{
 		this.fileID = fileID;
 		this.key = key;
-		this.refKey = key.replaceAll("^[\\d+_]+", "");
+		this.refKey = key;
 		this.type = type;
-		
 		this.hitRect=hitRect;
 		this.nameX = nameX;
 		this.nameY = nameY;
-
 		this.atfParams = atfParams;
-
-		if (refKey == null || refKey.isEmpty())
+		this.params = new String[]{};
+		this.actionTable = new Hashtable<Integer, AttireAction>();
+		
+		//清除名称前的参数
+		String lastIDs="";
+		String lastName="";
+		for(int i=0;i<key.length();i++)
 		{
-			this.refKey = key;
-		}
-
-		String[] parts = key.split("_");
-		ArrayList<Integer> ints = new ArrayList<Integer>();
-		for (String part : parts)
-		{
-			try
+			char c=key.charAt(i);
+			if(!Character.isDigit(c) && c!='-' && c!=',' && c!='_')
 			{
-				int id = Integer.parseInt(part);
-				ints.add(id);
-			}
-			catch (Exception err)
-			{
+				lastIDs=key.substring(0,i);
+				lastName=key.substring(i);
 				break;
 			}
 		}
-		params = ints.toArray(new Integer[ints.size()]);
-
-		actionTable = new Hashtable<Integer, AttireAction>();
+		if(!lastName.isEmpty())
+		{
+			this.refKey = lastName;
+		}
+		
+		lastIDs=lastIDs.trim();
+		for(int i=0;i<lastIDs.length();i++)
+		{
+			char c=lastIDs.charAt(i);
+			if(c!='_' && c!='-' && c!=',')
+			{
+				lastIDs=lastIDs.substring(i);
+				break;
+			}
+		}
+		for(int i=lastIDs.length()-1;i>=0;i--)
+		{
+			char c=lastIDs.charAt(i);
+			if(c!='_' && c!='-' && c!=',')
+			{
+				lastIDs=lastIDs.substring(0,i+1);
+				break;
+			}
+		}
+		
+		this.params = lastIDs.split("_");
 	}
 
 	/**
@@ -105,7 +122,7 @@ public class Attire
 	 * 
 	 * @return
 	 */
-	public Integer[] getParams()
+	public String[] getParams()
 	{
 		return params;
 	}

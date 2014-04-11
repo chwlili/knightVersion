@@ -908,13 +908,13 @@ public class WorldExporter extends AbsExporter
 					continue;
 				}
 
-				Integer[] params = attire.getParams();
+				String[] params = attire.getParams();
 				if (params.length == 0)
 				{
 					continue;
 				}
 
-				if (params[0] == 1)
+				if (params[0].equals("1"))
 				{
 					// 装扮
 					if (params.length >= 3)
@@ -947,7 +947,7 @@ public class WorldExporter extends AbsExporter
 						GamePacker.error("职业关联的装扮命名错误：" + attire.getRefKey() + "   (应该为：1_职业ID_职业等级_名称)");
 					}
 				}
-				else if (params[0] == 2)
+				else if (params[0].equals("2"))
 				{
 					// 装备
 					if (params.length >= 4)
@@ -980,7 +980,7 @@ public class WorldExporter extends AbsExporter
 						GamePacker.error("与装备关联的装扮命名错误：" + attire.getRefKey() + "   (应该为：2_起始ID_结束ID_职业ID_名称)");
 					}
 				}
-				else if (params[0] == 3)
+				else if (params[0].equals("3"))
 				{
 					// 效果
 					effects.append(String.format("\t\t<effect effectID=\"%s\">\n", attire.getRefKey()));
@@ -1006,18 +1006,18 @@ public class WorldExporter extends AbsExporter
 					}
 					effects.append(String.format("\t\t</effect>\n"));
 				}
-				else if (params[0] == 4)
+				else if (params[0].equals("4"))
 				{
 					// 怪物
 				}
-				else if (params[0] == 5)
+				else if (params[0].equals("5"))
 				{
 					// 标签
 					// TextureSet
 					// textureSet=textureSetTable.getTextureSet(attire.getTextureSetKey());
 					// labels.append(String.format("\t\t<label labelID=\"%s\" size=\"%s\" files=\"%s\"/>\n",attire.getRefKey(),getTextureSetSize(textureSet),getTextureSetURLs(textureSet)));
 				}
-				else if (params[0] == 6)
+				else if (params[0].equals("6"))
 				{
 					// 刀光
 					if (params.length >= 2)
@@ -1050,10 +1050,10 @@ public class WorldExporter extends AbsExporter
 						GamePacker.error("与刀光关联的装扮命名错误：" + attire.getRefKey() + "   (应该为：6_职业ID_名称)");
 					}
 				}
-				else if(params[0]==7)
+				else if(params[0].equals("7"))
 				{
 					//伙伴
-					if (params.length >= 2)
+					/*if (params.length >= 2)
 					{
 						roles.append(String.format("\t\t<partner id=\"%s\" name=\"%s\">\n", params[1], attire.getRefKey()));
 						for (AttireAction action : attire.getActions())
@@ -1081,7 +1081,7 @@ public class WorldExporter extends AbsExporter
 					else
 					{
 						GamePacker.error("与伙伴关联的装扮命名错误：" + attire.getRefKey() + "   (应该为：7_伙伴ID_名称)");
-					}
+					}*/
 				}
 			}
 		}

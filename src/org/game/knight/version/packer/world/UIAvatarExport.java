@@ -270,10 +270,10 @@ public class UIAvatarExport
 			json_attires.append(String.format("\"%s\":{\"width\":%s,\"height\":%s,\"actions\":{%s}}", attire.getRefKey(), attire.getHitRect().getWidth(), attire.getHitRect().getHeight(), json_actions.toString()));
 
 			// 装扮分类
-			Integer[] params = attire.getParams();
+			String[] params = attire.getParams();
 			if (params.length > 0)
 			{
-				if (params[0] == 1 && params.length >= 3)
+				if (params[0].equals("1") && params.length >= 3)
 				{
 					// 装扮
 					if (json_role.length() > 0)
@@ -282,12 +282,12 @@ public class UIAvatarExport
 					}
 					json_role.append(String.format("\"%s_%s\":\"%s\"", params[1], params[2], attire.getRefKey()));
 				}
-				else if (params[0] == 2 && params.length >= 4)
+				else if (params[0].equals("2") && params.length >= 4)
 				{
 					// 装备
-					int fromID = params[1];
-					int destID = params[2];
-					int sectID = params[3];
+					int fromID = Integer.parseInt(params[1]);
+					int destID = Integer.parseInt(params[2]);
+					int sectID = Integer.parseInt(params[3]);
 					for (int i = fromID; i <= destID; i++)
 					{
 						if (json_equip.length() > 0)
@@ -297,7 +297,7 @@ public class UIAvatarExport
 						json_equip.append(String.format("\"%s_%s\":\"%s\"", i, sectID, attire.getRefKey()));
 					}
 				}
-				else if (params[0] == 6 && params.length >= 2)
+				else if (params[0].equals("6") && params.length >= 2)
 				{
 					// 刀光
 					if (json_role_light.length() > 0)
@@ -306,227 +306,7 @@ public class UIAvatarExport
 					}
 					json_role_light.append(String.format("\"%s\":\"%s\"", params[1], attire.getRefKey()));
 				}
-				else if (params[0] == 7 && params.length >= 2)
-				{
-					// 伙伴
-					if (json_partner.length() > 0)
-					{
-						json_partner.append(",");
-					}
-					json_partner.append(String.format("\"%s\":\"%s\"", params[1], attire.getRefKey()));
-				}
-			}
-		}
-
-		String content = String.format("{\"classPackageName\":\"%s\",\"roleMap\":{%s},\"roleLightMap\":{%s},\"equipMap\":{%s},\"partnerMap\":{%s},\"attires\":{%s}}", UI_AVATAR_FRAME_PACK, json_role.toString(), json_role_light.toString(), json_equip.toString(), json_partner.toString(), json_attires.toString());
-
-		byte[] contentBytes = content.getBytes("UTF-8");
-		if (zip)
-		{
-			contentBytes = ZlibUtil.compress(contentBytes);
-		}
-		cfgFileKey = (zip ? "z" : "") + MD5Util.md5Bytes(contentBytes);
-
-		world.exportFile(cfgFileKey, contentBytes, "cfg");
-
-		saveHistoryFile();
-
-		return cfgFileKey;
-	}
-
-	/**
-	 * 导出UI装扮表
-	 * 
-	 * @throws IOException
-	 */
-	public String exportUIAttires_1(Hashtable<String, AttireFile> attires, WorldAttires attireManager, boolean zip) throws IOException
-	{
-		ArrayList<Attire> attireList = filterAttires(attires);
-
-		StringBuilder json_role = new StringBuilder();
-		StringBuilder json_role_light = new StringBuilder();
-		StringBuilder json_equip = new StringBuilder();
-		StringBuilder json_partner = new StringBuilder();
-
-		StringBuilder json_attires = new StringBuilder();
-		for (Attire attire : attireList)
-		{
-			StringBuilder json_actions = new StringBuilder();
-
-			for (AttireAction action : attire.getActions())
-			{
-				if (action.getID() != 0 && action.getID() != 1)
-				{
-					continue;
-				}
-
-				StringBuilder json_anims = new StringBuilder();
-
-				for (AttireAnim anim : action.getAnims())
-				{
-					String imgSHA = world.getChecksumTable().getChecksumID(anim.getImg().getInnerpath());
-
-					int rowCount = anim.getRow();
-					int colCount = anim.getCol();
-
-					ArrayList<Region> regions = new ArrayList<Region>();
-					ArrayList<String> regionIDs = new ArrayList<String>();
-					ArrayList<Integer> regionTimes = new ArrayList<Integer>();
-					StringBuilder animFileKey = new StringBuilder();
-
-					int regionCount = rowCount * colCount;
-					for (int i = 0; i < regionCount; i++)
-					{
-						int delay = anim.getTimes()[i];
-						if (delay > 0)
-						{
-							Region region = attireManager.getTextureRegion(anim.getBagID(), imgSHA, anim.getRow(), anim.getCol(), i);
-							if (region != null)
-							{
-								String key = "anim_" + imgSHA + "_" + rowCount + "_" + colCount + "_" + "frame" + i;
-
-								regions.add(region);
-								regionIDs.add(key);
-								regionTimes.add(delay);
-
-								if (animFileKey.length() > 0)
-								{
-									animFileKey.append(key);
-								}
-							}
-						}
-					}
-
-					String swfFileKey = animFileKey.toString();
-					String swfFilePath = "";
-					long swfFileSize = 0;
-
-					boolean exported = world.hasExportedFile(swfFileKey);
-
-					ArrayList<byte[]> bitmaps = new ArrayList<byte[]>();
-					ArrayList<String> bitmapIDs = new ArrayList<String>();
-
-					for (int i = 0; i < regionIDs.size(); i++)
-					{
-						Region region = regions.get(i);
-						String regionID = regionIDs.get(i);
-
-						// 导出PNG
-						if (!exported)
-						{
-							BufferedImage img = ImageIO.read(anim.getImg().getFile());
-
-							BufferedImage texture = new BufferedImage(region.getClipW(), region.getClipH(), BufferedImage.TYPE_INT_ARGB);
-							Graphics2D graphics = (Graphics2D) texture.getGraphics();
-							graphics.drawImage(img, 0, 0, region.getClipW(), region.getClipH(), region.getX() + region.getClipX(), region.getY() + region.getClipY(), region.getX() + region.getClipX() + region.getClipW(), region.getY() + region.getClipY() + region.getClipH(), null);
-							graphics.dispose();
-
-							ByteArrayOutputStream outputBytes = new ByteArrayOutputStream();
-							ImageIO.write(texture, "png", outputBytes);
-
-							bitmaps.add(outputBytes.toByteArray());
-						}
-
-						// 确定类名
-						String value = getValue(regionID);
-						if (value == null)
-						{
-							value = "$" + getNextClassID();
-							putValue(regionID, value);
-						}
-						bitmapIDs.add(value);
-					}
-
-					if (!exported)
-					{
-						SwfWriter swf = new SwfWriter();
-						for (int i = 0; i < bitmaps.size(); i++)
-						{
-							swf.addBitmap(new SwfBitmap(bitmaps.get(i), UI_AVATAR_FRAME_PACK, bitmapIDs.get(i), true));
-						}
-
-						world.exportFile(swfFileKey, swf.toBytes(true), "swf");
-					}
-
-					swfFilePath = world.getExportedFileUrl(swfFileKey);
-					swfFileSize = world.getExportedFileSize(swfFileKey);
-
-					StringBuilder json_frames = new StringBuilder();
-					for (int i = 0; i < regionIDs.size(); i++)
-					{
-						Region region = regions.get(i);
-						int offSetX = region.getClipX() + region.getClipW() / 2 - region.getW() / 2;
-						int offsetY = region.getClipY() + region.getClipH() - region.getH();
-
-						// 帧信息
-						if (json_frames.length() > 0)
-						{
-							json_frames.append(",");
-						}
-						json_frames.append(String.format("{\"x\":%s,\"y\":%s,\"delay\":%s,\"classID\":\"%s\"}", offSetX, offsetY, regionTimes.get(i), bitmapIDs.get(i)));
-					}
-
-					// 动画信息
-					if (json_anims.length() > 0)
-					{
-						json_anims.append(",");
-					}
-					json_anims.append(String.format("{\"x\":%s,\"y\":%s,\"scaleX\":%s,\"scaleY\":%s,\"flip\":%s,\"groupID\":%s,\"layerID\":%s,\"fileURL\":\"%s\",\"fileSize\":%s,\"frames\":[%s]}", anim.getX(), anim.getY(), anim.getScaleX(), anim.getScaleY(), anim.getFlip(), anim.getGroupID(), anim.getLayerID(), swfFilePath, swfFileSize, json_frames.toString()));
-				}
-
-				// 动作信息
-				if (json_actions.length() > 0)
-				{
-					json_actions.append(",");
-				}
-				json_actions.append(String.format("\"%s\":{\"nameX\":%s,\"nameY\":%s,\"anims\":[%s]}", action.getID(), action.getNameX(), action.getNameY(), json_anims.toString()));
-			}
-
-			// 装扮信息
-			if (json_attires.length() > 0)
-			{
-				json_attires.append(",");
-			}
-			json_attires.append(String.format("\"%s\":{\"width\":%s,\"height\":%s,\"actions\":{%s}}", attire.getRefKey(), attire.getHitRect().getWidth(), attire.getHitRect().getHeight(), json_actions.toString()));
-
-			// 装扮分类
-			Integer[] params = attire.getParams();
-			if (params.length > 0)
-			{
-				if (params[0] == 1 && params.length >= 3)
-				{
-					// 装扮
-					if (json_role.length() > 0)
-					{
-						json_role.append(",");
-					}
-					json_role.append(String.format("\"%s_%s\":\"%s\"", params[1], params[2], attire.getRefKey()));
-				}
-				else if (params[0] == 2 && params.length >= 4)
-				{
-					// 装备
-					int fromID = params[1];
-					int destID = params[2];
-					int sectID = params[3];
-					for (int i = fromID; i <= destID; i++)
-					{
-						if (json_equip.length() > 0)
-						{
-							json_equip.append(",");
-						}
-						json_equip.append(String.format("\"%s_%s\":\"%s\"", i, sectID, attire.getRefKey()));
-					}
-				}
-				else if (params[0] == 6 && params.length >= 2)
-				{
-					// 刀光
-					if (json_role_light.length() > 0)
-					{
-						json_role_light.append(",");
-					}
-					json_role_light.append(String.format("\"%s\":\"%s\"", params[1], attire.getRefKey()));
-				}
-				else if (params[0] == 7 && params.length >= 2)
+				else if (params[0].equals("7") && params.length >= 2)
 				{
 					// 伙伴
 					if (json_partner.length() > 0)
@@ -572,35 +352,35 @@ public class UIAvatarExport
 					continue;
 				}
 
-				Integer[] params = attire.getParams();
+				String[] params = attire.getParams();
 				if (params.length == 0)
 				{
 					continue;
 				}
 
 				boolean canOutput = false;
-
-				if (params[0] == 1 && params.length >= 3)
+				
+				if (params[0].equals("1") && params.length >= 3)
 				{
 					// 装扮
 					canOutput = true;
 				}
-				else if (params[0] == 2 && params.length >= 4)
+				else if (params[0].equals("2") && params.length >= 4)
 				{
 					// 装备
 					canOutput = true;
 				}
-				else if (params[0] == 3)
+				else if (params[0].equals("3"))
 				{
 					// 效果
 					canOutput = true;
 				}
-				else if (params[0] == 6 && params.length >= 2)
+				else if (params[0].equals("6") && params.length >= 2)
 				{
 					// 刀光
 					canOutput = true;
 				}
-				else if (params[0] == 7 && params.length >= 2)
+				else if (params[0].equals("7") && params.length >= 2)
 				{
 					// 伙伴
 					canOutput = true;
