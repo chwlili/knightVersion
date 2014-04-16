@@ -109,10 +109,10 @@ public class UIAvatarExport
 							if (region != null)
 							{
 								String key = "anim_" + imgSHA + "_" + rowCount + "_" + colCount + "_" + "frame" + i;
-								String type=getValue(key);
-								if(type==null)
+								String type = getValue(key);
+								if (type == null)
 								{
-									type="$"+getNextClassID();
+									type = "$" + getNextClassID();
 								}
 
 								regions.add(region);
@@ -124,8 +124,8 @@ public class UIAvatarExport
 								{
 									animFileKey.append(",");
 								}
-								animFileKey.append(key+"_"+type);
-								
+								animFileKey.append(key + "_" + type);
+
 								putValue(key, type);
 							}
 						}
@@ -359,7 +359,7 @@ public class UIAvatarExport
 				}
 
 				boolean canOutput = false;
-				
+
 				if (params[0].equals("1") && params.length >= 3)
 				{
 					// ×°°ç

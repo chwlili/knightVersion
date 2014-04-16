@@ -1020,9 +1020,9 @@ public class WorldExporter extends AbsExporter
 				else if (params[0].equals("6"))
 				{
 					// µ¶¹â
-					if (params.length >= 2)
+					if (params.length >= 3)
 					{
-						roles.append(String.format("\t\t<roleEffect faction=\"%s\" name=\"%s\">\n", params[1], attire.getRefKey()));
+						roles.append(String.format("\t\t<roleEffect faction=\"%s\" sectLv=\"%s\" name=\"%s\">\n", params[1], params[2],attire.getRefKey()));
 						for (AttireAction action : attire.getActions())
 						{
 							if (action.getAnims().size() > 0)
