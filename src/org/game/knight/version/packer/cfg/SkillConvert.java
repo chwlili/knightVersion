@@ -661,6 +661,7 @@ public class SkillConvert extends DefaultHandler
 			skillGroupData.hotKey = XmlUtil.parseString(attributes.getValue("key"), "");
 			skillGroupData.skills = XmlUtil.parseString(attributes.getValue("skills"), "");
 			skillGroupData.books = XmlUtil.parseString(attributes.getValue("activation"), "");
+			skillGroupData.quality=XmlUtil.parseInt(attributes.getValue("quality"), 0);
 		}
 		else if ("groupData".equals(qName))
 		{
@@ -673,6 +674,7 @@ public class SkillConvert extends DefaultHandler
 			groupData.hotKey = skillGroupData.hotKey;
 			groupData.skills = skillGroupData.skills;
 			groupData.books = skillGroupData.books;
+			groupData.quality=skillGroupData.quality;
 
 			skillGroupData.desc = groupData.desc;
 

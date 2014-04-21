@@ -16,11 +16,12 @@ public class SkillGroupData extends AbsXmlNode
 	public String hotKey;
 	public String skills;
 	public String books;
+	public int quality;
 
 	@Override
 	protected String buildString()
 	{
-		return String.format("<skillGroupData type=\"%s\" faction=\"%s\" factionLv=\"%s\" name=\"%s\" desc=\"%s\" hotKey=\"%s\" skills=\"%s\" books=\"%s\"/>", type,faction,factionLv,name,desc,hotKey,skills,books);
+		return String.format("<skillGroupData type=\"%s\" faction=\"%s\" factionLv=\"%s\" name=\"%s\" desc=\"%s\" hotKey=\"%s\" skills=\"%s\" books=\"%s\" quality=\"%s\"/>", type,faction,factionLv,name,desc,hotKey,skills,books,quality);
 	}
 
 }
