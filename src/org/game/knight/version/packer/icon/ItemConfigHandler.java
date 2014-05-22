@@ -23,7 +23,7 @@ public class ItemConfigHandler extends DefaultHandler
 	private ItemHandler packHandler=new ItemHandler();
 	
 	/**
-	 * ¹¹Ôìº¯Êý
+	 * ï¿½ï¿½ï¿½ìº¯ï¿½ï¿½
 	 * @param dir
 	 */
 	public ItemConfigHandler(File dir)
@@ -32,7 +32,7 @@ public class ItemConfigHandler extends DefaultHandler
 	}
 	
 	/**
-	 * »ñÈ¡ÁÐ±í
+	 * ï¿½ï¿½È¡ï¿½Ð±ï¿½
 	 * @return
 	 */
 	public ArrayList<ItemID> getItems()
@@ -41,7 +41,7 @@ public class ItemConfigHandler extends DefaultHandler
 	}
 	
 	/**
-	 * Éú³É
+	 * ï¿½ï¿½ï¿½
 	 * @throws ParserConfigurationException
 	 * @throws SAXException
 	 * @throws FileNotFoundException
@@ -90,7 +90,7 @@ public class ItemConfigHandler extends DefaultHandler
 	}
 	
 	/**
-	 * ÎïÆ·´¦ÀíÆ÷
+	 * ï¿½ï¿½Æ·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	 */
 	private class ItemHandler extends DefaultHandler
 	{

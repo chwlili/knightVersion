@@ -187,8 +187,16 @@ public class IconExporter extends AbsExporter
 			});
 
 			StringBuilder qpurl=new StringBuilder();
+			Hashtable<Integer, Boolean> idTable=new Hashtable<Integer, Boolean>();
 			for (ItemID item : items)
 			{
+				if(idTable.containsKey(item.id))
+				{
+					continue;
+				}
+				
+				idTable.put(item.id, true);
+				
 				String[] paths = new String[] { "/bagIcon/" + item.iconID + ".png", "/bagIcon/" + item.iconID + ".jpg", "/bagIcon/" + item.id + ".png", "/bagIcon/" + item.id + ".jpg", "/bagIcon/0.png" };
 				for (String path : paths)
 				{
