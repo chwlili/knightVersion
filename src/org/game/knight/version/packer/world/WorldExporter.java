@@ -377,7 +377,7 @@ public class WorldExporter extends AbsExporter
 					continue;
 				}
 
-				attireText.append(String.format("\t<attire id=\"%s.%s\" name=\"%s\" width=\"%s\" height=\"%s\">\n", attire.getFileID(), attire.getKey(), attire.getRefKey(), attire.getHitRect().getWidth(), attire.getHitRect().getHeight()));
+				attireText.append(String.format("\t<attire id=\"%s.%s\" name=\"%s\" x=\"%s\" y=\"%s\" width=\"%s\" height=\"%s\">\n", attire.getFileID(), attire.getKey(), attire.getRefKey(), attire.getHitRect().getX(),attire.getHitRect().getY(),attire.getHitRect().getWidth(), attire.getHitRect().getHeight()));
 				for (AttireAction action : attire.getActions())
 				{
 					attireText.append(String.format("\t\t<action id=\"%s\" nameX=\"%s\" nameY=\"%s\" textures=\"%s\" >\n", action.getID(), action.getNameX(), action.getNameY(), attireManager.getActionTextureIDs(action)));
