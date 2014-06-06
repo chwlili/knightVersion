@@ -2,7 +2,9 @@ package org.game.knight.version.packer;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -17,6 +19,7 @@ import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.preference.DirectoryFieldEditor;
 import org.eclipse.jface.viewers.TreePath;
 import org.eclipse.jface.viewers.TreeSelection;
 import org.eclipse.jface.viewers.TreeViewer;
@@ -46,7 +49,6 @@ import org.game.knight.version.packer.game.GameExporter;
 import org.game.knight.version.packer.icon.IconExporter;
 import org.game.knight.version.packer.view.ViewExport;
 import org.game.knight.version.packer.world.WorldExporter;
-
 
 public class GamePacker extends Composite
 {
@@ -256,7 +258,7 @@ public class GamePacker extends Composite
 
 		zlibSelection = new Button(params, SWT.CHECK);
 		zlibSelection.setText("\u538B\u7F29XML");
-		
+
 		swfSelection = new Button(params, SWT.CHECK);
 		swfSelection.setText("\u538B\u7F29\u89C6\u56FEImg");
 
@@ -265,10 +267,10 @@ public class GamePacker extends Composite
 
 		mobileSelection = new Button(params, SWT.CHECK);
 		mobileSelection.setText("\u624B\u673A\u914D\u7F6E\u683C\u5F0F");
-		
-		writeRegionImgSelection=new Button(params,SWT.CHECK);
+
+		writeRegionImgSelection = new Button(params, SWT.CHECK);
 		writeRegionImgSelection.setText("输出小图");
-		
+
 		scrolledComposite.setContent(composite);
 		scrolledComposite.setMinSize(composite.computeSize(SWT.DEFAULT, SWT.DEFAULT));
 
@@ -321,7 +323,7 @@ public class GamePacker extends Composite
 	 */
 	private void initInputHandler()
 	{
-		//窗口关闭
+		// 窗口关闭
 		getShell().addDisposeListener(new DisposeListener()
 		{
 			@Override
@@ -330,7 +332,7 @@ public class GamePacker extends Composite
 				cancelExport();
 			}
 		});
-		
+
 		// 输入标签
 		cfgLabel.addSelectionListener(new DirOpenHandler(cfgInput));
 		fileLabel.addSelectionListener(new DirOpenHandler(fileInput));
@@ -437,10 +439,16 @@ public class GamePacker extends Composite
 		{
 			String path = this.input.getText();
 
-			if (path == null || path.isEmpty()) { return; }
+			if (path == null || path.isEmpty())
+			{
+				return;
+			}
 
 			File file = new File(path);
-			if (!file.exists() || !file.isDirectory()) { return; }
+			if (!file.exists() || !file.isDirectory())
+			{
+				return;
+			}
 
 			try
 			{
@@ -558,7 +566,7 @@ public class GamePacker extends Composite
 		section.put("imgZipSelection", swfSelection.getSelection());
 		section.put("mobileSelection", mobileSelection.getSelection());
 		section.put("clearupSelection", clearupSelection.getSelection());
-		section.put("writeRegionImgSelection",writeRegionImgSelection.getSelection());
+		section.put("writeRegionImgSelection", writeRegionImgSelection.getSelection());
 
 		setting.save();
 	}
@@ -578,37 +586,55 @@ public class GamePacker extends Composite
 
 		if (cfgSelection.getSelection())
 		{
-			if (!checkInputDir(cfgInput.getText(), "配置")) { return; }
+			if (!checkInputDir(cfgInput.getText(), "配置"))
+			{
+				return;
+			}
 			inputCount++;
 		}
 
 		if (fileSelection.getSelection())
 		{
-			if (!checkInputDir(fileInput.getText(), "文件")) { return; }
+			if (!checkInputDir(fileInput.getText(), "文件"))
+			{
+				return;
+			}
 			inputCount++;
 		}
 
 		if (iconSelection.getSelection())
 		{
-			if (!checkInputDir(iconInput.getText(), "图标")) { return; }
+			if (!checkInputDir(iconInput.getText(), "图标"))
+			{
+				return;
+			}
 			inputCount++;
 		}
 
 		if (viewSelection.getSelection())
 		{
-			if (!checkInputDir(viewInput.getText(), "视图")) { return; }
+			if (!checkInputDir(viewInput.getText(), "视图"))
+			{
+				return;
+			}
 			inputCount++;
 		}
 
 		if (worldSelection.getSelection())
 		{
-			if (!checkInputDir(worldInput.getText(), "世界")) { return; }
+			if (!checkInputDir(worldInput.getText(), "世界"))
+			{
+				return;
+			}
 			inputCount++;
 		}
 
 		if (codeSelection.getSelection())
 		{
-			if (!checkInputDir(codeInput.getText(), "程序")) { return; }
+			if (!checkInputDir(codeInput.getText(), "程序"))
+			{
+				return;
+			}
 			inputCount++;
 		}
 
@@ -619,8 +645,14 @@ public class GamePacker extends Composite
 				MessageDialog.openError(getShell(), "输入不合法", "版本号不能为空!");
 				return;
 			}
-			if (!checkOutputDir(cdnInput.getText(), "资源库", false)) { return; }
-			if (!checkOutputDir(idcInput.getText(), "备用库", true)) { return; }
+			if (!checkOutputDir(cdnInput.getText(), "资源库", false))
+			{
+				return;
+			}
+			if (!checkOutputDir(idcInput.getText(), "备用库", true))
+			{
+				return;
+			}
 
 			// 保存设定
 			saveSetting();
@@ -678,7 +710,10 @@ public class GamePacker extends Composite
 		}
 		else
 		{
-			if (path != null && !path.isEmpty()) { return checkInputDir(path, name); }
+			if (path != null && !path.isEmpty())
+			{
+				return checkInputDir(path, name);
+			}
 		}
 		return true;
 	}
@@ -899,8 +934,8 @@ public class GamePacker extends Composite
 		final boolean zip = zlibSelection.getSelection();
 		final boolean img = swfSelection.getSelection();
 		final boolean clearup = clearupSelection.getSelection();
-		final boolean isMobile=mobileSelection.getSelection();
-		final boolean writeRegionImg=writeRegionImgSelection.getSelection();
+		final boolean isMobile = mobileSelection.getSelection();
+		final boolean writeRegionImg = writeRegionImgSelection.getSelection();
 
 		execing = false;
 		viewing = false;
@@ -915,31 +950,31 @@ public class GamePacker extends Composite
 
 				if (cfgSelected)
 				{
-					ConfigExporter configs = new ConfigExporter(new File(cfgPath), new File(cdnPath + File.separatorChar + "configs"),zip);
+					ConfigExporter configs = new ConfigExporter(new File(cfgPath), new File(cdnPath + File.separatorChar + "configs"), zip);
 					configs.publish();
 				}
 
 				if (fileSelected)
 				{
-					FilesExporter files = new FilesExporter(new File(filePath), new File(cdnPath + File.separatorChar + "files"),zip);
+					FilesExporter files = new FilesExporter(new File(filePath), new File(cdnPath + File.separatorChar + "files"), zip);
 					files.publish();
 				}
 
 				if (iconSelected)
 				{
-					IconExporter icons = new IconExporter(new File(iconPath), new File(cdnPath + File.separatorChar + "icons"),zip,new File(cfgPath));
+					IconExporter icons = new IconExporter(new File(iconPath), new File(cdnPath + File.separatorChar + "icons"), zip, new File(cfgPath));
 					icons.publish();
 				}
 
 				if (viewSelected)
 				{
-					ViewExport views = new ViewExport(new File(viewPath), new File(cdnPath + File.separatorChar + "views"),img);
+					ViewExport views = new ViewExport(new File(viewPath), new File(cdnPath + File.separatorChar + "views"), img);
 					views.publish();
 				}
 
 				if (worldSelected)
 				{
-					WorldExporter world = new WorldExporter(new File(worldPath), new File(cdnPath + File.separatorChar + "world"),zip,isMobile,writeRegionImg);
+					WorldExporter world = new WorldExporter(new File(worldPath), new File(cdnPath + File.separatorChar + "world"), zip, isMobile, writeRegionImg);
 					world.publish();
 				}
 
@@ -948,30 +983,31 @@ public class GamePacker extends Composite
 					GameExporter code = new GameExporter(new File(codePath), new File(cdnPath + File.separatorChar + "games"), new File(startupPath), cdnPath, ver, startupParam);
 					code.publish();
 				}
-				
-				if(!GamePacker.isCancel())
+
+				if (!GamePacker.isCancel())
 				{
 					GamePacker.beginTask("合并版本信息");
 					try
 					{
-						mergerFiles(new File(cdnPath), new File(idcPath), ver,zip);
+						writeDB(new File(cdnPath), ver, zip);
+						writeDB1(new File(cdnPath), ver, zip);
+						writeVerFile(new File(cdnPath), ver);
+						writePolicyFile(new File(cdnPath));
+
+						if (clearup)
+						{
+							cleaupCDN(new File(cdnPath), ver);
+						}
+						syncToIDC(new File(cdnPath), new File(idcPath));
 					}
 					catch (Exception exception)
 					{
 						error(exception);
 					}
-					GamePacker.endTask();
-	
-					GamePacker.beginTask("同步版本库和备用库");
-					try
+					finally
 					{
-						mergerFileUrls(new File(cdnPath), new File(idcPath), ver, clearup);
+						GamePacker.endTask();
 					}
-					catch (Exception exception)
-					{
-						error(exception);
-					}
-					GamePacker.endTask();
 				}
 
 				execing = false;
@@ -1083,13 +1119,24 @@ public class GamePacker extends Composite
 		}
 
 		File[] files = new File[modules.size()];
-		files=modules.toArray(files);
-		
+		files = modules.toArray(files);
+
 		return files;
 	}
 
-	private void mergerFiles(File cdnDir, File idcDir, String ver,boolean zip) throws Exception
+	/**
+	 * 合并db.xml
+	 * 
+	 * @param cdnDir
+	 * @param idcDir
+	 * @param ver
+	 * @param zip
+	 * @throws Exception
+	 */
+	private void writeDB(File cdnDir, String ver, boolean zip) throws Exception
 	{
+		GamePacker.log("输出3d版本文件");
+
 		Document dom = DocumentHelper.createDocument();
 		dom.addElement("project");
 
@@ -1110,49 +1157,81 @@ public class GamePacker extends Composite
 				element.detach();
 				root.add(element);
 			}
-			
-			SimpleDateFormat df=new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
-			String time=df.format(new Date());
-			
+
+			SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+			String time = df.format(new Date());
+
 			root.addAttribute("version", ver);
 			root.addAttribute("time", time);
 		}
-		
-		
+
 		// 配置内容
 		byte[] content = XmlUtil.formatXML(dom.asXML()).getBytes("UTF-8");
-		if(zip)
+		if (zip)
 		{
-			content=ZlibUtil.compress(content);
+			content = ZlibUtil.compress(content);
 		}
-		
-		//policy内容
-		byte[] policyContent="<?xml version=\"1.0\"?>\r\n<!DOCTYPE cross-domain-policy SYSTEM \"http://www.macromedia.com/xml/dtds/cross-domain-policy.dtd\">\r\n\r\n<cross-domain-policy>\r\n\t<allow-access-from domain=\"*\" />\r\n</cross-domain-policy>".getBytes("UTF-8");
-		
-		// 输出到CDN
-		GamePacker.log("输出版本信息到资源库！");
-		File verFile = new File(cdnDir.getPath() + File.separatorChar + ver + ".xml");
-		File finalFile = new File(cdnDir.getPath() + File.separatorChar + "final.xml");
-		File policyFile=new File(cdnDir.getPath()+File.separatorChar+"policy.xml");
-		File crossdomainFile=new File(cdnDir.getPath()+File.separatorChar+"crossdomain.xml");
-		
-		FileUtil.writeFile(verFile, content);
-		FileUtil.writeFile(finalFile, content);
-		FileUtil.writeFile(policyFile, policyContent);
-		FileUtil.writeFile(crossdomainFile, policyContent);
 
-		// 同步到IDC
-		if (idcDir != null && idcDir.exists() && idcDir.isDirectory())
+		// 输出到CDN
+		FileUtil.writeFile(new File(cdnDir.getPath() + File.separatorChar + ver + ".xml"), content);
+		FileUtil.writeFile(new File(cdnDir.getPath() + File.separatorChar + "final" + ".xml"), content);
+	}
+
+	/**
+	 * 合并db1.xml
+	 * 
+	 * @param cdnDir
+	 * @param idcDir
+	 * @param ver
+	 * @param zip
+	 * @throws Exception
+	 */
+	private void writeDB1(File cdnDir, String ver, boolean zip) throws Exception
+	{
+		GamePacker.log("输出2d版本文件");
+
+		Document dom = DocumentHelper.createDocument();
+		dom.addElement("project");
+
+		Element root = dom.getRootElement();
+
+		// 获取所有模块目录
+		File[] modules = getModuleDirs(cdnDir);
+
+		// 合并所有模块的文件地址
+		for (File module : modules)
 		{
-			GamePacker.log("输出版本信息到备用库！");
-			File idcVerFile = new File(idcDir.getPath() + verFile.getPath().substring(cdnDir.getPath().length()));
-			File idcXmlFile = new File(idcDir.getPath() + finalFile.getPath().substring(cdnDir.getPath().length()));
-			File idcPolicyFile=new File(idcDir.getPath() + policyFile.getPath().substring(cdnDir.getPath().length()));
-			
-			FileUtil.writeFile(idcVerFile, content);
-			FileUtil.writeFile(idcXmlFile, content);
-			FileUtil.writeFile(idcPolicyFile, policyContent);
+			File dbFile = new File(module.getPath() + File.separatorChar + "db1.xml");
+			if (!dbFile.exists())
+			{
+				dbFile = new File(module.getPath() + File.separatorChar + "db.xml");
+			}
+
+			Document document = (new SAXReader()).read(dbFile);
+			for (Object node : document.getRootElement().elements())
+			{
+				Element element = (Element) node;
+				element.detach();
+				root.add(element);
+			}
+
+			SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+			String time = df.format(new Date());
+
+			root.addAttribute("version", ver);
+			root.addAttribute("time", time);
 		}
+
+		// 配置内容
+		byte[] content = XmlUtil.formatXML(dom.asXML()).getBytes("UTF-8");
+		if (zip)
+		{
+			content = ZlibUtil.compress(content);
+		}
+
+		// 输出到CDN
+		FileUtil.writeFile(new File(cdnDir.getPath() + File.separatorChar + ver + ".2d.xml"), content);
+		FileUtil.writeFile(new File(cdnDir.getPath() + File.separatorChar + "final" + ".2d.xml"), content);
 	}
 
 	/**
@@ -1164,145 +1243,231 @@ public class GamePacker extends Composite
 	 * @param clearup
 	 * @throws Exception
 	 */
-	private void mergerFileUrls(File cdnDir, File idcDir, String ver, boolean clearup) throws Exception
+	private void writeVerFile(File cdnDir, String ver) throws Exception
 	{
+		GamePacker.log("输出文件表");
+
 		StringBuilder urls = new StringBuilder();
 
-		// 获取所有模块目录
 		File[] modules = getModuleDirs(cdnDir);
 
-		// 合并所有模块的文件地址
 		for (File module : modules)
 		{
 			File dbFile = new File(module.getPath() + File.separatorChar + "db.ver");
-			String dbText = new String(FileUtil.getFileBytes(dbFile),"UTF-8");
+			String dbText = new String(FileUtil.getFileBytes(dbFile), "UTF-8");
 			urls.append(dbText);
 		}
 
-		// 保存合并后的文件地址表
-		GamePacker.log("保存文件记录！");
 		byte[] content = urls.toString().getBytes("UTF-8");
-		File verFile = new File(cdnDir.getPath() + File.separatorChar + ver + ".ver");
-		File finalFile = new File(cdnDir.getPath() + File.separatorChar + "final.ver");
-		FileUtil.writeFile(verFile, content);
-		FileUtil.writeFile(finalFile, content);
 
-		// 合并后的文件地址数组
-		String[] newURLs = urls.toString().replaceAll("\\r", "").split("\\n");
+		FileUtil.writeFile(new File(cdnDir.getPath() + File.separatorChar + ver + ".ver"), content);
+		FileUtil.writeFile(new File(cdnDir.getPath() + File.separatorChar + "final.ver"), content);
+	}
 
-		// 复制到备用库
-		if (idcDir != null && idcDir.exists() && idcDir.isDirectory())
+	/**
+	 * 输出crossdomain文件
+	 * 
+	 * @param cdnDir
+	 * @throws UnsupportedEncodingException
+	 */
+	private void writePolicyFile(File cdnDir) throws UnsupportedEncodingException
+	{
+		GamePacker.log("输出跨域文件");
+
+		byte[] policyContent = "<?xml version=\"1.0\"?>\r\n<!DOCTYPE cross-domain-policy SYSTEM \"http://www.macromedia.com/xml/dtds/cross-domain-policy.dtd\">\r\n\r\n<cross-domain-policy>\r\n\t<allow-access-from domain=\"*\" />\r\n</cross-domain-policy>".getBytes("UTF-8");
+
+		FileUtil.writeFile(new File(cdnDir.getPath() + File.separatorChar + "policy.xml"), policyContent);
+		FileUtil.writeFile(new File(cdnDir.getPath() + File.separatorChar + "crossdomain.xml"), policyContent);
+	}
+
+	/**
+	 * 清理目录
+	 * 
+	 * @param cdnDir
+	 * @throws UnsupportedEncodingException
+	 */
+	private void cleaupCDN(File cdnDir, String ver) throws UnsupportedEncodingException
+	{
+		GamePacker.log("清理旧版本文件");
+
+		String verFileText = new String(FileUtil.getFileBytes(new File(cdnDir.getPath() + File.separatorChar + "final.ver")), "UTF-8");
+
+		String[] newURLs = verFileText.replaceAll("\\r", "").split("\\n");
+
+		File[] modules = getModuleDirs(cdnDir);
+
+		// 找出所有存在的版本文件
+		Hashtable<String, File> oldFiles = new Hashtable<String, File>();
+		for (int i = 0; i < modules.length; i++)
 		{
-			GamePacker.beginLogSet("同步文件到备用库！");
-			for (String url : newURLs)
+			File module = modules[i];
+			for (File dir : module.listFiles())
 			{
-				File cdnFile = new File(cdnDir.getPath() + url);
-				File idcFile = new File(idcDir.getPath() + url);
-				if (cdnFile.exists() && !idcFile.exists())
+				if (dir.isDirectory() && !dir.isHidden() && !dir.getName().equals(".ver"))
 				{
-					GamePacker.progress("同步文件:"+url);
-					FileUtil.copyTo(idcFile, cdnFile);
+					for (File file : dir.listFiles())
+					{
+						if (!file.isDirectory() && !file.isHidden())
+						{
+							String absURL = file.getPath();
+							String relURL = absURL.substring(cdnDir.getPath().length(), absURL.length()).replaceAll("\\\\", "/");
+							oldFiles.put(relURL, file);
+						}
+					}
 				}
 			}
-			GamePacker.endLogSet();
 		}
 
-		// 清理
-		if (clearup)
+		// 过滤有效的版本文件
+		for (String url : newURLs)
 		{
-			GamePacker.beginLogSet("清理无效文件！");
-			
-			// 找出所有存在的版本文件
-			Hashtable<String, File> oldFiles = new Hashtable<String, File>();
-			for (int i = 0; i < modules.length; i++)
+			oldFiles.remove(url);
+		}
+
+		// 删除无效的版本文件
+		for (String url : oldFiles.keySet())
+		{
+			GamePacker.progress("删除文件:" + url);
+
+			oldFiles.get(url).delete();
+		}
+
+		// 删除无效的版本文件表
+		for (File file : cdnDir.listFiles())
+		{
+			if (file.isFile() && !file.isHidden())
 			{
-				File module = modules[i];
-				for (File dir : module.listFiles())
+				String fileName = file.getName();
+				if (fileName.equals("final.xml") || fileName.equals("final.2d.xml") || fileName.equals("final.ver"))
 				{
-					if (dir.isDirectory() && !dir.isHidden() && !dir.getName().equals(".ver"))
+					continue;
+				}
+				if (fileName.equals(ver + ".xml") || fileName.equals(ver + ".2d.xml") || fileName.equals(ver + ".ver"))
+				{
+					continue;
+				}
+				if (fileName.equals("policy.xml") || fileName.equals("crossdomain.xml"))
+				{
+					continue;
+				}
+
+				file.delete();
+			}
+		}
+	}
+
+	/**
+	 * 同步到IDC
+	 * 
+	 * @param cdn
+	 * @param idc
+	 * @throws IOException
+	 */
+	private void syncToIDC(File cdn, File idc) throws IOException
+	{
+		if (!idc.exists())
+		{
+			return;
+		}
+
+		GamePacker.log("同步到备用库");
+
+		//复制CDN中的资源文件到IDC
+		ArrayList<File> cdnFiles = new ArrayList<File>();
+		cdnFiles.add(cdn);
+		while (cdnFiles.size() > 0)
+		{
+			File file = cdnFiles.remove(0);
+			if (!file.isHidden())
+			{
+				if (file.isDirectory())
+				{
+					for (File child : file.listFiles())
 					{
-						for (File file : dir.listFiles())
+						cdnFiles.add(child);
+					}
+				}
+				else
+				{
+					File cdnFile=file;
+					File idcFile=new File(idc.getPath()+cdnFile.getPath().substring(cdn.getPath().length()));
+					if(!idcFile.exists() || cdnFile.length()!=idcFile.length())
+					{
+						GamePacker.progress("复制文件：" + cdnFile.getPath().substring(cdn.getPath().length()));
+
+						FileUtil.copyTo(idcFile, cdnFile);
+					}
+				}
+			}
+		}
+
+		//复制CDN中的版本信息到IDC
+		for (File file : cdn.listFiles())
+		{
+			if(!file.isHidden())
+			{
+				if(!file.isDirectory() && file.isFile())
+				{
+					FileUtil.copyTo(new File(idc.getPath()+file.getPath().substring(cdn.getPath().length())), file);
+				}
+				else if(file.isDirectory())
+				{
+					for(File dbFile:file.listFiles())
+					{
+						if(!dbFile.isDirectory() && dbFile.isFile())
 						{
-							if (!file.isDirectory() && !file.isHidden())
+							FileUtil.copyTo(new File(idc.getPath()+dbFile.getPath().substring(cdn.getPath().length())), dbFile);
+						}
+						else if(dbFile.isDirectory() && ".ver".equals(dbFile.getName()))
+						{
+							for(File verFile:dbFile.listFiles())
 							{
-								String absURL = file.getPath();
-								String relURL = absURL.substring(cdnDir.getPath().length(), absURL.length()).replaceAll("\\\\", "/");
-								oldFiles.put(relURL, file);
+								if(!verFile.isDirectory() && verFile.isFile())
+								{
+									FileUtil.copyTo(new File(idc.getPath()+verFile.getPath().substring(cdn.getPath().length())), verFile);
+								}
 							}
 						}
 					}
 				}
 			}
+		}
 
-			// 过滤有效的版本文件
-			for (String url : newURLs)
+		//删除IDC中多余的文件
+		ArrayList<File> idcFiles = new ArrayList<File>();
+		idcFiles.add(idc);
+		while (idcFiles.size() > 0)
+		{
+			File file = idcFiles.remove(0);
+			if (!file.isHidden())
 			{
-				oldFiles.remove(url);
-			}
-
-			// 删除无效的版本文件
-			for (File file : oldFiles.values())
-			{
-				String url=file.getPath().substring(cdnDir.getPath().length());
-				
-				GamePacker.progress("删除文件:"+url);
-				
-				file.delete();
-
-				if (idcDir != null && idcDir.exists() && idcDir.isDirectory())
+				if (file.isDirectory())
 				{
-					// 清理IDC
-					File idcFile = new File(idcDir.getPath() + url);
-					if (idcFile.exists())
+					for (File child : file.listFiles())
 					{
+						idcFiles.add(child);
+					}
+				}
+				else
+				{
+					File idcFile=file;
+					File cdnFile=new File(cdn.getPath()+idcFile.getPath().substring(idc.getPath().length()));
+					if(!cdnFile.exists())
+					{
+						GamePacker.progress("删除文件：" + idcFile.getPath().substring(idc.getPath().length()));
+						
 						idcFile.delete();
 					}
-				}
-			}
-
-			// 删除无效的版本文件表
-			for (File file : cdnDir.listFiles())
-			{
-				if (file.isFile() && !file.isHidden() && file.getName().endsWith(".ver"))
-				{
-					GamePacker.progress("清理版本文件！");
-					
-					if (!file.getName().equals("final.ver") && !file.getName().equals(ver + ".ver"))
+					else if(cdnFile.exists() && cdnFile.length()!=idcFile.length())
 					{
-						String filePath = file.getPath();
+						GamePacker.progress("复制文件：" + idcFile.getPath().substring(idc.getPath().length()));
 
-						File oldVerFile = file;
-						File oldXmlFile = new File(filePath.substring(0, filePath.length() - 3) + "xml");
-
-						if (oldVerFile.exists())
-						{
-							oldVerFile.delete();
-						}
-						if (oldXmlFile.exists())
-						{
-							oldXmlFile.delete();
-						}
-
-						if (idcDir != null && idcDir.exists() && idcDir.isDirectory())
-						{
-							// 清理IDC
-							File oldIdcVerFile = new File(idcDir.getPath() + oldVerFile.getPath().substring(cdnDir.getPath().length()));
-							File oldIdcXmlFile = new File(idcDir.getPath() + oldXmlFile.getPath().substring(cdnDir.getPath().length()));
-
-							if (oldIdcVerFile.exists())
-							{
-								oldIdcVerFile.delete();
-							}
-							if (oldIdcXmlFile.exists())
-							{
-								oldIdcXmlFile.delete();
-							}
-						}
+						FileUtil.copyTo(idcFile, cdnFile);
 					}
 				}
 			}
-			
-			GamePacker.endLogSet();
 		}
+
+		GamePacker.log("完成");
 	}
 }

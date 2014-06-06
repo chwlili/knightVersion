@@ -88,7 +88,7 @@ public class SwfBitmap
 				ImageWriter writer = writers.next();
 				ImageWriteParam param = writer.getDefaultWriteParam();
 				param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-				param.setCompressionQuality(.99f);
+				param.setCompressionQuality(.70f);
 				ByteArrayOutputStream byteOutput=new ByteArrayOutputStream();
 				
 				writer.setOutput(new MemoryCacheImageOutputStream(byteOutput));

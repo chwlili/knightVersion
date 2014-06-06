@@ -29,7 +29,7 @@ import org.game.knight.version.packer.world.attire.AttireAction;
 import org.game.knight.version.packer.world.attire.AttireAnim;
 import org.game.knight.version.packer.world.attire.AttireFile;
 
-public class UIAvatarExport
+public class AvatarExport1
 {
 	private static final String UI_AVATAR_FRAME_PACK = "knight.ui.avatar";
 
@@ -42,7 +42,7 @@ public class UIAvatarExport
 	 * 
 	 * @param world
 	 */
-	public UIAvatarExport(WorldExporter world)
+	public AvatarExport1(WorldExporter world)
 	{
 		openHistoryFile(new File(world.getDestDir().getPath() + "/.ver/uiAvatar"));
 

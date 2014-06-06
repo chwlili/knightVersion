@@ -332,6 +332,8 @@ public class WorldExporter extends AbsExporter
 	private String avatarFileKey;
 	private Hashtable<Scene, String> sceneFileKeys;
 
+	private String attire2FileKey;
+
 	/**
 	 * 同步所有装扮
 	 * 
@@ -377,7 +379,7 @@ public class WorldExporter extends AbsExporter
 					continue;
 				}
 
-				attireText.append(String.format("\t<attire id=\"%s.%s\" name=\"%s\" x=\"%s\" y=\"%s\" width=\"%s\" height=\"%s\">\n", attire.getFileID(), attire.getKey(), attire.getRefKey(), attire.getHitRect().getX(),attire.getHitRect().getY(),attire.getHitRect().getWidth(), attire.getHitRect().getHeight()));
+				attireText.append(String.format("\t<attire id=\"%s.%s\" name=\"%s\" x=\"%s\" y=\"%s\" width=\"%s\" height=\"%s\">\n", attire.getFileID(), attire.getKey(), attire.getRefKey(), attire.getHitRect().getX(), attire.getHitRect().getY(), attire.getHitRect().getWidth(), attire.getHitRect().getHeight()));
 				for (AttireAction action : attire.getActions())
 				{
 					attireText.append(String.format("\t\t<action id=\"%s\" nameX=\"%s\" nameY=\"%s\" textures=\"%s\" >\n", action.getID(), action.getNameX(), action.getNameY(), attireManager.getActionTextureIDs(action)));
@@ -440,7 +442,9 @@ public class WorldExporter extends AbsExporter
 	 */
 	private void exportUIAttires() throws IOException
 	{
-		avatarFileKey = new UIAvatarExport(this).exportUIAttires(attires, attireManager, zip);
+		avatarFileKey = new AvatarExport1(this).exportUIAttires(attires, attireManager, zip);
+		// attire2FileKey = new AvatarExport2(this).export(attires,
+		// attireManager, zip);
 	}
 
 	/**
@@ -888,9 +892,9 @@ public class WorldExporter extends AbsExporter
 		StringBuilder txt = new StringBuilder();
 		txt.append("<project>\n");
 		txt.append("\t<configs>\n");
-		txt.append(String.format("\t\t<config name=\"%s\" path=\"%s\" size=\"%s\"/>\n", "attire", getExportedFileUrl(attireFileKey), getExportedFileSize(attireFileKey)));
-		txt.append(String.format("\t\t<config name=\"%s\" path=\"%s\" size=\"%s\"/>\n", "world", getExportedFileUrl(worldBytesKey), getExportedFileSize(worldBytesKey)));
 		txt.append(String.format("\t\t<config name=\"%s\" path=\"%s\" size=\"%s\"/>\n", "uiAvatar", getExportedFileUrl(avatarFileKey), getExportedFileSize(avatarFileKey)));
+		txt.append(String.format("\t\t<config name=\"%s\" path=\"%s\" size=\"%s\"/>\n", "world", getExportedFileUrl(worldBytesKey), getExportedFileSize(worldBytesKey)));
+		txt.append(String.format("\t\t<config name=\"%s\" path=\"%s\" size=\"%s\"/>\n", "attire", getExportedFileUrl(attireFileKey), getExportedFileSize(attireFileKey)));
 		txt.append("\t</configs>\n");
 
 		txt.append("\t<attires>\n");
@@ -1022,7 +1026,7 @@ public class WorldExporter extends AbsExporter
 					// 刀光
 					if (params.length >= 3)
 					{
-						roles.append(String.format("\t\t<roleEffect faction=\"%s\" sectLv=\"%s\" name=\"%s\">\n", params[1], params[2],attire.getRefKey()));
+						roles.append(String.format("\t\t<roleEffect faction=\"%s\" sectLv=\"%s\" name=\"%s\">\n", params[1], params[2], attire.getRefKey()));
 						for (AttireAction action : attire.getActions())
 						{
 							if (action.getAnims().size() > 0)
@@ -1050,38 +1054,8 @@ public class WorldExporter extends AbsExporter
 						GamePacker.error("与刀光关联的装扮命名错误：" + attire.getRefKey() + "   (应该为：6_职业ID_名称)");
 					}
 				}
-				else if(params[0].equals("7"))
+				else if (params[0].equals("7"))
 				{
-					//伙伴
-					/*if (params.length >= 2)
-					{
-						roles.append(String.format("\t\t<partner id=\"%s\" name=\"%s\">\n", params[1], attire.getRefKey()));
-						for (AttireAction action : attire.getActions())
-						{
-							if (action.getAnims().size() > 0)
-							{
-								roles.append(String.format("\t\t\t<action id=\"%s\" size=\"%s\" files=\"%s\"/>\n", action.getID(), attireManager.getActionSize(action), attireManager.getActionPaths(action)));
-
-								String[] urls = attireManager.getActionPaths(action).split("\\,");
-								for (String url : urls)
-								{
-									if (!actionFileUrls.containsKey(url))
-									{
-										File actionFile = new File(getDestDir().getParentFile().getPath() + url);
-										if (actionFile.exists())
-										{
-											actionFileUrls.put(url, actionFile.length());
-										}
-									}
-								}
-							}
-						}
-						roles.append(String.format("\t\t</partner>\n"));
-					}
-					else
-					{
-						GamePacker.error("与伙伴关联的装扮命名错误：" + attire.getRefKey() + "   (应该为：7_伙伴ID_名称)");
-					}*/
 				}
 			}
 		}
@@ -1112,8 +1086,28 @@ public class WorldExporter extends AbsExporter
 		}
 		txt.append("\t</scenes>\n");
 		txt.append("</project>");
+		
 		GamePacker.log("保存汇总信息");
 		FileUtil.writeFile(new File(getDestDir().getPath() + "/db.xml"), txt.toString().getBytes("UTF-8"));
+		GamePacker.endLogSet();
+		
+		//
+		StringBuilder second_ver = new StringBuilder();
+		second_ver.append("<project>\n");
+		second_ver.append("\t<configs>\n");
+		second_ver.append(String.format("\t\t<config name=\"%s\" path=\"%s\" size=\"%s\"/>\n", "uiAvatar", getExportedFileUrl(avatarFileKey), getExportedFileSize(avatarFileKey)));
+		second_ver.append(String.format("\t\t<config name=\"%s\" path=\"%s\" size=\"%s\"/>\n", "world", getExportedFileUrl(worldBytesKey), getExportedFileSize(worldBytesKey)));
+		//second_ver.append(String.format("\t\t<config name=\"%s\" path=\"%s\" size=\"%s\"/>\n", "attire", getExportedFileUrl(attireFileKey), getExportedFileSize(attireFileKey)));
+		second_ver.append("\t</configs>\n");
+
+		AvatarExport2 test=new AvatarExport2(this);
+		test.export(scenes, attires, attireManager, zip, mobile);
+		second_ver.append(test.getVersionData());
+		
+		second_ver.append("</project>");
+		
+		GamePacker.log("保存汇总信息");
+		FileUtil.writeFile(new File(getDestDir().getPath() + "/db1.xml"), second_ver.toString().getBytes("UTF-8"));
 		GamePacker.endLogSet();
 
 		// 生成文件列表
