@@ -856,21 +856,21 @@ public class WorldExporter extends AbsExporter
 				scene_size.put(scene, sceneSize);
 				scene_path.put(scene, files.toString());
 
-				sb.append(String.format("\t\t\t<scene id=\"%s\" name=\"%s\" type=\"%s\" group=\"%s\" level=\"%s\" achieve=\"%s\" finishQuest=\"%s\" acceptQuest=\"%s\" files=\"%s\" size=\"%s\"/>\n", worldScene.getSceneID(), worldScene.getSceneName(), worldScene.getSceneType(), worldScene.getSceneGroup(), 0, "-", "-", "-", files.toString(), sceneSize));
+				sb.append(String.format("\t\t\t<scene id=\"%s\" name=\"%s\" type=\"%s\" group=\"%s\" level=\"%s\" achieve=\"%s\" finishQuest=\"%s\" acceptQuest=\"%s\" />\n", worldScene.getSceneID(), worldScene.getSceneName(), worldScene.getSceneType(), worldScene.getSceneGroup(), 0, "-", "-", "-"));
 			}
 			sb.append("\t\t</city>\n");
 		}
 		sb.append("\t</citys>\n");
-		sb.append("\t<links>\n");
-		for (SceneLink line : link.getLinks())
-		{
-			if (line.getFrom() != null && line.getDest() != null)
-			{
-				sb.append(String.format("\t\t<link fromScene=\"%s\" fromX=\"%s\" fromY=\"%s\" toScene=\"%s\" />\n", line.getFrom().getScene().getSceneID(), line.getFrom().getX() + line.getFrom().getWidth() / 2, line.getFrom().getY() + line.getFrom().getHeight() / 2, line.getDest().getScene().getSceneID()));
-			}
-		}
-		sb.append("\t</links>\n");
-		sb.append("\t<map width=\"1024\" height=\"768\" />\n");
+		//sb.append("\t<links>\n");
+		//for (SceneLink line : link.getLinks())
+		//{
+		//	if (line.getFrom() != null && line.getDest() != null)
+		//	{
+		//		sb.append(String.format("\t\t<link fromScene=\"%s\" fromX=\"%s\" fromY=\"%s\" toScene=\"%s\" />\n", line.getFrom().getScene().getSceneID(), line.getFrom().getX() + line.getFrom().getWidth() / 2, line.getFrom().getY() + line.getFrom().getHeight() / 2, line.getDest().getScene().getSceneID()));
+		//	}
+		//}
+		//sb.append("\t</links>\n");
+		//sb.append("\t<map width=\"1024\" height=\"768\" />\n");
 		sb.append("</worldDB>");
 		GamePacker.log("±£¥Ê ¿ΩÁ≈‰÷√");
 		byte[] worldBytes = sb.toString().getBytes("UTF-8");
