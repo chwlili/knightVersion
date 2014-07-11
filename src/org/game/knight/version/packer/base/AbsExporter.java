@@ -205,7 +205,10 @@ public abstract class AbsExporter
 		ArrayList<File> dirs=new ArrayList<File>();
 		ArrayList<File> files=new ArrayList<File>();
 		
-		dirs.add(new File(src.getPath()));
+		if(src!=null && src.exists())
+		{
+			dirs.add(new File(src.getPath()));
+		}
 		while (dirs.size() > 0)
 		{
 			File curr = dirs.remove(0);

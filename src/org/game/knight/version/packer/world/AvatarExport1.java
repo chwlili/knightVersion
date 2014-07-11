@@ -78,7 +78,7 @@ public class AvatarExport1
 		{
 			for (AttireAction action : attire.getActions())
 			{
-				if (action.getID() != 0 && action.getID() != 1)
+				if (action.getID() != 0 && action.getID() != 1 && action.getID() != 51)
 				{
 					continue;
 				}
@@ -208,6 +208,7 @@ public class AvatarExport1
 		StringBuilder json_role_light = new StringBuilder();
 		StringBuilder json_equip = new StringBuilder();
 		StringBuilder json_partner = new StringBuilder();
+		StringBuilder json_horse = new StringBuilder();
 
 		StringBuilder json_attires = new StringBuilder();
 		for (Attire attire : attireList)
@@ -215,7 +216,7 @@ public class AvatarExport1
 			StringBuilder json_actions = new StringBuilder();
 			for (AttireAction action : attire.getActions())
 			{
-				if (action.getID() != 0 && action.getID() != 1)
+				if (action.getID() != 0 && action.getID() != 1 && action.getID() != 51)
 				{
 					continue;
 				}
@@ -267,7 +268,7 @@ public class AvatarExport1
 			{
 				json_attires.append(",");
 			}
-			json_attires.append(String.format("\"%s\":{\"width\":%s,\"height\":%s,\"actions\":{%s}}", attire.getRefKey(), attire.getHitRect().getWidth(), attire.getHitRect().getHeight(), json_actions.toString()));
+			json_attires.append(String.format("\"%s\":{\"nameX\":%s,\"nameY\":%s,\"width\":%s,\"height\":%s,\"actions\":{%s}}", attire.getRefKey(), attire.getNameX(), attire.getNameY(), attire.getHitRect().getWidth(), attire.getHitRect().getHeight(), json_actions.toString()));
 
 			// 装扮分类
 			String[] params = attire.getParams();
@@ -315,10 +316,19 @@ public class AvatarExport1
 					}
 					json_partner.append(String.format("\"%s\":\"%s\"", params[1], attire.getRefKey()));
 				}
+				else if (params[0].equals("8") && params.length >= 2)
+				{
+					// 坐骑
+					if (json_horse.length() > 0)
+					{
+						json_horse.append(",");
+					}
+					json_horse.append(String.format("\"%s\":\"%s\"", params[1], attire.getRefKey()));
+				}
 			}
 		}
 
-		String content = String.format("{\"classPackageName\":\"%s\",\"roleMap\":{%s},\"roleLightMap\":{%s},\"equipMap\":{%s},\"partnerMap\":{%s},\"attires\":{%s}}", UI_AVATAR_FRAME_PACK, json_role.toString(), json_role_light.toString(), json_equip.toString(), json_partner.toString(), json_attires.toString());
+		String content = String.format("{\"classPackageName\":\"%s\",\"roleMap\":{%s},\"roleLightMap\":{%s},\"equipMap\":{%s},\"partnerMap\":{%s},\"horseMap\":{%s},\"attires\":{%s}}", UI_AVATAR_FRAME_PACK, json_role.toString(), json_role_light.toString(), json_equip.toString(), json_partner.toString(), json_horse.toString(), json_attires.toString());
 
 		byte[] contentBytes = content.getBytes("UTF-8");
 		if (zip)
@@ -385,6 +395,11 @@ public class AvatarExport1
 					// 伙伴
 					canOutput = true;
 				}
+				else if (params[0].equals("8") && params.length >= 2)
+				{
+					// 坐骑
+					canOutput = true;
+				}
 
 				if (!canOutput)
 				{
@@ -392,7 +407,7 @@ public class AvatarExport1
 				}
 
 				// 只有第一帧第二帧有内容
-				if ((attire.getAction(0) != null && attire.getAction(0).getAnims().size() > 0) || (attire.getAction(1) != null && attire.getAction(1).getAnims().size() > 0))
+				if ((attire.getAction(0) != null && attire.getAction(0).getAnims().size() > 0) || (attire.getAction(1) != null && attire.getAction(1).getAnims().size() > 0) || (attire.getAction(51) != null && attire.getAction(51).getAnims().size() > 0))
 				{
 					result.add(attire);
 				}

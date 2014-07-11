@@ -886,7 +886,7 @@ public class WorldExporter extends AbsExporter
 		{
 			return;
 		}
-
+		
 		GamePacker.beginLogSet("输出汇总信息");
 		GamePacker.log("生成汇总信息");
 		StringBuilder txt = new StringBuilder();
@@ -903,6 +903,7 @@ public class WorldExporter extends AbsExporter
 		StringBuilder equips = new StringBuilder();
 		StringBuilder effects = new StringBuilder();
 		StringBuilder labels = new StringBuilder();
+		StringBuilder horses=new StringBuilder();
 		for (AttireFile attireFile : attires.values())
 		{
 			for (Attire attire : attireFile.getAllAttires())
@@ -1057,6 +1058,38 @@ public class WorldExporter extends AbsExporter
 				else if (params[0].equals("7"))
 				{
 				}
+				else if(params[0].equals("8"))
+				{
+					if (params.length >= 2)
+					{
+						horses.append(String.format("\t\t<horse horseID=\"%s\" name=\"%s\">\n", params[1],attire.getRefKey()));
+						for (AttireAction action : attire.getActions())
+						{
+							if (action.getAnims().size() > 0)
+							{
+								horses.append(String.format("\t\t\t<action id=\"%s\" size=\"%s\" files=\"%s\"/>\n", action.getID(), attireManager.getActionSize(action), attireManager.getActionPaths(action)));
+	
+								String[] urls = attireManager.getActionPaths(action).split("\\,");
+								for (String url : urls)
+								{
+									if (!actionFileUrls.containsKey(url))
+									{
+										File actionFile = new File(getDestDir().getParentFile().getPath() + url);
+										if (actionFile.exists())
+										{
+											actionFileUrls.put(url, actionFile.length());
+										}
+									}
+								}
+							}
+						}
+						horses.append(String.format("\t\t</horse>\n"));
+					}
+					else
+					{
+						GamePacker.error("与坐骑关联的装扮命名错误：" + attire.getRefKey() + "   (应该为：0_坐骑ID_名称)");
+					}
+				}
 			}
 		}
 
@@ -1073,6 +1106,7 @@ public class WorldExporter extends AbsExporter
 		txt.append(equips);
 		txt.append(effects);
 		txt.append(labels);
+		txt.append(horses);
 		txt.append("\t</attires>\n");
 
 		txt.append("\t<scenes>\n");

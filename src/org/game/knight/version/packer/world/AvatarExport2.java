@@ -90,6 +90,11 @@ public class AvatarExport2
 	{
 		return versionData.toString();
 	}
+	
+	public String getCfgFileKey()
+	{
+		return cfgFileKey;
+	}
 
 	public void export(Hashtable<String, Scene> scenes, Hashtable<String, AttireFile> attires, WorldAttires attireManager, boolean zip, boolean mobile) throws IOException
 	{
@@ -102,182 +107,6 @@ public class AvatarExport2
 		exportScenes(scenes, zip, mobile);
 
 		saveHistoryFile();
-	}
-
-	private void exportAttireSummay(Hashtable<String, AttireFile> attires, WorldAttires attireManager, boolean zip)
-	{
-		StringBuilder txt = new StringBuilder();
-
-		txt.append("\t<attires>\n");
-
-		Hashtable<String, Long> actionFileUrls = new Hashtable<String, Long>();
-		StringBuilder roles = new StringBuilder();
-		StringBuilder equips = new StringBuilder();
-		StringBuilder effects = new StringBuilder();
-		StringBuilder labels = new StringBuilder();
-		for (AttireFile attireFile : attires.values())
-		{
-			for (Attire attire : attireFile.getAllAttires())
-			{
-				if (attire.isAnimAttire() || attire.getKey().startsWith("0_"))
-				{
-					continue;
-				}
-
-				String[] params = attire.getParams();
-				if (params.length == 0)
-				{
-					continue;
-				}
-
-				if (params[0].equals("1"))
-				{
-					// 装扮
-					if (params.length >= 3)
-					{
-						roles.append(String.format("\t\t<role faction=\"%s\" sectLv=\"%s\" name=\"%s\">\n", params[1], params[2], attire.getRefKey()));
-						/*
-						 * for (AttireAction action : attire.getActions()) { if
-						 * (action.getAnims().size() > 0) {
-						 * roles.append(String.format
-						 * ("\t\t\t<action id=\"%s\" size=\"%s\" files=\"%s\"/>\n"
-						 * , action.getID(),
-						 * attireManager.getActionSize(action),
-						 * attireManager.getActionPaths(action)));
-						 * 
-						 * String[] urls =
-						 * attireManager.getActionPaths(action).split("\\,");
-						 * for (String url : urls) { if
-						 * (!actionFileUrls.containsKey(url)) { File actionFile
-						 * = new File(getDestDir().getParentFile().getPath() +
-						 * url); if (actionFile.exists()) {
-						 * actionFileUrls.put(url, actionFile.length()); } } } }
-						 * }
-						 */
-						roles.append(String.format("\t\t</role>\n"));
-					}
-					else
-					{
-						GamePacker.error("职业关联的装扮命名错误：" + attire.getRefKey() + "   (应该为：1_职业ID_职业等级_名称)");
-					}
-				}
-				else if (params[0].equals("2"))
-				{
-					// 装备
-					if (params.length >= 4)
-					{
-						equips.append(String.format("\t\t<equip fromID=\"%s\" toID=\"%s\" faction=\"%s\" name=\"%s\">\n", params[1], params[2], params[3], attire.getRefKey()));
-						/*
-						 * for (AttireAction action : attire.getActions()) { if
-						 * (action.getAnims().size() > 0) {
-						 * equips.append(String.format(
-						 * "\t\t\t<action id=\"%s\" size=\"%s\" files=\"%s\"/>\n"
-						 * , action.getID(),
-						 * attireManager.getActionSize(action),
-						 * attireManager.getActionPaths(action)));
-						 * 
-						 * String[] urls =
-						 * attireManager.getActionPaths(action).split("\\,");
-						 * for (String url : urls) { if
-						 * (!actionFileUrls.containsKey(url)) { File actionFile
-						 * = new File(getDestDir().getParentFile().getPath() +
-						 * url); if (actionFile.exists()) {
-						 * actionFileUrls.put(url, actionFile.length()); } } } }
-						 * }
-						 */
-						equips.append(String.format("\t\t</equip>\n"));
-					}
-					else
-					{
-						GamePacker.error("与装备关联的装扮命名错误：" + attire.getRefKey() + "   (应该为：2_起始ID_结束ID_职业ID_名称)");
-					}
-				}
-				else if (params[0].equals("3"))
-				{
-					// 效果
-					effects.append(String.format("\t\t<effect effectID=\"%s\">\n", attire.getRefKey()));
-					/*
-					 * for (AttireAction action : attire.getActions()) { if
-					 * (action.getAnims().size() > 0) {
-					 * effects.append(String.format
-					 * ("\t\t\t<action id=\"0\" size=\"%s\" files=\"%s\"/>\n",
-					 * attireManager.getActionSize(action),
-					 * attireManager.getActionPaths(action)));
-					 * 
-					 * String[] urls =
-					 * attireManager.getActionPaths(action).split("\\,"); for
-					 * (String url : urls) { if
-					 * (!actionFileUrls.containsKey(url)) { File actionFile =
-					 * new File(getDestDir().getParentFile().getPath() + url);
-					 * if (actionFile.exists()) { actionFileUrls.put(url,
-					 * actionFile.length()); } } } } }
-					 */
-					effects.append(String.format("\t\t</effect>\n"));
-				}
-				else if (params[0].equals("4"))
-				{
-					// 怪物
-				}
-				else if (params[0].equals("5"))
-				{
-					// 标签
-					// TextureSet
-					// textureSet=textureSetTable.getTextureSet(attire.getTextureSetKey());
-					// labels.append(String.format("\t\t<label labelID=\"%s\" size=\"%s\" files=\"%s\"/>\n",attire.getRefKey(),getTextureSetSize(textureSet),getTextureSetURLs(textureSet)));
-				}
-				else if (params[0].equals("6"))
-				{
-					// 刀光
-					if (params.length >= 3)
-					{
-						roles.append(String.format("\t\t<roleEffect faction=\"%s\" sectLv=\"%s\" name=\"%s\">\n", params[1], params[2], attire.getRefKey()));
-						/*
-						 * for (AttireAction action : attire.getActions()) { if
-						 * (action.getAnims().size() > 0) {
-						 * roles.append(String.format
-						 * ("\t\t\t<action id=\"%s\" size=\"%s\" files=\"%s\"/>\n"
-						 * , action.getID(),
-						 * attireManager.getActionSize(action),
-						 * attireManager.getActionPaths(action)));
-						 * 
-						 * String[] urls =
-						 * attireManager.getActionPaths(action).split("\\,");
-						 * for (String url : urls) { if
-						 * (!actionFileUrls.containsKey(url)) { File actionFile
-						 * = new File(getDestDir().getParentFile().getPath() +
-						 * url); if (actionFile.exists()) {
-						 * actionFileUrls.put(url, actionFile.length()); } } } }
-						 * }
-						 */
-						roles.append(String.format("\t\t</roleEffect>\n"));
-					}
-					else
-					{
-						GamePacker.error("与刀光关联的装扮命名错误：" + attire.getRefKey() + "   (应该为：6_职业ID_名称)");
-					}
-				}
-				else if (params[0].equals("7"))
-				{
-				}
-			}
-		}
-
-		txt.append("\t\t<files>\n");
-		String[] rowKeys = actionFileUrls.keySet().toArray(new String[actionFileUrls.size()]);
-		Arrays.sort(rowKeys);
-		for (String rowKey : rowKeys)
-		{
-			txt.append(String.format("\t\t\t<file url=\"%s\" size=\"%s\" />\n", rowKey, actionFileUrls.get(rowKey)));
-		}
-		txt.append("\t\t</files>\n");
-
-		txt.append(roles);
-		txt.append(equips);
-		txt.append(effects);
-		txt.append(labels);
-		txt.append("\t</attires>\n");
-
-		versionData.append(txt.toString());
 	}
 
 	/**
@@ -528,6 +357,11 @@ public class AvatarExport2
 
 						attireText.append(String.format("\t\t\t</anim>\n"));
 					}
+					for (AttireAudio audio : action.getAudios())
+					{
+						String audioURL = world.exportFile(world.getChecksumTable().getChecksumID(audio.getMp3().getInnerpath()), audio.getMp3().getFile());
+						attireText.append(String.format("\t\t\t<audio path=\"%s\" loop=\"%s\" volume=\"%s\"/>\n", audioURL, audio.getLoop(), audio.getVolume()));
+					}
 
 					attireText.append(String.format("\t\t</action>\n"));
 				}
@@ -543,7 +377,7 @@ public class AvatarExport2
 			contentBytes = ZlibUtil.compress(contentBytes);
 		}
 
-		String cfgFileKey = (zip ? "z" : "") + MD5Util.md5Bytes(contentBytes);
+		cfgFileKey = (zip ? "z" : "") + MD5Util.md5Bytes(contentBytes);
 
 		world.exportFile(cfgFileKey, contentBytes, "cfg");
 
@@ -565,6 +399,7 @@ public class AvatarExport2
 		StringBuilder equips = new StringBuilder();
 		StringBuilder effects = new StringBuilder();
 		StringBuilder labels = new StringBuilder();
+		StringBuilder horses=new StringBuilder();
 		for (AttireFile attireFile : attires.values())
 		{
 			for (Attire attire : attireFile.getAllAttires())
@@ -734,6 +569,41 @@ public class AvatarExport2
 				else if (params[0].equals("7"))
 				{
 				}
+				else if(params[0].equals("8"))
+				{
+					horses.append(String.format("\t\t<horse horseID=\"%s\" name=\"%s\">\n", params[1],attire.getRefKey()));
+
+					if (params.length >= 2)
+					{
+						for (AttireAction action : attire.getActions())
+						{
+							if (action.getAnims().size() > 0)
+							{
+								ActionInfo info=getActionID(action);
+								
+								roles.append(String.format("\t\t\t<action id=\"%s\" size=\"%s\" files=\"%s\"/>\n", action.getID(), info.size, info.urls));
+	
+								String[] urls = info.urls.split("\\,");
+								for (String url : urls)
+								{
+									if (!actionFileUrls.containsKey(url))
+									{
+										File actionFile = new File(world.getDestDir().getParentFile().getPath() + url);
+										if (actionFile.exists())
+										{
+											actionFileUrls.put(url, actionFile.length());
+										}
+									}
+								}
+							}
+						}
+						horses.append(String.format("\t\t</horse>\n"));
+					}
+					else
+					{
+						GamePacker.error("与坐骑关联的装扮命名错误：" + attire.getRefKey() + "   (应该为：0_坐骑ID_名称)");
+					}
+				}
 			}
 		}
 
@@ -791,265 +661,6 @@ public class AvatarExport2
 		}
 
 		return new ActionInfo(urls.toString(), size);
-	}
-
-	/**
-	 * 导出装扮表
-	 * 
-	 * @throws IOException
-	 */
-	private void exportAttires(Hashtable<String, AttireFile> attires, WorldAttires attireManager, boolean zip) throws IOException
-	{
-		ArrayList<AttireAnim> allAnims = new ArrayList<AttireAnim>();
-		ArrayList<AttireAnim> newAnims = new ArrayList<AttireAnim>();
-
-		Hashtable<AttireAnim, ArrayList<Region>> anim_regions = new Hashtable<AttireAnim, ArrayList<Region>>();
-		Hashtable<AttireAnim, ArrayList<String>> anim_regionIDs = new Hashtable<AttireAnim, ArrayList<String>>();
-		Hashtable<AttireAnim, ArrayList<Integer>> anim_regionTimes = new Hashtable<AttireAnim, ArrayList<Integer>>();
-		Hashtable<AttireAnim, ArrayList<String>> anim_regionTypes = new Hashtable<AttireAnim, ArrayList<String>>();
-		Hashtable<AttireAnim, ArrayList<byte[]>> anim_regionBytes = new Hashtable<AttireAnim, ArrayList<byte[]>>();
-
-		Hashtable<AttireAnim, String> anim_fileKey = new Hashtable<AttireAnim, String>();
-		Hashtable<AttireAnim, String> anim_filePath = new Hashtable<AttireAnim, String>();
-		Hashtable<AttireAnim, Integer> anim_fileSize = new Hashtable<AttireAnim, Integer>();
-
-		GamePacker.progress("排序装扮");
-		ArrayList<Attire> attireList = new ArrayList<Attire>();
-		for (AttireFile attireFile : attires.values())
-		{
-			for (Attire attire : attireFile.getAllAttires())
-			{
-				attireList.add(attire);
-			}
-		}
-		Collections.sort(attireList, new Comparator<Attire>()
-		{
-			@Override
-			public int compare(Attire o1, Attire o2)
-			{
-				return o1.getRefKey().compareTo(o2.getRefKey());
-			}
-		});
-
-		if (GamePacker.isCancel())
-		{
-			return;
-		}
-
-		GamePacker.progress("分析装扮数据");
-		for (Attire attire : attireList)
-		{
-			for (AttireAction action : attire.getActions())
-			{
-				for (AttireAnim anim : action.getAnims())
-				{
-					String imgSHA = world.getChecksumTable().getChecksumID(anim.getImg().getInnerpath());
-
-					int rowCount = anim.getRow();
-					int colCount = anim.getCol();
-
-					ArrayList<Region> regions = new ArrayList<Region>();
-					ArrayList<String> regionIDs = new ArrayList<String>();
-					ArrayList<Integer> regionTimes = new ArrayList<Integer>();
-					ArrayList<String> regionTypes = new ArrayList<String>();
-
-					StringBuilder animFileKey = new StringBuilder();
-					String animFilePath = "";
-					int animFileSize = 0;
-
-					int regionCount = rowCount * colCount;
-					for (int i = 0; i < regionCount; i++)
-					{
-						int delay = anim.getTimes()[i];
-						if (delay > 0)
-						{
-							Region region = attireManager.getTextureRegion(anim.getBagID(), imgSHA, anim.getRow(), anim.getCol(), i);
-							if (region != null)
-							{
-								String key = "2dframe_" + imgSHA + "_" + rowCount + "_" + colCount + "_" + "frame" + i;
-								String type = getValue(key);
-								if (type == null)
-								{
-									type = "$" + getNextClassID();
-								}
-
-								regions.add(region);
-								regionIDs.add(key);
-								regionTimes.add(delay);
-								regionTypes.add(type);
-
-								if (animFileKey.length() > 0)
-								{
-									animFileKey.append(",");
-								}
-								animFileKey.append(key + "_" + type);
-
-								putValue(key, type);
-
-								if (GamePacker.isCancel())
-								{
-									return;
-								}
-							}
-						}
-					}
-
-					String fileID = animFileKey.toString();
-					if (world.hasExportedFile(fileID))
-					{
-						animFilePath = world.getExportedFileUrl(fileID);
-						animFileSize = (int) world.getExportedFileSize(fileID);
-					}
-					else
-					{
-						newAnims.add(anim);
-					}
-
-					allAnims.add(anim);
-
-					anim_regions.put(anim, regions);
-					anim_regionIDs.put(anim, regionIDs);
-					anim_regionTimes.put(anim, regionTimes);
-					anim_regionTypes.put(anim, regionTypes);
-
-					anim_fileKey.put(anim, animFileKey.toString());
-					anim_filePath.put(anim, animFilePath);
-					anim_fileSize.put(anim, animFileSize);
-				}
-			}
-		}
-
-		if (GamePacker.isCancel())
-		{
-			return;
-		}
-
-		GamePacker.progress("输出装扮资源");
-		for (int i = 0; i < newAnims.size(); i++)
-		{
-			AttireAnim anim = newAnims.get(i);
-			ArrayList<Region> regions = anim_regions.get(anim);
-			ArrayList<String> regionTypes = anim_regionTypes.get(anim);
-			ArrayList<byte[]> regionBytes = new ArrayList<byte[]>();
-
-			String animFileKey = anim_fileKey.get(anim);
-			String animFilePath = anim_filePath.get(anim);
-			int animFileSize = anim_fileSize.get(anim);
-
-			for (int j = 0; j < regions.size(); j++)
-			{
-				GamePacker.progress(String.format("输出装扮资源(%s/%s)：裁切图像(%s/%s)", i + 1, newAnims.size(), j + 1, regions.size()));
-
-				// 导出PNG
-				Region region = regions.get(j);
-				BufferedImage img = ImageIO.read(anim.getImg().getFile());
-
-				BufferedImage texture = new BufferedImage(region.getClipW(), region.getClipH(), BufferedImage.TYPE_INT_ARGB);
-				Graphics2D graphics = (Graphics2D) texture.getGraphics();
-				graphics.drawImage(img, 0, 0, region.getClipW(), region.getClipH(), region.getX() + region.getClipX(), region.getY() + region.getClipY(), region.getX() + region.getClipX() + region.getClipW(), region.getY() + region.getClipY() + region.getClipH(), null);
-				graphics.dispose();
-
-				ByteArrayOutputStream outputBytes = new ByteArrayOutputStream();
-				ImageIO.write(texture, "png", outputBytes);
-
-				regionBytes.add(outputBytes.toByteArray());
-
-				if (GamePacker.isCancel())
-				{
-					return;
-				}
-			}
-
-			// 输出SWF
-			GamePacker.progress(String.format("输出装扮资源(%s/%s)：输出swf文件", i + 1, newAnims.size()));
-			SwfWriter swf = new SwfWriter();
-			for (int j = 0; j < regionTypes.size(); j++)
-			{
-				swf.addBitmap(new SwfBitmap(regionBytes.get(j), AVATAR2_FRAME_PACK, regionTypes.get(j), true));
-			}
-			world.exportFile(animFileKey, swf.toBytes(true), "swf");
-
-			// 记录信息
-			animFilePath = world.getExportedFileUrl(animFileKey);
-			animFileSize = (int) world.getExportedFileSize(animFileKey);
-
-			anim_regionBytes.put(anim, regionBytes);
-			anim_filePath.put(anim, animFilePath);
-			anim_fileSize.put(anim, animFileSize);
-		}
-
-		if (GamePacker.isCancel())
-		{
-			return;
-		}
-
-		GamePacker.progress("输出装扮配置");
-		StringBuilder attireText = new StringBuilder();
-		attireText.append("<attires>\n");
-		for (Attire attire : attireList)
-		{
-			attireText.append(String.format("\t<attire id=\"%s.%s\" name=\"%s\" x=\"%s\" y=\"%s\" width=\"%s\" height=\"%s\">\n", attire.getFileID(), attire.getKey(), attire.getRefKey(), attire.getHitRect().getX(), attire.getHitRect().getY(), attire.getHitRect().getWidth(), attire.getHitRect().getHeight()));
-
-			for (AttireAction action : attire.getActions())
-			{
-				attireText.append(String.format("\t\t<action id=\"%s\" nameX=\"%s\" nameY=\"%s\" >\n", action.getID(), action.getNameX(), action.getNameY()));
-
-				for (AttireAnim anim : action.getAnims())
-				{
-					String animFilePath = anim_filePath.get(anim);
-					int animFileSize = anim_fileSize.get(anim);
-
-					attireAnim_url.put(anim, animFilePath);
-					attireAnim_size.put(anim, animFileSize);
-
-					attireText.append(String.format("\t\t\t<anim x=\"%s\" y=\"%s\" scaleX=\"%s\" scaleY=\"%s\" flip=\"%s\" groupID=\"%s\" layerID=\"%s\" fileURL=\"%s\" fileSize=\"%s\">\n", anim.getX(), anim.getY(), anim.getScaleX(), anim.getScaleY(), anim.getFlip(), anim.getGroupID(), anim.getLayerID(), animFilePath, animFileSize));
-
-					ArrayList<Region> regions = anim_regions.get(anim);
-					ArrayList<String> regionIDs = anim_regionIDs.get(anim);
-					ArrayList<Integer> regionTimes = anim_regionTimes.get(anim);
-					ArrayList<String> regionTypes = anim_regionTypes.get(anim);
-
-					StringBuilder json_frames = new StringBuilder();
-					for (int i = 0; i < regionIDs.size(); i++)
-					{
-						Region region = regions.get(i);
-						int offSetX = region.getClipX() + region.getClipW() / 2 - region.getW() / 2;
-						int offsetY = region.getClipY() + region.getClipH() - region.getH();
-
-						// 帧信息
-						if (json_frames.length() > 0)
-						{
-							json_frames.append(",");
-						}
-						attireText.append(String.format("\t\t\t\t<frame classID=\"%s\" x=\"%s\" y=\"%s\" delay=\"%s\"/>\n", regionTypes.get(i), offSetX, offsetY, regionTimes.get(i)));
-					}
-
-					attireText.append(String.format("\t\t\t</anim>\n"));
-				}
-
-				attireText.append(String.format("\t\t</action>\n"));
-			}
-
-			attireText.append(String.format("\t</attire>\n"));
-		}
-		attireText.append("</attires>");
-
-		byte[] contentBytes = attireText.toString().getBytes("UTF-8");
-		if (zip)
-		{
-			contentBytes = ZlibUtil.compress(contentBytes);
-		}
-
-		String cfgFileKey = (zip ? "z" : "") + MD5Util.md5Bytes(contentBytes);
-
-		world.exportFile(cfgFileKey, contentBytes, "cfg");
-
-		StringBuilder configs = new StringBuilder();
-		configs.append(String.format("\t<configs>\n"));
-		configs.append(String.format("\t\t<config name=\"%s\" path=\"%s\" size=\"%s\"/>\n", "attire", world.getExportedFileUrl(cfgFileKey), world.getExportedFileSize(cfgFileKey)));
-		configs.append(String.format("\t</configs>\n"));
-
-		versionData.append(configs.toString());
 	}
 
 	/**
