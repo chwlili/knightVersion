@@ -192,6 +192,7 @@ public class SkillConvert extends DefaultHandler
 			skillData.skillCooldown = XmlUtil.parseInt(attributes.getValue("cooldown"), 0);
 			skillData.skillIgnorePath = XmlUtil.parseInt(attributes.getValue("pathMode"), 0) == 2;
 			skillData.skillPrevAction = XmlUtil.parseString(attributes.getValue("prevAction"), "");
+			skillData.skillTarget=XmlUtil.parseInt(attributes.getValue("skillTarget"), 3);
 		}
 		else if ("attacker".equals(qName))
 		{

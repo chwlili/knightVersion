@@ -8,6 +8,7 @@ public class SkillData extends AbsXmlNode
 	public int skillCooldown;
 	public String skillPrevAction;
 	public boolean skillIgnorePath;
+	public int skillTarget;
 	
 	public ArrayList<Integer> skillAttackPath = new ArrayList<Integer>();
 	public ArrayList<Integer> skillBulletList=new ArrayList<Integer>();
@@ -18,6 +19,6 @@ public class SkillData extends AbsXmlNode
 	@Override
 	protected String buildString()
 	{
-		return String.format("<skillData cd=\"%s\" ignorePath=\"%s\" preActions=\"%s\" movePath=\"%s\" bullets=\"%s\" quivers=\"%s\" hits=\"%s\"/>", skillCooldown, skillIgnorePath, skillPrevAction,formatList(skillAttackPath), formatList(skillBulletList), formatList(skillQuiverList),formatList(skillHitList));
+		return String.format("<skillData cd=\"%s\" ignorePath=\"%s\" skillTarget=\"%s\" preActions=\"%s\" movePath=\"%s\" bullets=\"%s\" quivers=\"%s\" hits=\"%s\"/>", skillCooldown, skillIgnorePath, skillTarget,skillPrevAction,formatList(skillAttackPath), formatList(skillBulletList), formatList(skillQuiverList),formatList(skillHitList));
 	}
 }
