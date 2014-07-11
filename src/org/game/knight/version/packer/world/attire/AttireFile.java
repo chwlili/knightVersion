@@ -279,14 +279,7 @@ public class AttireFile
 
 			// 获取装扮信息
 			String attireID = node.attributeValue("name");
-			int attireRectX = XmlUtil.parseInt(node.attributeValue("x"), 0);
-			int attireRectY = XmlUtil.parseInt(node.attributeValue("y"), 0);
-			int attireRectW = XmlUtil.parseInt(node.attributeValue("width"), 0);
-			int attireRectH = XmlUtil.parseInt(node.attributeValue("height"), 0);
-			int attireNameX = XmlUtil.parseInt(node.attributeValue("nameX"), 0);
-			int attireNameY = XmlUtil.parseInt(node.attributeValue("nameY"), attireRectH);
-			HitRect attireHitRect = new HitRect(attireRectX, attireRectY, attireRectW, attireRectH);
-			
+
 			// 压缩组
 			Hashtable<String, String> groupParams = new Hashtable<String, String>();
 			@SuppressWarnings({ "rawtypes" })
@@ -305,12 +298,6 @@ public class AttireFile
 
 				groupParams.put(groupID, groupParam);
 			}
-
-			// 建立装扮
-			Attire attire = new Attire(fileID, attireID, 0, attireHitRect, attireNameX, attireNameY, groupParams);
-
-			// 添加装扮
-			attireRefs.put(attireID, attire);
 
 			// 打击矩形
 			Hashtable<Integer, Integer> actionRectX = new Hashtable<Integer, Integer>();
@@ -332,7 +319,7 @@ public class AttireFile
 				int h = XmlUtil.parseInt(sizeNode.attributeValue("height"), 0);
 				int nameX = XmlUtil.parseInt(sizeNode.attributeValue("nameX"), 0);
 				int nameY = XmlUtil.parseInt(sizeNode.attributeValue("nameY"), h);
-
+				
 				if (x != 0)
 				{
 					actionRectX.put(id, x);
@@ -358,6 +345,70 @@ public class AttireFile
 					actionNameY.put(id, nameY);
 				}
 			}
+
+			int attireRectX = XmlUtil.parseInt(node.attributeValue("x"), 0);
+			int attireRectY = XmlUtil.parseInt(node.attributeValue("y"), 0);
+			int attireRectW = XmlUtil.parseInt(node.attributeValue("width"), 0);
+			int attireRectH = XmlUtil.parseInt(node.attributeValue("height"), 0);
+			int attireNameX = XmlUtil.parseInt(node.attributeValue("nameX"), 0);
+			int attireNameY = XmlUtil.parseInt(node.attributeValue("nameY"), attireRectH);
+			
+			if(attireRectX==0 && attireRectY==0 && attireRectW==0 && attireRectH==0 && attireNameX==0 && attireNameY==0)
+			{
+				int defRectActionID=actionRectX.containsKey(1) ? 1:0;
+				if(!actionRectX.containsKey(defRectActionID))
+				{
+					int min=Integer.MAX_VALUE;
+					for(Integer aid:actionRectX.keySet())
+					{
+						if(aid<min)
+						{
+							min=aid;
+						}
+					}
+					if(min!=Integer.MAX_VALUE)
+					{
+						defRectActionID=min;
+					}
+				}
+				
+				if(actionRectX.containsKey(defRectActionID))
+				{
+					if(actionRectX.containsKey(defRectActionID))
+					{
+						attireRectX = actionRectX.get(defRectActionID);
+					}
+					if(actionRectY.containsKey(defRectActionID))
+					{
+						attireRectY = actionRectY.get(defRectActionID);
+					}
+					if(actionRectW.containsKey(defRectActionID))
+					{
+						attireRectW = actionRectW.get(defRectActionID);
+					}
+					if(actionRectH.containsKey(defRectActionID))
+					{
+						attireRectH = actionRectH.get(defRectActionID);
+					}
+					if(actionNameX.containsKey(defRectActionID))
+					{
+						attireNameX = actionNameX.get(defRectActionID);
+					}
+					if(actionNameY.containsKey(defRectActionID))
+					{
+						attireNameY = actionNameY.get(defRectActionID);
+					}
+				}
+			}
+			
+			//
+			HitRect attireHitRect = new HitRect(attireRectX, attireRectY, attireRectW, attireRectH);
+			
+			// 建立装扮
+			Attire attire = new Attire(fileID, attireID, 0, attireHitRect, attireNameX, attireNameY, groupParams);
+
+			// 添加装扮
+			attireRefs.put(attireID, attire);
 
 			// 遍历装备节点
 			@SuppressWarnings({ "rawtypes" })
