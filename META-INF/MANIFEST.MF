@@ -7,6 +7,7 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ClassPath: libs/dom4j-1.6.1.jar,
  libs/jaxen-1.1-beta-6.jar,
  libs/transform-3.0.2.jar,
+ libs/poi-3.6-20091214.jar,
  .
 Require-Bundle: org.eclipse.ui;bundle-version="3.7.0",
  org.eclipse.core.runtime;bundle-version="3.7.0"

@@ -11,6 +11,7 @@ import java.util.Date;
 import java.util.Hashtable;
 
 import org.chw.util.FileUtil;
+import org.chw.util.MD5Util;
 import org.chw.util.XmlUtil;
 import org.chw.util.ZlibUtil;
 import org.dom4j.Document;
@@ -1171,6 +1172,7 @@ public class GamePacker extends Composite
 		{
 			content = ZlibUtil.compress(content);
 		}
+		content=MD5Util.addSuffix(content);
 
 		// 输出到CDN
 		FileUtil.writeFile(new File(cdnDir.getPath() + File.separatorChar + ver + ".xml"), content);
@@ -1228,6 +1230,7 @@ public class GamePacker extends Composite
 		{
 			content = ZlibUtil.compress(content);
 		}
+		content=MD5Util.addSuffix(content);
 
 		// 输出到CDN
 		FileUtil.writeFile(new File(cdnDir.getPath() + File.separatorChar + ver + ".2d.xml"), content);

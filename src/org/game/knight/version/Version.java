@@ -22,6 +22,7 @@ import org.eclipse.wb.swt.SWTResourceManager;
 import org.game.knight.version.config.CdnSyncUtil;
 import org.game.knight.version.config.ConfigDownloadUtil;
 import org.game.knight.version.config.FolderSyncUtil;
+import org.game.knight.version.config.Log2XlsUtil;
 import org.game.knight.version.config.ServerCfgCopyUtil;
 import org.game.knight.version.config.VerExportUtil;
 import org.game.knight.version.packer.GamePacker;
@@ -40,6 +41,7 @@ public class Version
 	private FolderSyncUtil folderSyncUtil;
 	private VerExportUtil versionExporter;
 	private CdnSyncUtil cdnSyncUtil;
+	private Log2XlsUtil logXlsUtil;
 
 	/**
 	 * Launch the application.
@@ -122,10 +124,13 @@ public class Version
 		Composite versionBox = new Composite(tabFolder_1, SWT.NONE);
 		versionBox.setLayout(new GridLayout(1, false));
 		versionExporter = new VerExportUtil(versionBox, SWT.NONE);
-		versionExporter.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
+		versionExporter.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 1, 1));
+		logXlsUtil=new Log2XlsUtil(versionBox, SWT.NONE);
+		logXlsUtil.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 1, 1));
 		cdnSyncUtil = new CdnSyncUtil(versionBox, SWT.NONE);
 		cdnSyncUtil.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, 1, 1));
 		versionItem.setControl(versionBox);
+		
 
 		CTabItem tbtmNewItem = new CTabItem(tabFolder_1, SWT.NONE);
 		tbtmNewItem.setText("  \u6D4B \u8BD5  ");
@@ -200,6 +205,7 @@ public class Version
 		folderSyncUtil.initSetting(setting, "folderSync");
 		versionExporter.initSetting(setting, "verExpoter");
 		cdnSyncUtil.initSetting(setting, "cdnSync");
+		logXlsUtil.initSetting(setting, "sql2xls");
 
 		dynamicSetting = setting.getSection("dynamicTabs");
 		if (dynamicSetting == null)

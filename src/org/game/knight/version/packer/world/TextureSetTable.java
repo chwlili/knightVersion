@@ -3,6 +3,7 @@ package org.game.knight.version.packer.world;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -17,6 +18,7 @@ import java.util.Hashtable;
 import javax.imageio.ImageIO;
 
 import org.chw.util.FileUtil;
+import org.chw.util.MD5Util;
 import org.chw.util.MaxRects;
 import org.chw.util.MaxRects.Rect;
 import org.chw.util.MaxRects.RectSet;
@@ -533,33 +535,23 @@ public class TextureSetTable
 	 */
 	public void saveTexture(Texture textureData, String type) throws IOException
 	{
+		long fileID=world.getOptionTable().getNextFileID();
+		long folderID = (fileID - 1) / GamePackerConst.FILE_COUNT_EACH_DIR + 1;
+		
 		// 确定png路径
-		long pngFileID = world.getOptionTable().getNextFileID();
-		long pngFolderID = (pngFileID - 1) / GamePackerConst.FILE_COUNT_EACH_DIR + 1;
-		String pngFilePath = "/" + pngFolderID + "/" + pngFileID + ".png";
+		String pngFilePath = "/" + folderID + "/" + fileID + ".png";
 		textureData.setPngFilePath("/" + world.getDestDir().getName() + pngFilePath);
 
-		// 确定xml路径
-		// long xmlFileID=world.getOptionTable().getNextFileID();
-		// long
-		// xmlFolderID=(xmlFileID-1)/RootExporterConst.FILE_COUNT_EACH_DIR+1;
-		world.getOptionTable().getNextFileID();
-		String atfFilePath = "/" + pngFolderID + "/" + pngFileID + ".atf";
+		// 确定atf路径
+		//world.getOptionTable().getNextFileID();
+		String atfFilePath = "/" + folderID + "/" + fileID + ".atf";
 		textureData.setAtfFilePath("/" + world.getDestDir().getName() + atfFilePath);
 
 		// 确定xml路径
-		// long xmlFileID=world.getOptionTable().getNextFileID();
-		// long
-		// xmlFolderID=(xmlFileID-1)/RootExporterConst.FILE_COUNT_EACH_DIR+1;
-		world.getOptionTable().getNextFileID();
-		String xmlFilePath = "/" + pngFolderID + "/" + pngFileID + ".xml";
+		//world.getOptionTable().getNextFileID();
+		String xmlFilePath = "/" + folderID + "/" + fileID + ".xml";
 		textureData.setXmlFilePath("/" + world.getDestDir().getName() + xmlFilePath);
-
-		/*
-		 * File testFile = new File(world.getDestDir().getPath() + pngFilePath);
-		 * if (testFile.exists()) { return; }
-		 */
-
+		
 		GamePacker.log("输出贴图", pngFilePath + " .xml .atf");
 
 		// 合并贴图png文件，贴图xml文件
@@ -610,15 +602,6 @@ public class TextureSetTable
 			return;
 		}
 
-		// 保存xml文件
-		File saveXml = new File(world.getDestDir().getPath() + xmlFilePath);
-		FileUtil.writeFile(saveXml, atlas.toString().getBytes("utf8"));
-
-		if (GamePacker.isCancel())
-		{
-			return;
-		}
-
 		// 保存ATF文件
 		File saveAtf = new File(world.getDestDir().getPath() + atfFilePath);
 
@@ -656,6 +639,21 @@ public class TextureSetTable
 			byte[] atfBytes = FileUtil.getFileBytes(saveAtf);
 			atfBytes = ZlibUtil.compress(atfBytes);
 			FileUtil.writeFile(saveAtf, atfBytes);
+		}
+		
+		if(saveAtf.exists())
+		{
+			byte[] atfBytes=FileUtil.getFileBytes(saveAtf);
+			byte[] xmlBytes=atlas.toString().getBytes("utf8");
+			
+			ByteArrayOutputStream temp=new ByteArrayOutputStream();
+			temp.write(atfBytes);
+			temp.write(xmlBytes);
+			temp.write(xmlBytes.length);
+			
+			byte[] newBytes=temp.toByteArray();
+			
+			FileUtil.writeFile(saveAtf, MD5Util.addSuffix(newBytes));
 		}
 
 		if (!saveAtf.exists())

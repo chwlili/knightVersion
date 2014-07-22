@@ -3,6 +3,7 @@ package org.chw.util;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -27,7 +28,7 @@ public class MD5Util
 		{
 			InputStream fis = new FileInputStream(file);
 			byte buffer[] = new byte[1024];
-			MessageDigest md5 = MessageDigest.getInstance("SHA");
+			MessageDigest md5 = MessageDigest.getInstance("MD5");
 			for (int numRead = 0; (numRead = fis.read(buffer)) > 0;)
 			{
 				md5.update(buffer, 0, numRead);
@@ -92,6 +93,61 @@ public class MD5Util
 
 		}
 		return "";
+	}
+	
+	/**
+	 * Ìí¼ÓMD5ºó×º
+	 * @param bytes
+	 * @return
+	 */
+	public static byte[] addSuffix(byte[] bytes)
+	{
+		try
+		{
+			
+			ByteArrayOutputStream output=new ByteArrayOutputStream();
+			output.write(bytes);
+			//x4
+			//output.write(("MD5:"+md5Bytes(bytes)).getBytes());
+			//x5
+			//output.write((md5Bytes(bytes)).getBytes());
+			
+			//x6
+			boolean added=false;
+			byte[] suffix=new byte[]{0,0,0,0,0x4D,0x44,0x35,0};
+			if(bytes.length>suffix.length)
+			{
+				added=true;
+				for(int i=0;i<suffix.length;i++)
+				{
+					if(bytes[bytes.length-suffix.length+i]!=suffix[i])
+					{
+						added=false;
+						break;
+					}
+				}
+			}
+			
+			if(!added)
+			{
+				output.write(0);
+				output.write(0);
+				output.write(0);
+				output.write(0);
+				output.write(0x4D);
+				output.write(0x44);
+				output.write(0x35);
+				output.write(0);
+			}
+			
+			return output.toByteArray();
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+		
+		return null;
 	}
 
 	

@@ -288,7 +288,7 @@ public class AvatarExport2
 			{
 				swf.addBitmap(new SwfBitmap(regionBytes.get(j), AVATAR2_FRAME_PACK, regionTypes.get(j), true));
 			}
-			world.exportFile(fileID, swf.toBytes(true), "swf");
+			world.exportFile(fileID, MD5Util.addSuffix(swf.toBytes(true)), "swf");
 
 			if (GamePacker.isCancel())
 			{
@@ -359,7 +359,7 @@ public class AvatarExport2
 					}
 					for (AttireAudio audio : action.getAudios())
 					{
-						String audioURL = world.exportFile(world.getChecksumTable().getChecksumID(audio.getMp3().getInnerpath()), audio.getMp3().getFile());
+						String audioURL = world.exportFile(world.getChecksumTable().getChecksumID(audio.getMp3().getInnerpath()), MD5Util.addSuffix(FileUtil.getFileBytes(audio.getMp3().getFile())),"mp3");
 						attireText.append(String.format("\t\t\t<audio path=\"%s\" loop=\"%s\" volume=\"%s\"/>\n", audioURL, audio.getLoop(), audio.getVolume()));
 					}
 
@@ -377,9 +377,9 @@ public class AvatarExport2
 			contentBytes = ZlibUtil.compress(contentBytes);
 		}
 
-		cfgFileKey = (zip ? "z" : "") + MD5Util.md5Bytes(contentBytes);
+		cfgFileKey = (zip ? "zlib_md5" : "md5") + MD5Util.md5Bytes(contentBytes);
 
-		world.exportFile(cfgFileKey, contentBytes, "cfg");
+		world.exportFile(cfgFileKey, MD5Util.addSuffix(contentBytes), "cfg");
 
 		//
 		StringBuilder configs = new StringBuilder();
@@ -840,8 +840,8 @@ public class AvatarExport2
 			{
 				sceneBytes = ZlibUtil.compress(sceneBytes);
 			}
-			String sceneBytesKey = (zip ? "z" : "") + MD5Util.md5Bytes(sceneBytes);
-			world.exportFile(sceneBytesKey, sceneBytes, "xml");
+			String sceneBytesKey = (zip ? "zlib_md5" : "md5") + MD5Util.md5Bytes(sceneBytes);
+			world.exportFile(sceneBytesKey, MD5Util.addSuffix(sceneBytes), "xml");
 
 			// 保存URL和大小
 			scene_url.put(scene, world.getExportedFileUrl(sceneBytesKey));

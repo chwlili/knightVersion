@@ -342,7 +342,7 @@ public class WorldExporter extends AbsExporter
 	private void syncAttires() throws Exception
 	{
 		// 装扮贴图管理器
-		attireManager = new WorldAttires(getDestDir().getParentFile().getPath(), getChecksumTable(), clipTable, textureSetTable, writeRegionImg);
+		attireManager = new WorldAttires(getDestDir().getParentFile().getPath(), getChecksumTable(), clipTable, textureSetTable, writeRegionImg,zip);
 		attireManager.build(this, params, attires, scenes);
 
 		// 检测取消
@@ -407,7 +407,7 @@ public class WorldExporter extends AbsExporter
 					}
 					for (AttireAudio audio : action.getAudios())
 					{
-						String audioURL = exportFile(getChecksumTable().getChecksumID(audio.getMp3().getInnerpath()), audio.getMp3().getFile());
+						String audioURL = exportFile(getChecksumTable().getChecksumID(audio.getMp3().getInnerpath()), MD5Util.addSuffix(FileUtil.getFileBytes(audio.getMp3().getFile())),"mp3");
 						attireText.append(String.format("\t\t\t<audio path=\"%s\" loop=\"%s\" volume=\"%s\"/>\n", audioURL, audio.getLoop(), audio.getVolume()));
 					}
 					attireText.append("\t\t</action>\n");
@@ -424,9 +424,9 @@ public class WorldExporter extends AbsExporter
 		{
 			attireBytes = ZlibUtil.compress(attireBytes);
 		}
-		String attireBytesKey = (zip ? "z" : "") + MD5Util.md5Bytes(attireBytes);
+		String attireBytesKey = (zip ? "zlib_md5" : "md5") + MD5Util.md5Bytes(attireBytes);
 
-		exportFile(attireBytesKey, attireBytes, "cfg");
+		exportFile(attireBytesKey, MD5Util.addSuffix(attireBytes), "cfg");
 
 		attireFileKey = attireBytesKey;
 
@@ -695,8 +695,8 @@ public class WorldExporter extends AbsExporter
 			{
 				sceneBytes = ZlibUtil.compress(sceneBytes);
 			}
-			String sceneBytesKey = (zip ? "z" : "") + MD5Util.md5Bytes(sceneBytes);
-			exportFile(sceneBytesKey, sceneBytes, "xml");
+			String sceneBytesKey = (zip ? "zlib_md5" : "zlib") + MD5Util.md5Bytes(sceneBytes);
+			exportFile(sceneBytesKey, MD5Util.addSuffix(sceneBytes), "xml");
 			sceneFileKeys.put(scene, sceneBytesKey);
 
 			if (GamePacker.isCancel())
@@ -822,7 +822,7 @@ public class WorldExporter extends AbsExporter
 				{
 					String url = texture.getAtfFilePath();
 					String atfPath = getDestDir().getParentFile().getPath() + url.replace(".atf", ".atf");
-					String xmlPath = getDestDir().getParentFile().getPath() + url.replace(".atf", ".xml");
+					//String xmlPath = getDestDir().getParentFile().getPath() + url.replace(".atf", ".xml");
 
 					if (!outterPaths.contains(atfPath))
 					{
@@ -833,15 +833,15 @@ public class WorldExporter extends AbsExporter
 						sceneSize += atfFile.length();
 						fileURLs.add(url.replace(".atf", ".atf"));
 					}
-					if (!outterPaths.contains(xmlPath))
-					{
-						outterPaths.add(xmlPath);
-
-						File xmlFile = new File(xmlPath);
-
-						sceneSize += xmlFile.length();
-						fileURLs.add(url.replace(".atf", ".xml"));
-					}
+//					if (!outterPaths.contains(xmlPath))
+//					{
+//						outterPaths.add(xmlPath);
+//
+//						File xmlFile = new File(xmlPath);
+//
+//						sceneSize += xmlFile.length();
+//						fileURLs.add(url.replace(".atf", ".xml"));
+//					}
 				}
 
 				String[] fileURL_Array = fileURLs.toArray(new String[fileURLs.size()]);
@@ -878,8 +878,8 @@ public class WorldExporter extends AbsExporter
 		{
 			worldBytes = ZlibUtil.compress(worldBytes);
 		}
-		String worldBytesKey = (zip ? "z" : "") + MD5Util.md5Bytes(worldBytes);
-		exportFile(worldBytesKey, worldBytes, "cfg");
+		String worldBytesKey = (zip ? "zlib_md5" : "md5") + MD5Util.md5Bytes(worldBytes);
+		exportFile(worldBytesKey, MD5Util.addSuffix(worldBytes), "cfg");
 		GamePacker.endLogSet();
 
 		if (GamePacker.isCancel())

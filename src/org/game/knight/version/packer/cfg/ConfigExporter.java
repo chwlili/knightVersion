@@ -79,7 +79,7 @@ public class ConfigExporter extends AbsExporter
 
 			file_names.add(getFileName(file));
 			file_sizes.add(fileByte.length);
-
+			
 			output.write(fileByte);
 
 			if (isCancel())
@@ -103,7 +103,9 @@ public class ConfigExporter extends AbsExporter
 			byte[] part = new byte[Math.min(input.available(), partSize)];
 			
 			input.read(part);
-
+			
+			part=MD5Util.addSuffix(part);
+			
 			String md5 = MD5Util.md5Bytes(part);
 
 			partMD5.add(md5);

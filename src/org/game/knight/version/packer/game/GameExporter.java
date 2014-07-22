@@ -119,6 +119,8 @@ public class GameExporter extends AbsExporter
 					
 					input.read(part);
 					
+					part=MD5Util.addSuffix(part);
+					
 					String md5 = MD5Util.md5Bytes(part);
 
 					exportFile(md5, part, "part");

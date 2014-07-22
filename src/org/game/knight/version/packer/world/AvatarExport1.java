@@ -192,7 +192,7 @@ public class AvatarExport1
 			{
 				swf.addBitmap(new SwfBitmap(regionBytes.get(j), UI_AVATAR_FRAME_PACK, regionTypes.get(j), true));
 			}
-			world.exportFile(animFileKey, swf.toBytes(true), "swf");
+			world.exportFile(animFileKey, MD5Util.addSuffix(swf.toBytes(true)), "swf");
 
 			// ¼ÇÂ¼ÐÅÏ¢
 			animFilePath = world.getExportedFileUrl(animFileKey);
@@ -335,9 +335,9 @@ public class AvatarExport1
 		{
 			contentBytes = ZlibUtil.compress(contentBytes);
 		}
-		cfgFileKey = (zip ? "z" : "") + MD5Util.md5Bytes(contentBytes);
+		cfgFileKey = (zip ? "zlib_md5" : "md5") + MD5Util.md5Bytes(contentBytes);
 
-		world.exportFile(cfgFileKey, contentBytes, "cfg");
+		world.exportFile(cfgFileKey, MD5Util.addSuffix(contentBytes), "cfg");
 
 		saveHistoryFile();
 

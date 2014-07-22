@@ -198,7 +198,7 @@ public class ViewFile
 			domcument = DocumentHelper.createDocument();
 			domcument.addElement("xml");
 
-			GamePacker.warning("视图解析失败", getInnerPath());
+			GamePacker.error("视图解析失败", getInnerPath());
 		}
 
 		String name = domcument.getRootElement().attributeValue("name");

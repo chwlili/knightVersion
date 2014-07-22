@@ -87,7 +87,8 @@ public class IconExporter extends AbsExporter
 		for (String url : urls)
 		{
 			GamePacker.progress("输出文件", url);
-			exportFile(getChecksumTable().getChecksumID(url), files.get(url));
+			//exportFile(getChecksumTable().getChecksumID(url), files.get(url));
+			exportFile(getChecksumTable().getChecksumID(url), MD5Util.addSuffix(FileUtil.getFileBytes(files.get(url))), getFileExtName(files.get(url)));
 
 			if (isCancel())
 			{
@@ -153,8 +154,8 @@ public class IconExporter extends AbsExporter
 		txt.append("</iconSet>");
 		GamePacker.log("保存配置信息");
 		byte[] bytes = txt.toString().getBytes("UTF-8");
-		String checksum = (zip ? "z" : "") + MD5Util.md5Bytes(bytes);
-		exportFile(checksum, (zip ? ZlibUtil.compress(bytes) : bytes), "cfg");
+		String checksum = (zip ? "zlib_md5" : "md5") + MD5Util.md5Bytes(bytes);
+		exportFile(checksum, MD5Util.addSuffix((zip ? ZlibUtil.compress(bytes) : bytes)), "cfg");
 		GamePacker.endLogSet();
 
 		if (isCancel())

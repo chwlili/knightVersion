@@ -1,5 +1,6 @@
 package org.game.knight.version.packer.view;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,6 +10,13 @@ import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
 
+import org.apache.poi.hssf.usermodel.HSSFCell;
+import org.apache.poi.hssf.usermodel.HSSFCellStyle;
+import org.apache.poi.hssf.usermodel.HSSFFont;
+import org.apache.poi.hssf.usermodel.HSSFRow;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.hssf.util.HSSFColor;
 import org.chw.swf.clear.SwfTagClear;
 import org.chw.util.FileUtil;
 import org.chw.util.MD5Util;
@@ -19,18 +27,18 @@ import org.game.knight.version.packer.base.AbsExporter;
 public class ViewExport extends AbsExporter
 {
 	private boolean swfZip;
-	
+
 	/**
 	 * 构造函数
 	 * 
 	 * @param src
 	 * @param dst
 	 */
-	public ViewExport(File src, File dst,boolean swfZip)
+	public ViewExport(File src, File dst, boolean swfZip)
 	{
 		super("导出视图", src, dst);
-		
-		this.swfZip=swfZip;
+
+		this.swfZip = swfZip;
 	}
 
 	// -------------------------------------------------------------------------------
@@ -115,7 +123,8 @@ public class ViewExport extends AbsExporter
 
 		boolean exists = hasExportedFile(key);
 
-		exportFile(key, file.getFile());
+		// exportFile(key, file.getFile());
+		exportFile(key, FileUtil.getFileBytes(file.getFile()), getFileExtName(file.getFile()));
 
 		if (!exists)
 		{
@@ -125,6 +134,9 @@ public class ViewExport extends AbsExporter
 				SwfTagClear.clearSwfFile(getExportedFile(key));
 			}
 		}
+
+		File saveFile = getExportedFile(key);
+		FileUtil.writeFile(saveFile, MD5Util.addSuffix(FileUtil.getFileBytes(saveFile)));
 
 		GamePacker.progress("输出文件", file.getInnerPath());
 	}
@@ -152,8 +164,8 @@ public class ViewExport extends AbsExporter
 	{
 		if (!hasExportedFile(bag.getKey()))
 		{
-			exportFile(bag.getKey(), bag.build(swfZip), "swf");
-			//SwfTagClear.clearSwfFile(getExportedFile(bag.getKey()));
+			// exportFile(bag.getKey(), bag.build(swfZip), "swf");
+			exportFile(bag.getKey(), MD5Util.addSuffix(bag.build(swfZip)), "swf");
 		}
 		GamePacker.progress("生成文件", getExportedFileUrl(bag.getKey()));
 	}
@@ -332,6 +344,7 @@ public class ViewExport extends AbsExporter
 		});
 
 		// 合并语言文件
+		mergerLangs(list);
 		mergerLanguages(list);
 
 		// 生成语言包
@@ -434,11 +447,11 @@ public class ViewExport extends AbsExporter
 								int[] methods = file.getPreloadMethod();
 								for (int method : methods)
 								{
-									if(method==-1)
+									if (method == -1)
 									{
 										continue;
 									}
-									
+
 									if (method_size.containsKey(method))
 									{
 										size = method_size.get(method);
@@ -470,17 +483,17 @@ public class ViewExport extends AbsExporter
 						swfUrls.add(bagURL);
 						bagSize += bagLen;
 
-						if (file.getPreloadMethod()!=null && file.getPreloadMethod().length>0)
+						if (file.getPreloadMethod() != null && file.getPreloadMethod().length > 0)
 						{
 							int size = 0;
 							int[] methods = file.getPreloadMethod();
-							for(int method:methods)
+							for (int method : methods)
 							{
-								if(method==-1)
+								if (method == -1)
 								{
 									continue;
 								}
-								
+
 								if (method_size.containsKey(method))
 								{
 									size = method_size.get(method);
@@ -489,7 +502,7 @@ public class ViewExport extends AbsExporter
 								{
 									method_files.put(method, new HashSet<String>());
 								}
-	
+
 								if (!method_files.get(method).contains(bagURL))
 								{
 									method_files.get(method).add(bagURL);
@@ -511,10 +524,10 @@ public class ViewExport extends AbsExporter
 				}
 
 				// 记录信息
-				StringBuilder sb=new StringBuilder();
-				for(int typeID:file.getPreloadMethod())
+				StringBuilder sb = new StringBuilder();
+				for (int typeID : file.getPreloadMethod())
 				{
-					if(sb.length()>0)
+					if (sb.length() > 0)
 					{
 						sb.append(",");
 					}
@@ -572,6 +585,187 @@ public class ViewExport extends AbsExporter
 		GamePacker.endLogSet();
 	}
 
+	private static class LangItem
+	{
+		public String url;
+		public String key;
+		public String value;
+
+		public LangItem(String url, String key, String value)
+		{
+			this.url = url;
+			this.key = key;
+			this.value = value;
+		}
+	}
+
+	private void mergerLangs(ViewFile[] list) throws Exception
+	{
+		MergerViewText.mergerLangFiles(list, new File(getSourceDir().getPath() + File.separatorChar + "langs"));
+		if("tt".length()>0)
+		{
+			return;
+		}
+		ArrayList<LangItem> items=new ArrayList<ViewExport.LangItem>();
+		
+		// 统计语言项
+		for (ViewFile file : list)
+		{
+			if (file.isCfg())
+			{
+				Element dom = file.getTextsNode();
+
+				if (dom != null)
+				{
+					@SuppressWarnings("rawtypes")
+					List nodes = dom.selectNodes("text");
+					for (int i = 0; i < nodes.size(); i++)
+					{
+						Element node = (Element) nodes.get(i);
+
+						String url = file.getInnerPath();
+						String key = node.attributeValue("id");
+						String val = node.getText();
+						
+						items.add(new LangItem(url, key, val));
+					}
+				}
+			}
+		}
+		
+		//排序语言项
+		//生成excel
+		HSSFWorkbook book=new HSSFWorkbook();
+		HSSFSheet sheet=book.createSheet("cn");
+		sheet.setColumnWidth(0, 1000);
+		sheet.setColumnWidth(1, 5000);
+		sheet.setColumnWidth(2, 5000);
+		sheet.setColumnWidth(3, 20000);
+		sheet.setColumnWidth(4, 20000);
+		HSSFRow header=sheet.createRow(0);
+		header.setHeight((short)500);
+		HSSFCellStyle headerStyle=book.createCellStyle();
+		headerStyle.setAlignment(HSSFCellStyle.ALIGN_CENTER);
+		headerStyle.setVerticalAlignment(HSSFCellStyle.VERTICAL_CENTER);
+		HSSFFont font=book.createFont();
+		font.setColor(HSSFColor.WHITE.index);
+		headerStyle.setFont(font);
+		headerStyle.setFillForegroundColor(HSSFColor.DARK_TEAL.index);
+		headerStyle.setFillPattern(HSSFCellStyle.SOLID_FOREGROUND); 
+		HSSFCell headerCell=null;
+		headerCell=header.createCell(0);
+		headerCell.setCellValue("状态");
+		headerCell.setCellStyle(headerStyle);
+		headerCell=header.createCell(1);
+		headerCell.setCellValue("包/包ID");
+		headerCell.setCellStyle(headerStyle);
+		headerCell=header.createCell(2);
+		headerCell.setCellValue("引用ID");
+		headerCell.setCellStyle(headerStyle);
+		headerCell=header.createCell(3);
+		headerCell.setCellValue("原文");
+		headerCell.setCellStyle(headerStyle);
+		headerCell=header.createCell(4);
+		headerCell.setCellValue("译文");
+		headerCell.setCellStyle(headerStyle);
+		
+		HSSFCellStyle lineStyle=book.createCellStyle();
+		lineStyle.setBorderLeft((short)1);
+		lineStyle.setTopBorderColor((short)1);
+		lineStyle.setRightBorderColor((short)1);
+		lineStyle.setBorderBottom((short)2);
+		lineStyle.setLeftBorderColor(HSSFColor.GREY_25_PERCENT.index);
+		lineStyle.setTopBorderColor(HSSFColor.GREY_25_PERCENT.index);
+		lineStyle.setRightBorderColor(HSSFColor.GREY_25_PERCENT.index);
+		lineStyle.setBottomBorderColor(HSSFColor.RED.index);
+
+		HSSFCellStyle lineStyle2=book.createCellStyle();
+		lineStyle2.setLeftBorderColor(HSSFColor.GREY_25_PERCENT.index);
+		lineStyle2.setTopBorderColor(HSSFColor.GREY_25_PERCENT.index);
+		lineStyle2.setRightBorderColor(HSSFColor.GREY_25_PERCENT.index);
+		lineStyle2.setBottomBorderColor(HSSFColor.GREY_25_PERCENT.index);
+		lineStyle2.setBorderLeft((short)1);
+		lineStyle2.setTopBorderColor((short)1);
+		lineStyle2.setRightBorderColor((short)1);
+		lineStyle2.setBorderBottom((short)1);
+		
+		String url="";
+		HSSFCell prevCell0=null;
+		HSSFCell prevCell1=null;
+		HSSFCell prevCell2=null;
+		HSSFCell prevCell3=null;
+		HSSFCell prevCell4=null;
+		for(int i=0;i<items.size();i++)
+		{
+			LangItem item=items.get(i);
+			
+			if(!item.url.equals(url))
+			{
+				url=item.url;
+				if(prevCell1!=null)
+				{
+					prevCell0.setCellStyle(lineStyle);
+					prevCell1.setCellStyle(lineStyle);
+					prevCell2.setCellStyle(lineStyle);
+					prevCell3.setCellStyle(lineStyle);
+					prevCell4.setCellStyle(lineStyle);
+				}
+			}
+			
+			HSSFRow row=sheet.createRow(i+1);
+			
+			HSSFCell cell0=row.createCell(0);
+			cell0.setCellValue("x");
+			cell0.setCellStyle(lineStyle2);
+			
+			HSSFCell cell1=row.createCell(1);
+			cell1.setCellValue(item.url);
+			cell1.setCellStyle(lineStyle2);
+			
+			HSSFCell cell2=row.createCell(2);
+			cell2.setCellValue(item.key);
+			cell2.setCellStyle(lineStyle2);
+			
+			HSSFCell cell3=row.createCell(3);
+			cell3.setCellValue(item.value);
+			cell3.setCellType(HSSFCell.CELL_TYPE_STRING);
+			cell3.setCellStyle(lineStyle2);
+			
+			HSSFCell cell4=row.createCell(4);
+			cell4.setCellValue(item.value);
+			cell4.setCellType(HSSFCell.CELL_TYPE_STRING);
+			cell4.setCellStyle(lineStyle2);
+
+			prevCell0=cell0;
+			prevCell1=cell1;
+			prevCell2=cell2;
+			prevCell3=cell3;
+			prevCell4=cell4;
+		}
+		
+		ByteArrayOutputStream output=new ByteArrayOutputStream();
+		book.write(output);
+		output.close();
+		
+		System.out.print(output.toByteArray().toString());
+		
+		FileUtil.writeFile(new File(getSourceDir().getPath() + File.separatorChar + "langs" + File.separatorChar+"test.xls"), output.toByteArray());
+		
+//		int index=5;
+//		while(true)
+//		{
+//			File file=new File("E:/students"+index+".xls");
+//			if(!file.exists())
+//			{
+//				FileOutputStream output=new FileOutputStream(file.getPath());//getSourceDir().getPath() + File.separatorChar + "langs" + File.separatorChar+"lang45.xls");
+//				book.write(output);
+//				output.close();
+//				break;
+//			}
+//			index++;
+//		}
+	}
+
 	/**
 	 * 合并语言文件
 	 * 
@@ -615,7 +809,7 @@ public class ViewExport extends AbsExporter
 		File[] langFiles = langDIR.listFiles();
 		for (File langFile : langFiles)
 		{
-			if (langFile.isFile() && !langFile.isHidden())
+			if (langFile.isFile() && langFile.getName().endsWith(".txt") && !langFile.isHidden())
 			{
 				String langContent = new String(FileUtil.getFileBytes(langFile), "UTF-8");
 

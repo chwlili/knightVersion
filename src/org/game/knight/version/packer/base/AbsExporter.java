@@ -236,7 +236,7 @@ public abstract class AbsExporter
 			}
 		}
 
-		//SHA校验
+		//MD5校验
 		String[] keys = checksumTable.getKeys();
 		
 		HashSet<String> newKeys = new HashSet<String>();
@@ -246,7 +246,7 @@ public abstract class AbsExporter
 
 			String innerPath = file.getPath().substring(src.getPath().length()).replaceAll("\\\\", "/");
 			
-			GamePacker.progress(String.format("SHA(%s/%s) : %s",i+1,files.size(),innerPath));
+			GamePacker.progress(String.format("MD5(%s/%s) : %s",i+1,files.size(),innerPath));
 			
 			String childSHA=MD5Util.md5File(file);
 
@@ -279,7 +279,7 @@ public abstract class AbsExporter
 			}
 		}
 
-		optionTable.setRevision("SHA:0");
+		optionTable.setRevision("MD5:0");
 
 		//GamePacker.endLogSet();
 	}

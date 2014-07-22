@@ -3,6 +3,7 @@ package org.game.knight.version.packer.world;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -15,6 +16,7 @@ import java.util.Hashtable;
 import javax.imageio.ImageIO;
 
 import org.chw.util.FileUtil;
+import org.chw.util.MD5Util;
 import org.chw.util.XmlUtil;
 import org.chw.util.ZlibUtil;
 import org.dom4j.Document;
@@ -40,6 +42,8 @@ public class WorldAttires
 	private TextureSetTable textureSetTable;
 
 	private boolean writeRegionImg = false;
+	
+	private boolean zip=false;
 
 	private Hashtable<String, ExportParam> paramTable = new Hashtable<String, ExportParam>();
 
@@ -50,13 +54,14 @@ public class WorldAttires
 	 * @param clipTable
 	 * @param textureSetTable
 	 */
-	public WorldAttires(String outputPath, ChecksumTable shaTable, GridImgTable clipTable, TextureSetTable textureSetTable, boolean writeRegionImg)
+	public WorldAttires(String outputPath, ChecksumTable shaTable, GridImgTable clipTable, TextureSetTable textureSetTable, boolean writeRegionImg,boolean zip)
 	{
 		this.outputPath = outputPath;
 		this.shaTable = shaTable;
 		this.clipTable = clipTable;
 		this.textureSetTable = textureSetTable;
 		this.writeRegionImg = writeRegionImg;
+		this.zip=zip;
 	}
 
 	/**
@@ -623,14 +628,14 @@ public class WorldAttires
 	 * @param count
 	 * @throws IOException
 	 */
-	public void writeTexture(WorldExporter world, Texture textureData, String type, String groupName, int index, int count) throws IOException
+	private void writeTexture(WorldExporter world, Texture textureData, String type, String groupName, int index, int count) throws IOException
 	{
 		long fileID = world.getOptionTable().getNextFileID();
 		long folderID = (fileID - 1) / GamePackerConst.FILE_COUNT_EACH_DIR + 1;
 
 		// 跳过两个ID
-		world.getOptionTable().getNextFileID();
-		world.getOptionTable().getNextFileID();
+		//world.getOptionTable().getNextFileID();
+		//world.getOptionTable().getNextFileID();
 
 		// 确定png路径
 		String pngFilePath = "/" + folderID + "/" + fileID + ".png";
@@ -649,13 +654,6 @@ public class WorldAttires
 		if (!testFile.exists())
 		{
 			testFile.mkdirs();
-		}
-
-		// 跳过
-		File skipFile = new File(world.getDestDir().getPath() + pngFilePath);
-		if (skipFile.exists())
-		{
-			return;
 		}
 
 		// 合并贴图png文件，xml文件
@@ -690,8 +688,8 @@ public class WorldAttires
 
 		// 保存png文件
 		GamePacker.progress(String.format("输出贴图(%s/%s) : [%s] 输出PNG( %s )", index, count, groupName, pngFilePath));
-		File saveFile = new File(world.getDestDir().getPath() + pngFilePath);
-		ImageIO.write(texture, "png", saveFile);
+		File savePng = new File(world.getDestDir().getPath() + pngFilePath);
+		ImageIO.write(texture, "png", savePng);
 
 		// 检测取消
 		if (GamePacker.isCancel())
@@ -701,13 +699,11 @@ public class WorldAttires
 
 		// 保存xml文件
 		GamePacker.progress(String.format("输出贴图(%s/%s) : [%s] 输出XML( %s )", index, count, groupName, xmlFilePath));
-		File saveXml = new File(world.getDestDir().getPath() + xmlFilePath);
 		StringBuilder xmlContent = new StringBuilder();
 		xmlContent.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
 		xmlContent.append("<TextureAtlas imagePath=\"" + ("/" + world.getDestDir().getName() + pngFilePath) + "\">");
 		xmlContent.append(atlas.toString());
 		xmlContent.append("</TextureAtlas>");
-		FileUtil.writeFile(saveXml, xmlContent.toString().getBytes("utf8"));
 
 		// 检测取消
 		if (GamePacker.isCancel())
@@ -722,6 +718,22 @@ public class WorldAttires
 		if (atfInput.exists() && atfInput.isFile())
 		{
 			writeATF(atfInput, atfOutput, type);
+			
+			if(atfOutput.exists())
+			{
+				byte[] atfBytes=FileUtil.getFileBytes(atfOutput);
+				byte[] xmlBytes=ZlibUtil.compress(xmlContent.toString().getBytes("utf8"));
+				
+				ByteArrayOutputStream temp=new ByteArrayOutputStream();
+				temp.write(atfBytes);
+				temp.write(xmlBytes);
+				temp.write((xmlBytes.length>>>24) & 0xFF);
+				temp.write((xmlBytes.length>>>16) & 0xFF);
+				temp.write((xmlBytes.length>>>8) & 0xFF);
+				temp.write(xmlBytes.length & 0xFF);
+				
+				FileUtil.writeFile(atfOutput, MD5Util.addSuffix(temp.toByteArray()));
+			}
 		}
 		if (!atfOutput.exists() || !atfOutput.isFile())
 		{
@@ -754,7 +766,12 @@ public class WorldAttires
 				}
 			}
 		}
-
+		
+		//删除临时png
+		if(savePng.exists())
+		{
+			savePng.delete();
+		}
 	}
 
 	/**
@@ -950,7 +967,7 @@ public class WorldAttires
 			}
 
 			int actionSize = 0;
-			String[] actionURLs = new String[textures.size() * 2];
+			String[] actionURLs = new String[textures.size() /** 2*/];
 			int index = 0;
 			for (Texture texture : textures)
 			{
@@ -958,8 +975,8 @@ public class WorldAttires
 				actionURLs[index] = getTexturePath(texture);
 				index++;
 
-				actionURLs[index] = texture.getXmlFilePath();
-				index++;
+				//actionURLs[index] = texture.getXmlFilePath();
+				//index++;
 			}
 			Arrays.sort(actionURLs);
 
