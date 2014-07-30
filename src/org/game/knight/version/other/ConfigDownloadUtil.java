@@ -1,4 +1,4 @@
-package org.game.knight.version.config;
+package org.game.knight.version.other;
 
 import java.io.BufferedReader;
 import java.io.File;

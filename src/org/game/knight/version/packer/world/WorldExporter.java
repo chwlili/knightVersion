@@ -512,7 +512,7 @@ public class WorldExporter extends AbsExporter
 			String bgsPath = "";
 			if (scene.getBackSound() != null)
 			{
-				bgsPath = exportFile(getChecksumTable().getChecksumID(scene.getBackSound().getInnerpath()), scene.getBackSound().getFile());
+				bgsPath = exportFile("md5"+getChecksumTable().getChecksumID(scene.getBackSound().getInnerpath()), MD5Util.addSuffix(FileUtil.getFileBytes(scene.getBackSound().getFile())),"mp3");
 			}
 
 			int[] sectionArr = new int[scene.getSections().size()];

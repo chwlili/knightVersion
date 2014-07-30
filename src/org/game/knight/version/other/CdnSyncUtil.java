@@ -1,14 +1,9 @@
-package org.game.knight.version.config;
+package org.game.knight.version.other;
 
 import org.chw.util.CmdUtil;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.browser.Browser;
-import org.eclipse.swt.browser.ProgressEvent;
-import org.eclipse.swt.browser.ProgressListener;
-import org.eclipse.swt.browser.StatusTextEvent;
-import org.eclipse.swt.browser.StatusTextListener;
-import org.eclipse.swt.custom.CLabel;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.FillLayout;
@@ -17,10 +12,9 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
+import org.eclipse.swt.widgets.Link;
 import org.eclipse.swt.widgets.Text;
 import org.game.knight.version.AppSetting;
-import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Link;
 
 public class CdnSyncUtil extends Composite
 {

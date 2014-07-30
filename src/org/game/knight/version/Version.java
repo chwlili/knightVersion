@@ -19,12 +19,12 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.wb.swt.SWTResourceManager;
-import org.game.knight.version.config.CdnSyncUtil;
-import org.game.knight.version.config.ConfigDownloadUtil;
-import org.game.knight.version.config.FolderSyncUtil;
-import org.game.knight.version.config.Log2XlsUtil;
-import org.game.knight.version.config.ServerCfgCopyUtil;
-import org.game.knight.version.config.VerExportUtil;
+import org.game.knight.version.other.CdnSyncUtil;
+import org.game.knight.version.other.ConfigDownloadUtil;
+import org.game.knight.version.other.FolderSyncUtil;
+import org.game.knight.version.other.Log2XlsUtil;
+import org.game.knight.version.other.ServerCfgCopyUtil;
+import org.game.knight.version.other.VerExportUtil;
 import org.game.knight.version.packer.GamePacker;
 import org.game.knight.version.packer.GamePackerConst;
 import org.game.knight.version.packer.GamePackerExtendDialog;
@@ -42,6 +42,7 @@ public class Version
 	private VerExportUtil versionExporter;
 	private CdnSyncUtil cdnSyncUtil;
 	private Log2XlsUtil logXlsUtil;
+	private GameServerCheckerUI checker;
 
 	/**
 	 * Launch the application.
@@ -130,8 +131,14 @@ public class Version
 		cdnSyncUtil = new CdnSyncUtil(versionBox, SWT.NONE);
 		cdnSyncUtil.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, 1, 1));
 		versionItem.setControl(versionBox);
-		
 
+		CTabItem checkerItem = new CTabItem(tabFolder_1, SWT.NONE);
+		checkerItem.setText("  ¼ì²éÆ÷  ");
+		Composite checkerBox = new Composite(tabFolder_1, SWT.NONE);
+		checkerBox.setLayout(new GridLayout(1, false));
+		checker=new GameServerCheckerUI(checkerBox, SWT.NONE);
+		checkerItem.setControl(checkerBox);
+		
 		CTabItem tbtmNewItem = new CTabItem(tabFolder_1, SWT.NONE);
 		tbtmNewItem.setText("  \u6D4B \u8BD5  ");
 		debugExporter = new GamePacker(tabFolder_1, SWT.NONE);

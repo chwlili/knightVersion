@@ -1,4 +1,4 @@
-package org.game.knight.version.config;
+package org.game.knight.version.other;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -30,12 +30,12 @@ import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.DirectoryDialog;
-import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Link;
@@ -67,11 +67,13 @@ public class Log2XlsUtil extends Composite
 		setLayout(new StackLayout());
 
 		inputBox = new Composite(this, SWT.NONE);
-		inputBox.setLayout(new GridLayout(1, false));
+		FillLayout fl_inputBox = new FillLayout(SWT.HORIZONTAL);
+		inputBox.setLayout(fl_inputBox);
 
 		grplog = new Group(inputBox, SWT.NONE);
-		grplog.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
-		grplog.setLayout(new GridLayout(3, false));
+		GridLayout gl_grplog = new GridLayout(3, false);
+		gl_grplog.marginTop = 10;
+		grplog.setLayout(gl_grplog);
 		grplog.setText("\u8F6C\u6362LOG\u6570\u636E");
 
 		logLabel = new Link(grplog, SWT.NONE);
@@ -90,27 +92,12 @@ public class Log2XlsUtil extends Composite
 
 		logBrowse = new Button(grplog, SWT.NONE);
 		logBrowse.setText("  ...  ");
-
-		saveLabel = new Link(grplog, SWT.NONE);
-		saveLabel.setText("<a>\u751F\u6210\u6587\u4EF6</a>\uFF1A");
-		saveLabel.addSelectionListener(new SelectionAdapter()
-		{
-			@Override
-			public void widgetSelected(SelectionEvent e)
-			{
-				CmdUtil.openDir(logInput.getText());
-			}
-		});
-
-		saveInput = new Text(grplog, SWT.BORDER);
-		saveInput.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
-
-		saveBrowser = new Button(grplog, SWT.NONE);
-		saveBrowser.setText("  ...  ");
 		new Label(grplog, SWT.NONE);
 
 		submit = new Button(grplog, SWT.NONE);
-		submit.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, false, 1, 1));
+		GridData gd_submit = new GridData(SWT.CENTER, SWT.CENTER, true, false, 1, 1);
+		gd_submit.verticalIndent = 15;
+		submit.setLayoutData(gd_submit);
 		submit.setText("    开 始    ");
 		new Label(grplog, SWT.NONE);
 
@@ -201,21 +188,6 @@ public class Log2XlsUtil extends Composite
 				}
 			}
 		});
-
-		saveBrowser.addSelectionListener(new SelectionAdapter()
-		{
-			@Override
-			public void widgetSelected(SelectionEvent e)
-			{
-				FileDialog dir = new FileDialog(getShell());
-				String path = dir.open();
-
-				if (path != null)
-				{
-					saveInput.setText(path);
-				}
-			}
-		});
 	}
 
 	// --------------------------------------------------------------------------------
@@ -244,7 +216,6 @@ public class Log2XlsUtil extends Composite
 		}
 
 		logInput.setText(section.get("logInput") != null ? section.get("logInput") : "");
-		saveInput.setText(section.get("saveInput") != null ? section.get("saveInput") : "");
 	}
 
 	/**
@@ -253,7 +224,6 @@ public class Log2XlsUtil extends Composite
 	private void saveSetting()
 	{
 		section.put("logInput", logInput.getText());
-		section.put("saveInput", saveInput.getText());
 
 		setting.save();
 	}
@@ -311,20 +281,20 @@ public class Log2XlsUtil extends Composite
 	 */
 	private boolean checkTo()
 	{
-		String to = saveInput.getText();
-
-		if (to == null || to == "")
-		{
-			return false;
-		}
-		else
-		{
-			File toFile = new File(to);
-			if (toFile.exists() && toFile.isDirectory())
-			{
-				return false;
-			}
-		}
+//		String to = saveInput.getText();
+//
+//		if (to == null || to == "")
+//		{
+//			return false;
+//		}
+//		else
+//		{
+//			File toFile = new File(to);
+//			if (toFile.exists() && toFile.isDirectory())
+//			{
+//				return false;
+//			}
+//		}
 
 		return true;
 	}
@@ -390,9 +360,6 @@ public class Log2XlsUtil extends Composite
 	private Thread thread;
 	private Link logLabel;
 	private Group grplog;
-	private Text saveInput;
-	private Button saveBrowser;
-	private Link saveLabel;
 
 	/**
 	 * 运行
@@ -400,7 +367,7 @@ public class Log2XlsUtil extends Composite
 	private void run()
 	{
 		final String fromURL = logInput.getText();
-		final String destPath = saveInput.getText();
+//		final String destPath = saveInput.getText();
 
 		thread = new Thread(new Runnable()
 		{
@@ -491,12 +458,12 @@ public class Log2XlsUtil extends Composite
 						}
 					});
 				}
-
-				HSSFWorkbook book=new HSSFWorkbook();
 				
 				for (int i=0;i<sqls.size();i++)
 				{
 					File file=sqls.get(i);
+
+					HSSFWorkbook book=new HSSFWorkbook();
 					
 					final int sqlI=i+1;
 					if (!isDisposed())
@@ -716,29 +683,31 @@ public class Log2XlsUtil extends Composite
 						index++;
 					}
 					
+					try
+					{
+						FileOutputStream output = new FileOutputStream(new File(file.getPath()+".xls"));
+						book.write(output);
+						output.close();
+					}
+					catch (FileNotFoundException e)
+					{
+						e.printStackTrace();
+						showError(e.getMessage());
+						error=true;
+						break;
+					}
+					catch (IOException e)
+					{
+						e.printStackTrace();
+						showError(e.getMessage());
+						error=true;
+						break;
+					}
+					
 					if(stoped)
 					{
 						break;
 					}
-				}
-				
-				try
-				{
-					FileOutputStream output = new FileOutputStream(new File(destPath));
-					book.write(output);
-					output.close();
-				}
-				catch (FileNotFoundException e)
-				{
-					e.printStackTrace();
-					showError(e.getMessage());
-					error=true;
-				}
-				catch (IOException e)
-				{
-					e.printStackTrace();
-					showError(e.getMessage());
-					error=true;
 				}
 
 				runing = false;

@@ -683,7 +683,7 @@ public class AvatarExport2
 			String bgsPath = "";
 			if (scene.getBackSound() != null)
 			{
-				bgsPath = world.exportFile(world.getChecksumTable().getChecksumID(scene.getBackSound().getInnerpath()), scene.getBackSound().getFile());
+				bgsPath = world.exportFile("md5"+world.getChecksumTable().getChecksumID(scene.getBackSound().getInnerpath()), scene.getBackSound().getFile());
 			}
 
 			int[] sectionArr = new int[scene.getSections().size()];

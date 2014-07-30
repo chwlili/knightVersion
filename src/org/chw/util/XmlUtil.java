@@ -41,6 +41,32 @@ public class XmlUtil
 	    
 	    return xml; 
 	}
+	
+	static public String formatXML(Document dom)
+	{
+	    try 
+	    {
+	    	StringWriter write = new StringWriter();
+
+	    	OutputFormat localOutputFormat = OutputFormat.createPrettyPrint();
+			localOutputFormat.setEncoding("UTF-8");
+			
+		    XMLWriter localXMLWriter = new XMLWriter(write,localOutputFormat);
+			localXMLWriter.write(dom);
+			localXMLWriter.close();
+			
+			return write.toString();
+	    } 
+	    catch (Exception error) 
+	    { 
+	    	error.printStackTrace(); 
+	    } 
+	    finally 
+	    { 
+	    }
+	    
+	    return ""; 
+	}
 
 	/**
 	 * Ω‚ŒˆFloat
