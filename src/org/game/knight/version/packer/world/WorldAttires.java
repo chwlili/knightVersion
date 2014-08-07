@@ -41,9 +41,10 @@ public class WorldAttires
 	private GridImgTable clipTable;
 	private TextureSetTable textureSetTable;
 
+	private boolean keepAtfPng = false;
 	private boolean writeRegionImg = false;
-	
-	private boolean zip=false;
+
+	private boolean zip = false;
 
 	private Hashtable<String, ExportParam> paramTable = new Hashtable<String, ExportParam>();
 
@@ -54,14 +55,15 @@ public class WorldAttires
 	 * @param clipTable
 	 * @param textureSetTable
 	 */
-	public WorldAttires(String outputPath, ChecksumTable shaTable, GridImgTable clipTable, TextureSetTable textureSetTable, boolean writeRegionImg,boolean zip)
+	public WorldAttires(String outputPath, ChecksumTable shaTable, GridImgTable clipTable, TextureSetTable textureSetTable, boolean keepAtfPng, boolean writeRegionImg, boolean zip)
 	{
 		this.outputPath = outputPath;
 		this.shaTable = shaTable;
 		this.clipTable = clipTable;
 		this.textureSetTable = textureSetTable;
+		this.keepAtfPng = keepAtfPng;
 		this.writeRegionImg = writeRegionImg;
-		this.zip=zip;
+		this.zip = zip;
 	}
 
 	/**
@@ -634,8 +636,8 @@ public class WorldAttires
 		long folderID = (fileID - 1) / GamePackerConst.FILE_COUNT_EACH_DIR + 1;
 
 		// 跳过两个ID
-		//world.getOptionTable().getNextFileID();
-		//world.getOptionTable().getNextFileID();
+		// world.getOptionTable().getNextFileID();
+		// world.getOptionTable().getNextFileID();
 
 		// 确定png路径
 		String pngFilePath = "/" + folderID + "/" + fileID + ".png";
@@ -718,20 +720,20 @@ public class WorldAttires
 		if (atfInput.exists() && atfInput.isFile())
 		{
 			writeATF(atfInput, atfOutput, type);
-			
-			if(atfOutput.exists())
+
+			if (atfOutput.exists())
 			{
-				byte[] atfBytes=FileUtil.getFileBytes(atfOutput);
-				byte[] xmlBytes=ZlibUtil.compress(xmlContent.toString().getBytes("utf8"));
-				
-				ByteArrayOutputStream temp=new ByteArrayOutputStream();
+				byte[] atfBytes = FileUtil.getFileBytes(atfOutput);
+				byte[] xmlBytes = ZlibUtil.compress(xmlContent.toString().getBytes("utf8"));
+
+				ByteArrayOutputStream temp = new ByteArrayOutputStream();
 				temp.write(atfBytes);
 				temp.write(xmlBytes);
-				temp.write((xmlBytes.length>>>24) & 0xFF);
-				temp.write((xmlBytes.length>>>16) & 0xFF);
-				temp.write((xmlBytes.length>>>8) & 0xFF);
+				temp.write((xmlBytes.length >>> 24) & 0xFF);
+				temp.write((xmlBytes.length >>> 16) & 0xFF);
+				temp.write((xmlBytes.length >>> 8) & 0xFF);
 				temp.write(xmlBytes.length & 0xFF);
-				
+
 				FileUtil.writeFile(atfOutput, MD5Util.addSuffix(temp.toByteArray()));
 			}
 		}
@@ -766,9 +768,9 @@ public class WorldAttires
 				}
 			}
 		}
-		
-		//删除临时png
-		if(savePng.exists())
+
+		// 删除临时png
+		if (savePng.exists() && keepAtfPng==false)
 		{
 			savePng.delete();
 		}
@@ -890,7 +892,6 @@ public class WorldAttires
 			}
 		});
 
-		
 		// 初始化贴图信息
 		for (int i = 0; i < textures.length; i++)
 		{
@@ -905,8 +906,7 @@ public class WorldAttires
 			texture_path.put(texture, url);
 		}
 
-
-		//建立贴图相关的数据表
+		// 建立贴图相关的数据表
 		for (String groupID : group_gifKeys.keySet())
 		{
 			ExportParam param = paramTable.get(groupID);
@@ -916,15 +916,15 @@ public class WorldAttires
 			GridImgKey[] gifArray = gifs.values().toArray(new GridImgKey[gifs.size()]);
 
 			TextureSetKey textureSetKey = new TextureSetKey(param.getWidth(), param.getHeight(), param.getParam(), gifArray);
-			TextureSet textureSet=textureSetTable.getTextureSet(textureSetKey);
-			for(Texture texture:textureSet.getTextures())
+			TextureSet textureSet = textureSetTable.getTextureSet(textureSetKey);
+			for (Texture texture : textureSet.getTextures())
 			{
-				for(Region region:texture.getRegions())
+				for (Region region : texture.getRegions())
 				{
 					region.setTexturePath(texture.getAtfFilePath());
-					
-					String regionID=groupID+"_"+region.getOwnerChecksum()+"_"+region.getIndex();
-					
+
+					String regionID = groupID + "_" + region.getOwnerChecksum() + "_" + region.getIndex();
+
 					regionID_region.put(regionID, region);
 					region_texture.put(region, texture);
 				}
@@ -967,7 +967,8 @@ public class WorldAttires
 			}
 
 			int actionSize = 0;
-			String[] actionURLs = new String[textures.size() /** 2*/];
+			String[] actionURLs = new String[textures.size() /** 2 */
+			];
 			int index = 0;
 			for (Texture texture : textures)
 			{
@@ -975,8 +976,8 @@ public class WorldAttires
 				actionURLs[index] = getTexturePath(texture);
 				index++;
 
-				//actionURLs[index] = texture.getXmlFilePath();
-				//index++;
+				// actionURLs[index] = texture.getXmlFilePath();
+				// index++;
 			}
 			Arrays.sort(actionURLs);
 
@@ -1073,13 +1074,13 @@ public class WorldAttires
 	 * @param index
 	 * @return
 	 */
-	public Region getTextureRegion(String atfGroupID,String imgID, int row, int col, int index)
+	public Region getTextureRegion(String atfGroupID, String imgID, int row, int col, int index)
 	{
 		if (!paramTable.containsKey(atfGroupID))
 		{
 			atfGroupID = AttireDefParamID;
 		}
-		return regionID_region.get(atfGroupID+"_"+imgID + "_" + row + "_" + col + "_" + index);
+		return regionID_region.get(atfGroupID + "_" + imgID + "_" + row + "_" + col + "_" + index);
 	}
 
 	/**
@@ -1088,9 +1089,9 @@ public class WorldAttires
 	 * @param img
 	 * @return
 	 */
-	public Texture getImgTextures(String atfGroupID,String shaID)
+	public Texture getImgTextures(String atfGroupID, String shaID)
 	{
-		Region region = getTextureRegion(atfGroupID,shaID, 1, 1, 0);
+		Region region = getTextureRegion(atfGroupID, shaID, 1, 1, 0);
 		if (region != null)
 		{
 			return region_texture.get(region);

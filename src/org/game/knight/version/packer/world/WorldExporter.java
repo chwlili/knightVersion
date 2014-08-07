@@ -41,9 +41,10 @@ import org.game.knight.version.packer.world.scene.WorldScene;
 
 public class WorldExporter extends AbsExporter
 {
-	private boolean zip;
-	private boolean mobile;
-	private boolean writeRegionImg;
+	private boolean zip = true;
+	private boolean mobile = false;
+	private boolean keepAtfPng = false;
+	private boolean writeRegionImg = false;
 
 	/**
 	 * 构造函数
@@ -56,7 +57,8 @@ public class WorldExporter extends AbsExporter
 		super("导出世界", src, dst);
 
 		this.zip = zip;
-		this.mobile = isMobile;
+		this.mobile = false;//isMobile;
+		this.keepAtfPng=isMobile;
 		this.writeRegionImg = writeRegionImg;
 	}
 
@@ -342,7 +344,7 @@ public class WorldExporter extends AbsExporter
 	private void syncAttires() throws Exception
 	{
 		// 装扮贴图管理器
-		attireManager = new WorldAttires(getDestDir().getParentFile().getPath(), getChecksumTable(), clipTable, textureSetTable, writeRegionImg,zip);
+		attireManager = new WorldAttires(getDestDir().getParentFile().getPath(), getChecksumTable(), clipTable, textureSetTable, keepAtfPng,writeRegionImg,zip);
 		attireManager.build(this, params, attires, scenes);
 
 		// 检测取消

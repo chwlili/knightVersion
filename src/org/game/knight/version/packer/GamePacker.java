@@ -267,7 +267,7 @@ public class GamePacker extends Composite
 		clearupSelection.setText("\u6E05\u7406");
 
 		mobileSelection = new Button(params, SWT.CHECK);
-		mobileSelection.setText("\u624B\u673A\u914D\u7F6E\u683C\u5F0F");
+		mobileSelection.setText("\u4FDD\u7559\u4E34\u65F6\u56FE\u50CF");
 
 		writeRegionImgSelection = new Button(params, SWT.CHECK);
 		writeRegionImgSelection.setText("Êä³öÐ¡Í¼");
