@@ -623,8 +623,8 @@ public class ViewFile
 
 		if (!isCfg)
 		{
-			fileKey = manager.getChecksumTable().getChecksumID(getInnerPath());
-			classID = manager.getClassIDTable().getClassID(manager.getChecksumTable().getChecksumID(getInnerPath()) + ".img");
+			fileKey = manager.getChecksumTable().getGID(getInnerPath());
+			classID = manager.getClassIDTable().getClassID(manager.getChecksumTable().getGID(getInnerPath()) + ".img");
 		}
 		else
 		{
@@ -688,7 +688,7 @@ public class ViewFile
 	private void rebuildDocumentTree(ViewExport manager) throws Exception
 	{
 		HashSet<String> keys = new HashSet<String>();
-		keys.add(manager.getChecksumTable().getChecksumID(getInnerPath()));
+		keys.add(manager.getChecksumTable().getGID(getInnerPath()));
 
 		// ÖØ½¨ÒÀÀµ
 		Element dependNode = (Element) domcument.getRootElement().selectSingleNode("depends");
@@ -710,7 +710,7 @@ public class ViewFile
 				Element childNode = dependNode.addElement("depend");
 				childNode.addAttribute("src", file.innerPath);
 
-				keys.add(manager.getChecksumTable().getChecksumID(file.getInnerPath()));
+				keys.add(manager.getChecksumTable().getGID(file.getInnerPath()));
 			}
 		}
 
@@ -740,7 +740,7 @@ public class ViewFile
 				// childNode.addAttribute("src", val.innerPath);
 				childNode.addAttribute("type", "FILE_" + val.classID);
 
-				keys.add(manager.getChecksumTable().getChecksumID(val.getInnerPath()));
+				keys.add(manager.getChecksumTable().getGID(val.getInnerPath()));
 			}
 		}
 		if(imgRefs.size()>0)
@@ -779,7 +779,7 @@ public class ViewFile
 				// childNode.addAttribute("src", val.innerPath);
 				childNode.addAttribute("type", "FILE_" + val.classID);
 
-				keys.add(manager.getChecksumTable().getChecksumID(val.getInnerPath()));
+				keys.add(manager.getChecksumTable().getGID(val.getInnerPath()));
 			}
 		}
 
@@ -801,7 +801,7 @@ public class ViewFile
 
 			for (String key : refs)
 			{
-				ViewFileSwf swf = new ViewFileSwf(manager.getChecksumTable().getChecksumID(mergeredSwfDef.get(key).getInnerPath()), mergeredSwfDef.get(key));
+				ViewFileSwf swf = new ViewFileSwf(manager.getChecksumTable().getGID(mergeredSwfDef.get(key).getInnerPath()), mergeredSwfDef.get(key));
 				manager.addOutputFile(swf.getFile());
 				dependSwfs.add(swf);
 
@@ -809,7 +809,7 @@ public class ViewFile
 				childNode.addAttribute("id", key);
 				childNode.addAttribute("src", manager.getOutputFileURL(swf.getFile()));
 
-				keys.add(manager.getChecksumTable().getChecksumID(swf.getFile().getInnerPath()));
+				keys.add(manager.getChecksumTable().getGID(swf.getFile().getInnerPath()));
 			}
 		}
 
@@ -830,14 +830,14 @@ public class ViewFile
 
 			for (String key : refs)
 			{
-				ViewFileOther other = new ViewFileOther(manager.getChecksumTable().getChecksumID(mergeredUrlDef.get(key).getInnerPath()), mergeredUrlDef.get(key));
+				ViewFileOther other = new ViewFileOther(manager.getChecksumTable().getGID(mergeredUrlDef.get(key).getInnerPath()), mergeredUrlDef.get(key));
 				manager.addOutputFile(other.getFile());
 
 				Element childNode = urlNode.addElement("url");
 				childNode.addAttribute("id", key);
 				childNode.addAttribute("src", manager.getOutputFileURL(other.getFile()));
 
-				keys.add(manager.getChecksumTable().getChecksumID(other.getFile().getInnerPath()));
+				keys.add(manager.getChecksumTable().getGID(other.getFile().getInnerPath()));
 			}
 		}
 

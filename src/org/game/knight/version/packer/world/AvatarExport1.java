@@ -24,10 +24,10 @@ import org.chw.util.FileUtil;
 import org.chw.util.MD5Util;
 import org.chw.util.ZlibUtil;
 import org.game.knight.version.packer.GamePacker;
-import org.game.knight.version.packer.world.attire.Attire;
-import org.game.knight.version.packer.world.attire.AttireAction;
-import org.game.knight.version.packer.world.attire.AttireAnim;
-import org.game.knight.version.packer.world.attire.AttireFile;
+import org.game.knight.version.packer.world.model.Attire;
+import org.game.knight.version.packer.world.model.AttireAction;
+import org.game.knight.version.packer.world.model.AttireAnim;
+import org.game.knight.version.packer.world.model.AttireFile;
 
 public class AvatarExport1
 {
@@ -78,17 +78,17 @@ public class AvatarExport1
 		{
 			for (AttireAction action : attire.getActions())
 			{
-				if (action.getID() != 0 && action.getID() != 1 && action.getID() != 51)
+				if (action.id != 0 && action.id != 1 && action.id != 51)
 				{
 					continue;
 				}
 
-				for (AttireAnim anim : action.getAnims())
+				for (AttireAnim anim : action.animList)
 				{
-					String imgSHA = world.getChecksumTable().getChecksumID(anim.getImg().getInnerpath());
+					String imgSHA = world.getChecksumTable().getGID(anim.img.url);
 
-					int rowCount = anim.getRow();
-					int colCount = anim.getCol();
+					int rowCount = anim.row;
+					int colCount = anim.col;
 
 					ArrayList<Region> regions = new ArrayList<Region>();
 					ArrayList<String> regionIDs = new ArrayList<String>();
@@ -102,10 +102,10 @@ public class AvatarExport1
 					int regionCount = rowCount * colCount;
 					for (int i = 0; i < regionCount; i++)
 					{
-						int delay = anim.getTimes()[i];
+						int delay = anim.times[i];
 						if (delay > 0)
 						{
-							Region region = attireManager.getTextureRegion(anim.getBagID(), imgSHA, anim.getRow(), anim.getCol(), i);
+							Region region = attireManager.getTextureRegion(anim.bagID, imgSHA, anim.row, anim.col, i);
 							if (region != null)
 							{
 								String key = "anim_" + imgSHA + "_" + rowCount + "_" + colCount + "_" + "frame" + i;
@@ -172,7 +172,7 @@ public class AvatarExport1
 
 				// 导出PNG
 				Region region = regions.get(j);
-				BufferedImage img = ImageIO.read(anim.getImg().getFile());
+				BufferedImage img = ImageIO.read(anim.img.file);
 
 				BufferedImage texture = new BufferedImage(region.getClipW(), region.getClipH(), BufferedImage.TYPE_INT_ARGB);
 				Graphics2D graphics = (Graphics2D) texture.getGraphics();
@@ -216,13 +216,13 @@ public class AvatarExport1
 			StringBuilder json_actions = new StringBuilder();
 			for (AttireAction action : attire.getActions())
 			{
-				if (action.getID() != 0 && action.getID() != 1 && action.getID() != 51)
+				if (action.id != 0 && action.id != 1 && action.id != 51)
 				{
 					continue;
 				}
 
 				StringBuilder json_anims = new StringBuilder();
-				for (AttireAnim anim : action.getAnims())
+				for (AttireAnim anim : action.animList)
 				{
 					ArrayList<Region> regions = anim_regions.get(anim);
 					ArrayList<String> regionIDs = anim_regionIDs.get(anim);
@@ -252,7 +252,7 @@ public class AvatarExport1
 					{
 						json_anims.append(",");
 					}
-					json_anims.append(String.format("{\"x\":%s,\"y\":%s,\"scaleX\":%s,\"scaleY\":%s,\"flip\":%s,\"groupID\":%s,\"layerID\":%s,\"fileURL\":\"%s\",\"fileSize\":%s,\"frames\":[%s]}", anim.getX(), anim.getY(), anim.getScaleX(), anim.getScaleY(), anim.getFlip(), anim.getGroupID(), anim.getLayerID(), animFilePath, animFileSize, json_frames.toString()));
+					json_anims.append(String.format("{\"x\":%s,\"y\":%s,\"scaleX\":%s,\"scaleY\":%s,\"flip\":%s,\"groupID\":%s,\"layerID\":%s,\"fileURL\":\"%s\",\"fileSize\":%s,\"frames\":[%s]}", anim.x, anim.y, anim.scaleX, anim.scaleY, anim.flip, anim.groupID, anim.layerID, animFilePath, animFileSize, json_frames.toString()));
 				}
 
 				// 动作信息
@@ -260,7 +260,7 @@ public class AvatarExport1
 				{
 					json_actions.append(",");
 				}
-				json_actions.append(String.format("\"%s\":{\"nameX\":%s,\"nameY\":%s,\"anims\":[%s]}", action.getID(), action.getNameX(), action.getNameY(), json_anims.toString()));
+				json_actions.append(String.format("\"%s\":{\"nameX\":%s,\"nameY\":%s,\"anims\":[%s]}", action.id, action.nameX, action.nameY, json_anims.toString()));
 			}
 
 			// 装扮信息
@@ -268,7 +268,7 @@ public class AvatarExport1
 			{
 				json_attires.append(",");
 			}
-			json_attires.append(String.format("\"%s\":{\"nameX\":%s,\"nameY\":%s,\"width\":%s,\"height\":%s,\"actions\":{%s}}", attire.getRefKey(), attire.getNameX(), attire.getNameY(), attire.getHitRect().getWidth(), attire.getHitRect().getHeight(), json_actions.toString()));
+			json_attires.append(String.format("\"%s\":{\"nameX\":%s,\"nameY\":%s,\"width\":%s,\"height\":%s,\"actions\":{%s}}", attire.getRefKey(), attire.getNameX(), attire.getNameY(), attire.getHitRect().width, attire.getHitRect().height, json_actions.toString()));
 
 			// 装扮分类
 			String[] params = attire.getParams();
@@ -407,7 +407,7 @@ public class AvatarExport1
 				}
 
 				// 只有第一帧第二帧有内容
-				if ((attire.getAction(0) != null && attire.getAction(0).getAnims().size() > 0) || (attire.getAction(1) != null && attire.getAction(1).getAnims().size() > 0) || (attire.getAction(51) != null && attire.getAction(51).getAnims().size() > 0))
+				if ((attire.getAction(0) != null && attire.getAction(0).animList.size() > 0) || (attire.getAction(1) != null && attire.getAction(1).animList.size() > 0) || (attire.getAction(51) != null && attire.getAction(51).animList.size() > 0))
 				{
 					result.add(attire);
 				}

@@ -15,7 +15,7 @@ public class ViewFileBag extends ViewFileSwf
 	
 	/**
 	 * лМ╪снд╪Ч
-	 * @param file
+	 * @param data.file
 	 */
 	public ViewFileBag(String key,ViewFile[] files)
 	{

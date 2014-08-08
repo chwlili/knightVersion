@@ -88,7 +88,7 @@ public class IconExporter extends AbsExporter
 		{
 			GamePacker.progress("输出文件", url);
 			//exportFile(getChecksumTable().getChecksumID(url), files.get(url));
-			exportFile(getChecksumTable().getChecksumID(url), MD5Util.addSuffix(FileUtil.getFileBytes(files.get(url))), getFileExtName(files.get(url)));
+			exportFile(getChecksumTable().getGID(url), MD5Util.addSuffix(FileUtil.getFileBytes(files.get(url))), getFileExtName(files.get(url)));
 
 			if (isCancel())
 			{
@@ -106,7 +106,7 @@ public class IconExporter extends AbsExporter
 		GamePacker.beginLogSet("读取图标大小");
 		for (String url : urls)
 		{
-			String key = getChecksumTable().getChecksumID(url);
+			String key = getChecksumTable().getGID(url);
 			if (sizeTable.getWidth(key) == null)
 			{
 				BufferedImage img = ImageIO.read(files.get(url));
@@ -137,7 +137,7 @@ public class IconExporter extends AbsExporter
 		for (String url : urls)
 		{
 			File file = files.get(url);
-			String key = getChecksumTable().getChecksumID(url);
+			String key = getChecksumTable().getGID(url);
 
 			String type = file.getParentFile().getPath().substring(getSourceDir().getPath().length()).replaceAll("\\\\", "/").replaceFirst("/", "");
 			while (type.charAt(type.length() - 1) == '/')
@@ -201,9 +201,9 @@ public class IconExporter extends AbsExporter
 				String[] paths = new String[] { "/bagIcon/" + item.iconID + ".png", "/bagIcon/" + item.iconID + ".jpg", "/bagIcon/" + item.id + ".png", "/bagIcon/" + item.id + ".jpg", "/bagIcon/0.png" };
 				for (String path : paths)
 				{
-					if(getChecksumTable().getChecksum(path)!=null)
+					if(getChecksumTable().getMD5(path)!=null)
 					{
-						String key = getChecksumTable().getChecksumID(path);
+						String key = getChecksumTable().getGID(path);
 						if(hasExportedFile(key))
 						{
 							int itemID=item.id;

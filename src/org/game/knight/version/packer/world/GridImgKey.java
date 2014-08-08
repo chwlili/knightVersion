@@ -2,12 +2,14 @@ package org.game.knight.version.packer.world;
 
 import java.io.File;
 
+import org.game.knight.version.packer.world.model.ProjectImgFile;
+
 public class GridImgKey
 {
 	private String checksum;
 	private int rowCount;
 	private int colCount;
-	private ImgFile img;
+	private ProjectImgFile img;
 	private int[] times;
 
 	public GridImgKey(String checksum, int rowCount, int colCount, int[] times)
@@ -18,7 +20,7 @@ public class GridImgKey
 		this.times = times;
 	}
 
-	public GridImgKey(String checksum, int rowCount, int colCount, ImgFile img, int[] times)
+	public GridImgKey(String checksum, int rowCount, int colCount, ProjectImgFile img, int[] times)
 	{
 		this.checksum = checksum;
 		this.rowCount = rowCount;
@@ -80,7 +82,7 @@ public class GridImgKey
 	 */
 	public File getFile()
 	{
-		return img.getFile();
+		return img.file;
 	}
 
 	/**
@@ -90,7 +92,7 @@ public class GridImgKey
 	 */
 	public String getFileInnerPath()
 	{
-		return img.getInnerpath();
+		return img.url;
 	}
 
 	@Override

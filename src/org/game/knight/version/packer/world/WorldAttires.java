@@ -25,11 +25,13 @@ import org.dom4j.io.SAXReader;
 import org.game.knight.version.packer.GamePacker;
 import org.game.knight.version.packer.GamePackerConst;
 import org.game.knight.version.packer.base.ChecksumTable;
-import org.game.knight.version.packer.world.attire.Attire;
-import org.game.knight.version.packer.world.attire.AttireAction;
-import org.game.knight.version.packer.world.attire.AttireAnim;
-import org.game.knight.version.packer.world.attire.AttireFile;
-import org.game.knight.version.packer.world.scene.Scene;
+import org.game.knight.version.packer.world.model.AtfParam;
+import org.game.knight.version.packer.world.model.Attire;
+import org.game.knight.version.packer.world.model.AttireAction;
+import org.game.knight.version.packer.world.model.AttireAnim;
+import org.game.knight.version.packer.world.model.AttireFile;
+import org.game.knight.version.packer.world.model.ProjectImgFile;
+import org.game.knight.version.packer.world.model.Scene;
 
 public class WorldAttires
 {
@@ -42,10 +44,8 @@ public class WorldAttires
 	private TextureSetTable textureSetTable;
 
 	private boolean writeRegionImg = false;
-	
-	private boolean zip=false;
 
-	private Hashtable<String, ExportParam> paramTable = new Hashtable<String, ExportParam>();
+	private Hashtable<String, AtfParam> paramTable = new Hashtable<String, AtfParam>();
 
 	/**
 	 * 构造函数
@@ -61,7 +61,6 @@ public class WorldAttires
 		this.clipTable = clipTable;
 		this.textureSetTable = textureSetTable;
 		this.writeRegionImg = writeRegionImg;
-		this.zip=zip;
 	}
 
 	/**
@@ -143,13 +142,13 @@ public class WorldAttires
 
 							if (this.paramTable.containsKey(id))
 							{
-								ExportParam old = this.paramTable.get(id);
+								AtfParam old = this.paramTable.get(id);
 
-								GamePacker.error("输出参数ID冲突！(" + file.getPath() + " : " + id + ") -> ( " + old.getFile().getPath() + " : " + id + ")");
+								GamePacker.error("输出参数ID冲突！(" + file.getPath() + " : " + id + ") -> ( " + old.file.getPath() + " : " + id + ")");
 							}
 							else
 							{
-								this.paramTable.put(id, new ExportParam(file, id, w, h, param));
+								this.paramTable.put(id, new AtfParam(file, id, w, h, param));
 							}
 
 							continue;
@@ -162,7 +161,7 @@ public class WorldAttires
 
 		if (!this.paramTable.containsKey(AttireDefParamID))
 		{
-			this.paramTable.put(AttireDefParamID, new ExportParam(null, AttireDefParamID, 2048, 2048, AttireDefParam));
+			this.paramTable.put(AttireDefParamID, new AtfParam(null, AttireDefParamID, 2048, 2048, AttireDefParam));
 		}
 	}
 
@@ -265,16 +264,16 @@ public class WorldAttires
 
 				for (AttireAction action : attire.getActions())
 				{
-					for (AttireAnim anim : action.getAnims())
+					for (AttireAnim anim : action.animList)
 					{
-						ImgFile img = anim.getImg();
-						String imgPath = anim.getImg().getInnerpath();
-						String imgSHA1 = shaTable.getChecksumID(imgPath);
-						int imgRowCount = anim.getRow();
-						int imgColCount = anim.getCol();
-						int[] imgTimes = normalTimeArray(anim.getTimes());
+						ProjectImgFile img = anim.img;
+						String imgPath = anim.img.url;
+						String imgSHA1 = shaTable.getGID(imgPath);
+						int imgRowCount = anim.row;
+						int imgColCount = anim.col;
+						int[] imgTimes = normalTimeArray(anim.times);
 
-						String atfGroup = anim.getBagID();
+						String atfGroup = anim.bagID;
 						if (!paramTable.containsKey(atfGroup))
 						{
 							atfGroup = AttireDefParamID;
@@ -327,10 +326,10 @@ public class WorldAttires
 		for (AttireFile attireFile : attires.values())
 		{
 			// 遍历图像列表
-			for (ImgFile img : attireFile.getAllImgs())
+			for (ProjectImgFile img : attireFile.getAllImgs())
 			{
-				String imgPath = img.getInnerpath();
-				String imgSHA1 = shaTable.getChecksumID(imgPath);
+				String imgPath = img.url;
+				String imgSHA1 = shaTable.getGID(imgPath);
 				int imgRowCount = 1;
 				int imgColCount = 1;
 				int[] imgTimes = new int[] { 1 };
@@ -377,16 +376,16 @@ public class WorldAttires
 
 				for (AttireAction action : attire.getActions())
 				{
-					for (AttireAnim anim : action.getAnims())
+					for (AttireAnim anim : action.animList)
 					{
-						ImgFile img = anim.getImg();
-						String imgPath = anim.getImg().getInnerpath();
-						String imgSHA1 = shaTable.getChecksumID(imgPath);
-						int imgRowCount = anim.getRow();
-						int imgColCount = anim.getCol();
-						int[] imgTimes = normalTimeArray(anim.getTimes());
+						ProjectImgFile img = anim.img;
+						String imgPath = anim.img.url;
+						String imgSHA1 = shaTable.getGID(imgPath);
+						int imgRowCount = anim.row;
+						int imgColCount = anim.col;
+						int[] imgTimes = normalTimeArray(anim.times);
 
-						String atfGroup = anim.getBagID();
+						String atfGroup = anim.bagID;
 						if (!paramTable.containsKey(atfGroup))
 						{
 							atfGroup = AttireDefParamID;
@@ -529,13 +528,13 @@ public class WorldAttires
 
 		for (String groupID : group_gifKeys.keySet())
 		{
-			ExportParam param = paramTable.get(groupID);
+			AtfParam param = paramTable.get(groupID);
 
 			Hashtable<GridImgKey, GridImgKey> gifs = group_gifKeys.get(groupID);
 
 			GridImgKey[] gifArray = gifs.values().toArray(new GridImgKey[gifs.size()]);
 
-			TextureSetKey textureSetKey = new TextureSetKey(param.getWidth(), param.getHeight(), param.getParam(), gifArray);
+			TextureSetKey textureSetKey = new TextureSetKey(param.width, param.height, param.other, gifArray);
 			if (textureSetTable.contains(textureSetKey))
 			{
 				textureSetTable.add(textureSetKey);
@@ -598,12 +597,12 @@ public class WorldAttires
 		for (Texture texture : addedTextures)
 		{
 			String groupID = texture_GroupID.get(texture);
-			ExportParam param = paramTable.get(groupID);
+			AtfParam param = paramTable.get(groupID);
 
 			index++;
 			try
 			{
-				writeTexture(world, texture, param.getParam(), groupID, index, addedTextures.size());
+				writeTexture(world, texture, param.other, groupID, index, addedTextures.size());
 			}
 			catch (IOException e)
 			{
@@ -909,13 +908,13 @@ public class WorldAttires
 		//建立贴图相关的数据表
 		for (String groupID : group_gifKeys.keySet())
 		{
-			ExportParam param = paramTable.get(groupID);
+			AtfParam param = paramTable.get(groupID);
 
 			Hashtable<GridImgKey, GridImgKey> gifs = group_gifKeys.get(groupID);
 
 			GridImgKey[] gifArray = gifs.values().toArray(new GridImgKey[gifs.size()]);
 
-			TextureSetKey textureSetKey = new TextureSetKey(param.getWidth(), param.getHeight(), param.getParam(), gifArray);
+			TextureSetKey textureSetKey = new TextureSetKey(param.width, param.height, param.other, gifArray);
 			TextureSet textureSet=textureSetTable.getTextureSet(textureSetKey);
 			for(Texture texture:textureSet.getTextures())
 			{

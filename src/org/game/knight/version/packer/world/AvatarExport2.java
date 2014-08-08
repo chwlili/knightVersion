@@ -26,25 +26,26 @@ import org.chw.util.MD5Util;
 import org.chw.util.TextUtil;
 import org.chw.util.ZlibUtil;
 import org.game.knight.version.packer.GamePacker;
-import org.game.knight.version.packer.world.attire.Attire;
-import org.game.knight.version.packer.world.attire.AttireAction;
-import org.game.knight.version.packer.world.attire.AttireAnim;
-import org.game.knight.version.packer.world.attire.AttireAudio;
-import org.game.knight.version.packer.world.attire.AttireFile;
-import org.game.knight.version.packer.world.scene.Scene;
-import org.game.knight.version.packer.world.scene.SceneAnim;
-import org.game.knight.version.packer.world.scene.SceneBackLayer;
-import org.game.knight.version.packer.world.scene.SceneDoor;
-import org.game.knight.version.packer.world.scene.SceneForeLayer;
-import org.game.knight.version.packer.world.scene.SceneHot;
-import org.game.knight.version.packer.world.scene.SceneHotLink;
-import org.game.knight.version.packer.world.scene.SceneMonster;
-import org.game.knight.version.packer.world.scene.SceneMonsterBatch;
-import org.game.knight.version.packer.world.scene.SceneMonsterTimer;
-import org.game.knight.version.packer.world.scene.SceneNpc;
-import org.game.knight.version.packer.world.scene.ScenePart;
-import org.game.knight.version.packer.world.scene.SceneSection;
-import org.game.knight.version.packer.world.scene.SceneTrap;
+import org.game.knight.version.packer.world.model.Attire;
+import org.game.knight.version.packer.world.model.AttireAction;
+import org.game.knight.version.packer.world.model.AttireAnim;
+import org.game.knight.version.packer.world.model.AttireAudio;
+import org.game.knight.version.packer.world.model.AttireFile;
+import org.game.knight.version.packer.world.model.ProjectImgFile;
+import org.game.knight.version.packer.world.model.Scene;
+import org.game.knight.version.packer.world.model.SceneAnim;
+import org.game.knight.version.packer.world.model.SceneBackLayer;
+import org.game.knight.version.packer.world.model.SceneDoor;
+import org.game.knight.version.packer.world.model.SceneForeLayer;
+import org.game.knight.version.packer.world.model.SceneHot;
+import org.game.knight.version.packer.world.model.SceneHotLink;
+import org.game.knight.version.packer.world.model.SceneMonster;
+import org.game.knight.version.packer.world.model.SceneMonsterBatch;
+import org.game.knight.version.packer.world.model.SceneMonsterTimer;
+import org.game.knight.version.packer.world.model.SceneNpc;
+import org.game.knight.version.packer.world.model.ScenePart;
+import org.game.knight.version.packer.world.model.SceneSection;
+import org.game.knight.version.packer.world.model.SceneTrap;
 
 public class AvatarExport2
 {
@@ -54,21 +55,15 @@ public class AvatarExport2
 
 	private String cfgFileKey;
 
-	private Hashtable<AttireAnim, String> attireAnim_url = new Hashtable<AttireAnim, String>();
-	private Hashtable<AttireAnim, Integer> attireAnim_size = new Hashtable<AttireAnim, Integer>();
-
 	private Hashtable<Scene, String> scene_url = new Hashtable<Scene, String>();
 	private Hashtable<Scene, Integer> scene_size = new Hashtable<Scene, Integer>();
-
-	private String attireCfgKey;
-	private Hashtable<Scene, String> sceneCfgKeys = new Hashtable<Scene, String>();
 
 	private StringBuilder versionData = new StringBuilder();
 
 	private Hashtable<String, String> boundle_exportID = new Hashtable<String, String>();
 
-	private Hashtable<ImgFile, String> img_key = new Hashtable<ImgFile, String>();
-	private Hashtable<ImgFile, String> img_typeName = new Hashtable<ImgFile, String>();
+	private Hashtable<ProjectImgFile, String> img_key = new Hashtable<ProjectImgFile, String>();
+	private Hashtable<ProjectImgFile, String> img_typeName = new Hashtable<ProjectImgFile, String>();
 
 	/**
 	 * 构造函数
@@ -120,18 +115,18 @@ public class AvatarExport2
 		final Hashtable<String, String> boundle_fileID = new Hashtable<String, String>();
 		final ArrayList<String> boundle_news = new ArrayList<String>();
 
-		final Hashtable<Region, ImgFile> region_img = new Hashtable<Region, ImgFile>();
+		final Hashtable<Region, ProjectImgFile> region_img = new Hashtable<Region, ProjectImgFile>();
 		final Hashtable<Region, String> region_frameTypeName = new Hashtable<Region, String>();
 
 		GamePacker.progress("分析装扮数据");
 		for (AttireFile attireFile : attires.values())
 		{
-			for (ImgFile img : attireFile.getAllImgs())
+			for (ProjectImgFile img : attireFile.getAllImgs())
 			{
 				String bagID = attireFile.getImgGroupID(img);
-				String imgSHA = world.getChecksumTable().getChecksumID(img.getInnerpath());
+				String imgSHA = world.getChecksumTable().getGID(img.url);
 
-				Region region = new Region(imgSHA, 0, 0, 0, img.getWidth(), img.getHeight(), 0, 0, img.getWidth(), img.getHeight(), 0, 0, 0);
+				Region region = new Region(imgSHA, 0, 0, 0, img.width, img.height, 0, 0, img.width, img.height, 0, 0, 0);
 				if (region != null)
 				{
 					if (!boundle_regions.containsKey(bagID))
@@ -165,21 +160,21 @@ public class AvatarExport2
 			{
 				for (AttireAction action : attire.getActions())
 				{
-					for (AttireAnim anim : action.getAnims())
+					for (AttireAnim anim : action.animList)
 					{
-						String bagID = anim.getBagID();
-						String imgSHA = world.getChecksumTable().getChecksumID(anim.getImg().getInnerpath());
+						String bagID = anim.bagID;
+						String imgSHA = world.getChecksumTable().getGID(anim.img.url);
 
-						int rowCount = anim.getRow();
-						int colCount = anim.getCol();
+						int rowCount = anim.row;
+						int colCount = anim.col;
 						int regionCount = rowCount * colCount;
 
 						for (int i = 0; i < regionCount; i++)
 						{
-							int delay = anim.getTimes()[i];
+							int delay = anim.times[i];
 							if (delay > 0)
 							{
-								Region region = attireManager.getTextureRegion(anim.getBagID(), imgSHA, anim.getRow(), anim.getCol(), i);
+								Region region = attireManager.getTextureRegion(anim.bagID, imgSHA, anim.row, anim.col, i);
 								if (region != null)
 								{
 									if (!boundle_regions.containsKey(bagID))
@@ -202,7 +197,7 @@ public class AvatarExport2
 										putValue(frameID, frameTypeName);
 
 										region_frameTypeName.put(region, frameTypeName);
-										region_img.put(region, anim.getImg());
+										region_img.put(region, anim.img);
 									}
 								}
 							}
@@ -261,8 +256,8 @@ public class AvatarExport2
 
 				// 导出PNG
 				Region region = regions.get(j);
-				ImgFile regionImg = region_img.get(region);
-				BufferedImage img = ImageIO.read(regionImg.getFile());
+				ProjectImgFile regionImg = region_img.get(region);
+				BufferedImage img = ImageIO.read(regionImg.file);
 
 				BufferedImage texture = new BufferedImage(region.getClipW(), region.getClipH(), BufferedImage.TYPE_INT_ARGB);
 				Graphics2D graphics = (Graphics2D) texture.getGraphics();
@@ -304,7 +299,7 @@ public class AvatarExport2
 		// 标记单文件导出ID
 		for (AttireFile attireFile : attires.values())
 		{
-			for (ImgFile img : attireFile.getAllImgs())
+			for (ProjectImgFile img : attireFile.getAllImgs())
 			{
 				img_key.put(img, boundle_fileID.get(attireFile.getImgGroupID(img)));
 			}
@@ -318,29 +313,29 @@ public class AvatarExport2
 		{
 			for (Attire attire : attireFile.getAllAttires())
 			{
-				attireText.append(String.format("\t<attire id=\"%s.%s\" name=\"%s\" x=\"%s\" y=\"%s\" width=\"%s\" height=\"%s\">\n", attire.getFileID(), attire.getKey(), attire.getRefKey(), attire.getHitRect().getX(), attire.getHitRect().getY(), attire.getHitRect().getWidth(), attire.getHitRect().getHeight()));
+				attireText.append(String.format("\t<attire id=\"%s.%s\" name=\"%s\" x=\"%s\" y=\"%s\" width=\"%s\" height=\"%s\">\n", attire.getFileID(), attire.getKey(), attire.getRefKey(), attire.getHitRect().x, attire.getHitRect().y, attire.getHitRect().width, attire.getHitRect().height));
 
 				for (AttireAction action : attire.getActions())
 				{
-					attireText.append(String.format("\t\t<action id=\"%s\" nameX=\"%s\" nameY=\"%s\" >\n", action.getID(), action.getNameX(), action.getNameY()));
+					attireText.append(String.format("\t\t<action id=\"%s\" nameX=\"%s\" nameY=\"%s\" >\n", action.id, action.nameX, action.nameY));
 
-					for (AttireAnim anim : action.getAnims())
+					for (AttireAnim anim : action.animList)
 					{
-						attireText.append(String.format("\t\t\t<anim x=\"%s\" y=\"%s\" scaleX=\"%s\" scaleY=\"%s\" flip=\"%s\" groupID=\"%s\" layerID=\"%s\">\n", anim.getX(), anim.getY(), anim.getScaleX(), anim.getScaleY(), anim.getFlip(), anim.getGroupID(), anim.getLayerID()));
+						attireText.append(String.format("\t\t\t<anim x=\"%s\" y=\"%s\" scaleX=\"%s\" scaleY=\"%s\" flip=\"%s\" groupID=\"%s\" layerID=\"%s\">\n", anim.x, anim.y, anim.scaleX, anim.scaleY, anim.flip, anim.groupID, anim.layerID));
 
-						String bagID = anim.getBagID();
-						String imgSHA = world.getChecksumTable().getChecksumID(anim.getImg().getInnerpath());
+						String bagID = anim.bagID;
+						String imgSHA = world.getChecksumTable().getGID(anim.img.url);
 
-						int rowCount = anim.getRow();
-						int colCount = anim.getCol();
+						int rowCount = anim.row;
+						int colCount = anim.col;
 						int regionCount = rowCount * colCount;
 
 						for (int i = 0; i < regionCount; i++)
 						{
-							int delay = anim.getTimes()[i];
+							int delay = anim.times[i];
 							if (delay > 0)
 							{
-								Region region = attireManager.getTextureRegion(anim.getBagID(), imgSHA, anim.getRow(), anim.getCol(), i);
+								Region region = attireManager.getTextureRegion(anim.bagID, imgSHA, anim.row, anim.col, i);
 								if (region != null)
 								{
 									int offSetX = region.getClipX() + region.getClipW() / 2 - region.getW() / 2;
@@ -357,10 +352,10 @@ public class AvatarExport2
 
 						attireText.append(String.format("\t\t\t</anim>\n"));
 					}
-					for (AttireAudio audio : action.getAudios())
+					for (AttireAudio audio : action.audioList)
 					{
-						String audioURL = world.exportFile(world.getChecksumTable().getChecksumID(audio.getMp3().getInnerpath()), MD5Util.addSuffix(FileUtil.getFileBytes(audio.getMp3().getFile())),"mp3");
-						attireText.append(String.format("\t\t\t<audio path=\"%s\" loop=\"%s\" volume=\"%s\"/>\n", audioURL, audio.getLoop(), audio.getVolume()));
+						String audioURL = world.exportFile(world.getChecksumTable().getGID(audio.mp3.url), MD5Util.addSuffix(FileUtil.getFileBytes(audio.mp3.file)),"mp3");
+						attireText.append(String.format("\t\t\t<audio path=\"%s\" loop=\"%s\" volume=\"%s\"/>\n", audioURL, audio.loop, audio.volume));
 					}
 
 					attireText.append(String.format("\t\t</action>\n"));
@@ -424,11 +419,11 @@ public class AvatarExport2
 
 						for (AttireAction action : attire.getActions())
 						{
-							if (action.getAnims().size() > 0)
+							if (action.animList.size() > 0)
 							{
 								ActionInfo info = getActionID(action);
 
-								roles.append(String.format("\t\t\t<action id=\"%s\" size=\"%s\" files=\"%s\"/>\n", action.getID(), info.size, info.urls));
+								roles.append(String.format("\t\t\t<action id=\"%s\" size=\"%s\" files=\"%s\"/>\n", action.id, info.size, info.urls));
 
 								String[] urls = info.urls.split("\\,");
 								for (String url : urls)
@@ -461,11 +456,11 @@ public class AvatarExport2
 
 						for (AttireAction action : attire.getActions())
 						{
-							if (action.getAnims().size() > 0)
+							if (action.animList.size() > 0)
 							{
 								ActionInfo info=getActionID(action);
 								
-								equips.append(String.format("\t\t\t<action id=\"%s\" size=\"%s\" files=\"%s\"/>\n", action.getID(), info.size, info.urls));
+								equips.append(String.format("\t\t\t<action id=\"%s\" size=\"%s\" files=\"%s\"/>\n", action.id, info.size, info.urls));
 
 								String[] urls = info.urls.split("\\,");
 								for (String url : urls)
@@ -496,11 +491,11 @@ public class AvatarExport2
 
 					for (AttireAction action : attire.getActions())
 					{
-						if (action.getAnims().size() > 0)
+						if (action.animList.size() > 0)
 						{
 							ActionInfo info=getActionID(action);
 							
-							effects.append(String.format("\t\t\t<action id=\"%s\" size=\"%s\" files=\"%s\"/>\n", action.getID(), info.size, info.urls));
+							effects.append(String.format("\t\t\t<action id=\"%s\" size=\"%s\" files=\"%s\"/>\n", action.id, info.size, info.urls));
 
 							String[] urls = info.urls.split("\\,");
 							for (String url : urls)
@@ -539,11 +534,11 @@ public class AvatarExport2
 
 						for (AttireAction action : attire.getActions())
 						{
-							if (action.getAnims().size() > 0)
+							if (action.animList.size() > 0)
 							{
 								ActionInfo info=getActionID(action);
 								
-								roles.append(String.format("\t\t\t<action id=\"%s\" size=\"%s\" files=\"%s\"/>\n", action.getID(), info.size, info.urls));
+								roles.append(String.format("\t\t\t<action id=\"%s\" size=\"%s\" files=\"%s\"/>\n", action.id, info.size, info.urls));
 
 								String[] urls = info.urls.split("\\,");
 								for (String url : urls)
@@ -577,11 +572,11 @@ public class AvatarExport2
 					{
 						for (AttireAction action : attire.getActions())
 						{
-							if (action.getAnims().size() > 0)
+							if (action.animList.size() > 0)
 							{
 								ActionInfo info=getActionID(action);
 								
-								roles.append(String.format("\t\t\t<action id=\"%s\" size=\"%s\" files=\"%s\"/>\n", action.getID(), info.size, info.urls));
+								roles.append(String.format("\t\t\t<action id=\"%s\" size=\"%s\" files=\"%s\"/>\n", action.id, info.size, info.urls));
 	
 								String[] urls = info.urls.split("\\,");
 								for (String url : urls)
@@ -640,9 +635,9 @@ public class AvatarExport2
 	private ActionInfo getActionID(AttireAction action)
 	{
 		HashSet<String> bagIDs = new HashSet<String>();
-		for (AttireAnim anim : action.getAnims())
+		for (AttireAnim anim : action.animList)
 		{
-			bagIDs.add(anim.getBagID());
+			bagIDs.add(anim.bagID);
 		}
 
 		int size = 0;
@@ -683,13 +678,13 @@ public class AvatarExport2
 			String bgsPath = "";
 			if (scene.getBackSound() != null)
 			{
-				bgsPath = world.exportFile("md5"+world.getChecksumTable().getChecksumID(scene.getBackSound().getInnerpath()), scene.getBackSound().getFile());
+				bgsPath = world.exportFile("md5"+world.getChecksumTable().getGID(scene.getBackSound().url), scene.getBackSound().file);
 			}
 
 			int[] sectionArr = new int[scene.getSections().size()];
 			for (int i = 0; i < scene.getSections().size(); i++)
 			{
-				sectionArr[i] = scene.getSections().get(i).getPosition();
+				sectionArr[i] = scene.getSections().get(i).position;
 			}
 
 			StringBuilder sb = new StringBuilder();
@@ -707,21 +702,21 @@ public class AvatarExport2
 			sb.append("\t<sections>\n");
 			for (SceneSection section : scene.getSections())
 			{
-				sb.append("\t\t<section x=\"" + section.getPosition() + "\" type=\"" + section.getType() + "\" />\n");
+				sb.append("\t\t<section x=\"" + section.position + "\" type=\"" + section.type + "\" />\n");
 			}
 			sb.append("\t</sections>\n");
 
 			sb.append("\t<layers>\n");
 			for (SceneBackLayer layer : scene.getBackLayers())
 			{
-				if (layer.getImage().getFile() != null && layer.getImage().getFile().exists())
+				if (layer.img != null)
 				{
-					String url = world.getExportedFileUrl(img_key.get(layer.getImage()));
-					Integer size = (int) world.getExportedFileSize(img_key.get(layer.getImage()));
+					String url = world.getExportedFileUrl(img_key.get(layer.img));
+					Integer size = (int) world.getExportedFileSize(img_key.get(layer.img));
 
 					url_size.put(url, size);
 
-					sb.append("\t\t<layer x=\"" + layer.getX() + "\" y=\"" + layer.getY() + "\" speed=\"" + layer.getSpeed() + "\" fileURL=\"" + url + "\" fileType=\"" + img_typeName.get(layer.getImage()) + "\" />\n");
+					sb.append("\t\t<layer x=\"" + layer.x + "\" y=\"" + layer.y + "\" speed=\"" + layer.speed + "\" fileURL=\"" + url + "\" fileType=\"" + img_typeName.get(layer.img) + "\" />\n");
 				}
 			}
 			sb.append("\t</layers>\n");
@@ -729,14 +724,14 @@ public class AvatarExport2
 			sb.append("\t<foreLayers>\n");
 			for (SceneForeLayer layer : scene.getForeLayers())
 			{
-				if (layer.getImage().getFile() != null && layer.getImage().getFile().exists())
+				if (layer.img != null)
 				{
-					String url = world.getExportedFileUrl(img_key.get(layer.getImage()));
-					Integer size = (int) world.getExportedFileSize(img_key.get(layer.getImage()));
+					String url = world.getExportedFileUrl(img_key.get(layer.img));
+					Integer size = (int) world.getExportedFileSize(img_key.get(layer.img));
 
 					url_size.put(url, size);
 
-					sb.append("\t\t<layer x=\"" + layer.getX() + "\" y=\"" + layer.getY() + "\" width=\"" + layer.getW() + "\" speed=\"" + layer.getSpeed() + "\" fileURL=\"" + url + "\" fileType=\"" + img_typeName.get(layer.getImage()) + "\"/>\n");
+					sb.append("\t\t<layer x=\"" + layer.x + "\" y=\"" + layer.y + "\" width=\"" + layer.w + "\" speed=\"" + layer.speed + "\" fileURL=\"" + url + "\" fileType=\"" + img_typeName.get(layer.img) + "\"/>\n");
 				}
 			}
 			sb.append("\t</foreLayers>\n");
@@ -744,10 +739,10 @@ public class AvatarExport2
 			sb.append("\t<backAnims>\n");
 			for (SceneAnim anim : scene.getBackAnims())
 			{
-				if (anim.getAttire() != null)
+				if (anim.attire != null)
 				{
-					sceneAttires.add(anim.getAttire());
-					sb.append("\t\t<anim x=\"" + anim.getX() + "\" y=\"" + anim.getY() + "\" offsetX=\"" + anim.getOffsetX() + "\" offsetY=\"" + anim.getOffsetY() + "\" direction=\"" + anim.getDirection() + "\" attire=\"" + anim.getAttire().getFileID() + "." + anim.getAttire().getRefKey() + "\"/>\n");
+					sceneAttires.add(anim.attire);
+					sb.append("\t\t<anim x=\"" + anim.x + "\" y=\"" + anim.y + "\" offsetX=\"" + anim.offsetX + "\" offsetY=\"" + anim.offsetY + "\" direction=\"" + anim.direction + "\" attire=\"" + anim.attire.getFileID() + "." + anim.attire.getRefKey() + "\"/>\n");
 				}
 			}
 			sb.append("\t</backAnims>\n");
@@ -755,10 +750,10 @@ public class AvatarExport2
 			sb.append("\t<anims>\n");
 			for (SceneAnim anim : scene.getAnims())
 			{
-				if (anim.getAttire() != null)
+				if (anim.attire != null)
 				{
-					sceneAttires.add(anim.getAttire());
-					sb.append("\t\t<anim x=\"" + anim.getX() + "\" y=\"" + anim.getY() + "\" offsetX=\"" + anim.getOffsetX() + "\" offsetY=\"" + anim.getOffsetY() + "\" direction=\"" + anim.getDirection() + "\" attire=\"" + anim.getAttire().getFileID() + "." + anim.getAttire().getRefKey() + "\"/>\n");
+					sceneAttires.add(anim.attire);
+					sb.append("\t\t<anim x=\"" + anim.x + "\" y=\"" + anim.y + "\" offsetX=\"" + anim.offsetX + "\" offsetY=\"" + anim.offsetY + "\" direction=\"" + anim.direction + "\" attire=\"" + anim.attire.getFileID() + "." + anim.attire.getRefKey() + "\"/>\n");
 				}
 			}
 			sb.append("\t</anims>\n");
@@ -766,10 +761,10 @@ public class AvatarExport2
 			sb.append("\t<npcs>\n");
 			for (SceneNpc npc : scene.getNpcs())
 			{
-				if (npc.getAttire() != null)
+				if (npc.attire != null)
 				{
-					sceneAttires.add(npc.getAttire());
-					sb.append("\t\t<npc id=\"" + npc.getID() + "\" x=\"" + npc.getX() + "\" y=\"" + npc.getY() + "\" direction=\"" + npc.getDirection() + "\" attire=\"" + npc.getAttire().getFileID() + "." + npc.getAttire().getRefKey() + "\"/>\n");
+					sceneAttires.add(npc.attire);
+					sb.append("\t\t<npc id=\"" + npc.id + "\" x=\"" + npc.x + "\" y=\"" + npc.y + "\" direction=\"" + npc.direction + "\" attire=\"" + npc.attire.getFileID() + "." + npc.attire.getRefKey() + "\"/>\n");
 				}
 			}
 			sb.append("\t</npcs>\n");
@@ -780,13 +775,13 @@ public class AvatarExport2
 				SceneHot hot = door.getHot();
 				if (hot != null)
 				{
-					if (door.getAttire() != null)
+					if (door.attire != null)
 					{
-						sceneAttires.add(door.getAttire());
+						sceneAttires.add(door.attire);
 					}
 
-					sb.append("\t\t<door x=\"" + door.getX() + "\" y=\"" + door.getY() + "\" offsetX=\"0\" offsetY=\"0\" direction=\"" + door.getDirection() + "\" attire=\"" + (door.getAttire() != null ? door.getAttire().getFileID() + "." + door.getAttire().getKey() : "") + "\">\n");
-					sb.append(String.format("\t\t\t<hot x=\"%s\" y=\"%s\" width=\"%s\" height=\"%s\" acceptableQuests=\"%s\" acceptedQuests=\"%s\" submitableQuests=\"%s\" submitedQuests=\"%s\">\n", hot.getX(), hot.getY(), hot.getWidth(), hot.getHeight(), hot.getAcceptableQuests(), hot.getAcceptedQuests(), hot.getSubmitableQuests(), hot.getSubmitedQuests()));
+					sb.append("\t\t<door x=\"" + door.x + "\" y=\"" + door.y + "\" offsetX=\"0\" offsetY=\"0\" direction=\"" + door.direction + "\" attire=\"" + (door.attire != null ? door.attire.getFileID() + "." + door.attire.getKey() : "") + "\">\n");
+					sb.append(String.format("\t\t\t<hot x=\"%s\" y=\"%s\" width=\"%s\" height=\"%s\" acceptableQuests=\"%s\" acceptedQuests=\"%s\" submitableQuests=\"%s\" submitedQuests=\"%s\">\n", hot.x, hot.y, hot.width, hot.height, hot.acceptableQuests, hot.acceptedQuests, hot.submitableQuests, hot.submitedQuests));
 					for (SceneHotLink line : hot.getLinks())
 					{
 						sb.append(String.format("\t\t\t\t<link toID=\"%s\" toName=\"%s\" toX=\"%s\" toY=\"%s\" />\n", line.getToID(), line.getToName(), line.getToX(), line.getToY()));
@@ -801,7 +796,7 @@ public class AvatarExport2
 			sb.append("\t<traps>\n");
 			for (SceneTrap trap : scene.getTraps())
 			{
-				sb.append(String.format("\t\t<trap id=\"%s\" type=\"%s\" x=\"%s\" y=\"%s\" width=\"%s\" height=\"%s\" quest=\"%s\"><![CDATA[%s]]></trap>\n", trapID, trap.getType(), trap.getX(), trap.getY(), trap.getWidth(), trap.getHeight(), trap.getQuest(), trap.getContent()));
+				sb.append(String.format("\t\t<trap id=\"%s\" type=\"%s\" x=\"%s\" y=\"%s\" width=\"%s\" height=\"%s\" quest=\"%s\"><![CDATA[%s]]></trap>\n", trapID, trap.type, trap.x, trap.y, trap.width, trap.height, trap.quest, trap.content));
 				trapID++;
 			}
 			sb.append("\t</traps>\n");
@@ -810,20 +805,20 @@ public class AvatarExport2
 			HashSet<Integer> monsterIDs = new HashSet<Integer>();
 			for (ScenePart part : scene.getParts())
 			{
-				for (SceneMonsterTimer timer : part.getTimers())
+				for (SceneMonsterTimer timer : part.timers)
 				{
 					for (SceneMonsterBatch batch : timer.getBatchList())
 					{
 						for (SceneMonster monster : batch.getMonsters())
 						{
-							if (!monsterIDs.contains(monster.getMonsterID()))
+							if (!monsterIDs.contains(monster.monsterID))
 							{
-								if (monster.getAttire() != null)
+								if (monster.attire != null)
 								{
-									sceneAttires.add(monster.getAttire());
+									sceneAttires.add(monster.attire);
 
-									sb.append("\t\t<monster id=\"" + monster.getMonsterID() + "\" attire=\"" + monster.getAttire().getFileID() + "." + monster.getAttire().getKey() + "\" />\n");
-									monsterIDs.add(monster.getMonsterID());
+									sb.append("\t\t<monster id=\"" + monster.monsterID + "\" attire=\"" + monster.attire.getFileID() + "." + monster.attire.getKey() + "\" />\n");
+									monsterIDs.add(monster.monsterID);
 								}
 							}
 						}
@@ -852,10 +847,10 @@ public class AvatarExport2
 			{
 				for (AttireAction action : attire.getActions())
 				{
-					for (AttireAnim anim : action.getAnims())
+					for (AttireAnim anim : action.animList)
 					{
-						String url = world.getExportedFileUrl(boundle_exportID.get(anim.getBagID()));
-						int size = (int) world.getExportedFileSize(boundle_exportID.get(anim.getBagID()));
+						String url = world.getExportedFileUrl(boundle_exportID.get(anim.bagID));
+						int size = (int) world.getExportedFileSize(boundle_exportID.get(anim.bagID));
 
 						url_size.put(url, size);
 					}

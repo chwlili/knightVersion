@@ -56,7 +56,7 @@ public class GridImgTable
 	/**
 	 * 获取图像裁切信息
 	 * 
-	 * @param file
+	 * @param data.file
 	 * @param md5
 	 * @param rowCount
 	 * @param colCount

@@ -43,7 +43,7 @@ public class ChecksumTable
 	 * @param path
 	 * @return
 	 */
-	public String getChecksum(String path)
+	public String getMD5(String path)
 	{
 		return checksumTable.get(path);
 	}
@@ -54,7 +54,7 @@ public class ChecksumTable
 	 * @param path
 	 * @return
 	 */
-	public String getChecksumID(String path)
+	public String getGID(String path)
 	{
 		return checksumIDTable.get(checksumTable.get(path))+"";
 	}

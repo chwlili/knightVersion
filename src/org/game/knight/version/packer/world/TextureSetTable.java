@@ -163,7 +163,7 @@ public class TextureSetTable
 				GridImg[] clips = world.getGridImgTable().getClips(gridImgKey);
 				for (int j = 0; j < clips.length; j++)
 				{
-					String imgID = world.getChecksumTable().getChecksumID(gridImgKey.getFileInnerPath());
+					String imgID = world.getChecksumTable().getGID(gridImgKey.getFileInnerPath());
 					String regionKey = imgID + "_" + gridImgKey.getRowCount() + "_" + gridImgKey.getColCount();
 
 					regions[index] = new Region(regionKey, j, clips[j], gridImgKey.getFile(), gridImgKey.getTimes()[j]);
@@ -335,7 +335,7 @@ public class TextureSetTable
 	/**
 	 * ±£´æÌùÍ¼¼¯ÅäÖÃ
 	 * 
-	 * @param file
+	 * @param data.file
 	 */
 	public void save()
 	{

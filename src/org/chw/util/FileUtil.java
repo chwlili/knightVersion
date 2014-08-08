@@ -10,6 +10,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 
 public class FileUtil
 {
@@ -27,11 +28,12 @@ public class FileUtil
 
 	/**
 	 * 复制到
-	 * @throws IOException 
+	 * 
+	 * @throws IOException
 	 */
 	public static void copyTo(File dest, File from) throws IOException
 	{
-		if(dest.exists() && from!=null && from.isFile())
+		if (dest.exists() && from != null && from.isFile())
 		{
 			dest.delete();
 		}
@@ -48,7 +50,7 @@ public class FileUtil
 		// 新建文件输出流并对它进行缓冲
 		FileOutputStream output = null;
 		BufferedOutputStream outBuff = null;
-		
+
 		try
 		{
 			// 新建文件输入流并对它进行缓冲
@@ -70,19 +72,19 @@ public class FileUtil
 		}
 		finally
 		{
-			if(inBuff != null)
+			if (inBuff != null)
 			{
 				inBuff.close();
 			}
-			if(outBuff != null)
+			if (outBuff != null)
 			{
 				outBuff.close();
 			}
-			if(output != null)
+			if (output != null)
 			{
 				output.close();
 			}
-			if(input != null)
+			if (input != null)
 			{
 				input.close();
 			}
@@ -109,15 +111,16 @@ public class FileUtil
 	 */
 	public static void writeFile(File dest, byte[] bytes)
 	{
-		writeFile(dest,new ByteArrayInputStream(bytes));
+		writeFile(dest, new ByteArrayInputStream(bytes));
 	}
-	
+
 	/**
 	 * 写入文件
+	 * 
 	 * @param input
 	 * @param dest
 	 */
-	public static void writeFile(File dest,InputStream input)
+	public static void writeFile(File dest, InputStream input)
 	{
 		if (dest.exists())
 		{
@@ -134,7 +137,7 @@ public class FileUtil
 				dest.getParentFile().mkdirs();
 			}
 		}
-		
+
 		try
 		{
 			// 新建文件输入流并对它进行缓冲
@@ -161,8 +164,7 @@ public class FileUtil
 			e.printStackTrace();
 		}
 	}
-	
-	
+
 	/**
 	 * 复制文件
 	 */
@@ -221,7 +223,7 @@ public class FileUtil
 			}
 		}
 	}
-	
+
 	public static byte[] getFileBytes(File file)
 	{
 		try
@@ -251,7 +253,7 @@ public class FileUtil
 			// 确保所有数据均被读取
 			if (offset < bytes.length)
 			{
-				throw new IOException("Could not completely read file " +file.getName());
+				throw new IOException("Could not completely read file " + file.getName());
 			}
 
 			is.close();
@@ -270,4 +272,55 @@ public class FileUtil
 		return null;
 	}
 
+	/**
+	 * 列出所有文件、子文件
+	 * @param folder
+	 * @return
+	 */
+	public static File[] listFiles(File folder)
+	{
+		ArrayList<File> dirs = new ArrayList<File>();
+		ArrayList<File> files = new ArrayList<File>();
+
+		if(folder!=null && folder.exists())
+		{
+			if(folder.isDirectory())
+			{
+				dirs.add(folder);
+			}
+			else if(folder.isFile())
+			{
+				files.add(folder);
+			}
+		}
+		
+		while (dirs.size() > 0)
+		{
+			File curr = dirs.remove(0);
+			if (curr.isDirectory())
+			{
+				File[] childs = curr.listFiles();
+				for (int i = 0; i < childs.length; i++)
+				{
+					File child = childs[i];
+
+					if (child.isHidden())
+					{
+						continue;
+					}
+
+					if (child.isDirectory())
+					{
+						dirs.add(child);
+					}
+					else
+					{
+						files.add(child);
+					}
+				}
+			}
+		}
+		
+		return files.toArray(new File[files.size()]);
+	}
 }

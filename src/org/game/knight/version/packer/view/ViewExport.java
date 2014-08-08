@@ -119,7 +119,7 @@ public class ViewExport extends AbsExporter
 	 */
 	public void addOutputFile(ViewFile file) throws Exception
 	{
-		String key = getChecksumTable().getChecksumID(file.getInnerPath());
+		String key = getChecksumTable().getGID(file.getInnerPath());
 
 		boolean exists = hasExportedFile(key);
 
@@ -149,7 +149,7 @@ public class ViewExport extends AbsExporter
 	 */
 	public String getOutputFileURL(ViewFile file)
 	{
-		String key = getChecksumTable().getChecksumID(file.getInnerPath());
+		String key = getChecksumTable().getGID(file.getInnerPath());
 
 		return getExportedFileUrl(key);
 	}
@@ -476,8 +476,8 @@ public class ViewExport extends AbsExporter
 					if (!swfKeys.contains(swf.getKey()))
 					{
 						String bagKey = swf.getKey();
-						String bagURL = getExportedFileUrl(getChecksumTable().getChecksumID(swf.getFile().getInnerPath()));
-						long bagLen = getExportedFileSize(getChecksumTable().getChecksumID(swf.getFile().getInnerPath()));
+						String bagURL = getExportedFileUrl(getChecksumTable().getGID(swf.getFile().getInnerPath()));
+						long bagLen = getExportedFileSize(getChecksumTable().getGID(swf.getFile().getInnerPath()));
 
 						swfKeys.add(bagKey);
 						swfUrls.add(bagURL);

@@ -64,7 +64,7 @@ public class FilesExporter extends AbsExporter
 		{
 			GamePacker.progress("Êä³öÎÄ¼þ",url);
 			//exportFile(getChecksumTable().getChecksumID(url),files.get(url));
-			exportFile(getChecksumTable().getChecksumID(url), MD5Util.addSuffix(FileUtil.getFileBytes(files.get(url))), getFileExtName(files.get(url)));
+			exportFile(getChecksumTable().getGID(url), MD5Util.addSuffix(FileUtil.getFileBytes(files.get(url))), getFileExtName(files.get(url)));
 			if(isCancel())
 			{
 				return;
@@ -84,7 +84,7 @@ public class FilesExporter extends AbsExporter
 		txt.append("<fileSet>\n");
 		for(String innerPath : urls)
 		{
-			String exportKey=getChecksumTable().getChecksumID(innerPath);
+			String exportKey=getChecksumTable().getGID(innerPath);
 			
 			txt.append(String.format("\t<file name=\"%s\" url=\"%s\" size=\"%s\"/>\n",innerPath,getExportedFileUrl(exportKey),getExportedFileSize(exportKey)));
 		}

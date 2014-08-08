@@ -32,7 +32,7 @@ public class SwfBitmap
 	/**
 	 * ¹¹Ôìº¯Êý
 	 * 
-	 * @param file
+	 * @param data.file
 	 * @param quality
 	 */
 	public SwfBitmap(byte[] rgb,byte[] alpha,int width,int height,String packName,String className)
