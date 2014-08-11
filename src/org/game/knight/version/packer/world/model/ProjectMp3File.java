@@ -1,5 +1,6 @@
 package org.game.knight.version.packer.world.model;
 
+import java.io.File;
 
 public class ProjectMp3File extends ProjectFile
 {
@@ -10,12 +11,13 @@ public class ProjectMp3File extends ProjectFile
 
 	/**
 	 * ¹¹Ôìº¯Êý
+	 * 
 	 * @param file
 	 * @param url
 	 * @param innerDirPath
 	 */
-	public ProjectMp3File(ProjectFile file)
+	public ProjectMp3File(File file, String url, String md5, String gid)
 	{
-		super(file);
+		super(file, url, md5, gid);
 	}
 }

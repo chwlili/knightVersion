@@ -1,6 +1,5 @@
-package org.game.knight.version.packer.world.output3d;
+package org.game.knight.version.packer.world.model;
 
-import org.game.knight.version.packer.world.model.ProjectImgFile;
 
 
 public class ImageFrame

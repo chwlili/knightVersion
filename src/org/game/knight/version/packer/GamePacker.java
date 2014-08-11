@@ -20,7 +20,6 @@ import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.jface.preference.DirectoryFieldEditor;
 import org.eclipse.jface.viewers.TreePath;
 import org.eclipse.jface.viewers.TreeSelection;
 import org.eclipse.jface.viewers.TreeViewer;
@@ -49,7 +48,7 @@ import org.game.knight.version.packer.files.FilesExporter;
 import org.game.knight.version.packer.game.GameExporter;
 import org.game.knight.version.packer.icon.IconExporter;
 import org.game.knight.version.packer.view.ViewExport;
-import org.game.knight.version.packer.world.WorldExporter;
+import org.game.knight.version.packer.world.task.RootTask;
 
 public class GamePacker extends Composite
 {
@@ -975,8 +974,10 @@ public class GamePacker extends Composite
 
 				if (worldSelected)
 				{
-					WorldExporter world = new WorldExporter(new File(worldPath), new File(cdnPath + File.separatorChar + "world"), zip, isMobile, writeRegionImg);
-					world.publish();
+					//WorldExporter world = new WorldExporter(new File(worldPath), new File(cdnPath + File.separatorChar + "world"), zip, isMobile, writeRegionImg);
+					//world.publish();
+					RootTask world=new RootTask(new File(worldPath), new File(cdnPath + File.separatorChar + "world"));
+					world.start();
 				}
 
 				if (codeSelected)

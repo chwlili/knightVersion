@@ -1,7 +1,12 @@
 package org.game.knight.version.packer.world.model;
 
-import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.widgets.Display;
+import java.io.File;
+import java.io.IOException;
+import java.util.Iterator;
+
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.FileImageInputStream;
 
 public class ProjectImgFile extends ProjectFile
 {
@@ -14,34 +19,53 @@ public class ProjectImgFile extends ProjectFile
 	 * 宽度
 	 */
 	public final int width;
-	
+
 	/**
 	 * 高度
 	 */
 	public final int height;
-	
+
 	/**
 	 * 构造函数
+	 * 
 	 * @param file
 	 * @param url
 	 */
-	public ProjectImgFile(ProjectFile file)
+	public ProjectImgFile(File file, String url, String md5, String gid)
 	{
-		super(file);
-		
-		int w=0;
-		int h=0;
-		if(file.exists() && file.isFile())
+		super(file, url, md5, gid);
+
+		int w = 0;
+		int h = 0;
+
+		String ext="";
+		int dotIndex=file.getName().lastIndexOf(".");
+		if(dotIndex!=-1)
 		{
-			Image img=new Image(Display.getCurrent(), file.getAbsolutePath());
-			if(img!=null)
+			ext=file.getName().substring(dotIndex+1);
+		}
+		
+		Iterator<ImageReader> iter = ImageIO.getImageReadersBySuffix(ext);
+		if (iter.hasNext())
+		{
+			ImageReader reader = iter.next();
+			try
 			{
-				w=img.getBounds().width;
-				h=img.getBounds().height;
-				img.dispose();
+				reader.setInput(new FileImageInputStream(file));
+				w = reader.getWidth(reader.getMinIndex());
+				h = reader.getHeight(reader.getMinIndex());
+			}
+			catch (IOException e)
+			{
+				e.printStackTrace();
+			}
+			finally
+			{
+				reader.dispose();
 			}
 		}
-		this.width=w;
-		this.height=h;
+
+		this.width = w;
+		this.height = h;
 	}
 }

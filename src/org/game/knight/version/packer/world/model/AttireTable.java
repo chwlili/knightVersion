@@ -21,6 +21,7 @@ public class AttireTable
 
 	private HashMap<String, HashMap<String, AttireBitmap>> bitmapTable = new HashMap<String, HashMap<String, AttireBitmap>>();
 	private HashMap<String, HashMap<String, Attire>> attireTable = new HashMap<String, HashMap<String, Attire>>();
+	private ArrayList<Attire> allAttres=new ArrayList<Attire>();
 
 	/**
 	 * ¹¹Ôìº¯Êý
@@ -83,7 +84,7 @@ public class AttireTable
 	 */
 	public Attire[] getAllAttire()
 	{
-		return attireTable.values().toArray(new Attire[attireTable.size()]);
+		return allAttres.toArray(new Attire[allAttres.size()]);
 	}
 
 	/**
@@ -116,6 +117,7 @@ public class AttireTable
 			attireTable.put(url, new HashMap<String,Attire>());
 		}
 		attireTable.get(url).put(attire.key, attire);
+		allAttres.add(attire);
 	}
 	
 	/**

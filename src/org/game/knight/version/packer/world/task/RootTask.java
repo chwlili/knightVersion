@@ -5,9 +5,10 @@ import java.io.File;
 import org.game.knight.version.packer.GamePacker;
 import org.game.knight.version.packer.world.model.AtfParamTable;
 import org.game.knight.version.packer.world.model.AttireTable;
+import org.game.knight.version.packer.world.model.ImageFrameTable;
 import org.game.knight.version.packer.world.model.ProjectFileTable;
 import org.game.knight.version.packer.world.model.WorldTable;
-import org.game.knight.version.packer.world.output3d.ImageFrameTable;
+import org.game.knight.version.packer.world.model.WriteFileTable;
 
 public class RootTask
 {
@@ -20,7 +21,8 @@ public class RootTask
 	private AtfParamTable paramTable;
 	private AttireTable attireTable;
 	private WorldTable worldTable;
-	private ImageFrameTable frameFrameTable;
+	private ImageFrameTable imageFrameTable;
+	private WriteFileTable writeFileTable;
 
 	/**
 	 * 构造函数
@@ -95,7 +97,16 @@ public class RootTask
 	 */
 	public ImageFrameTable getImageFrameTable()
 	{
-		return frameFrameTable;
+		return imageFrameTable;
+	}
+	
+	/**
+	 * 输出文件表
+	 * @return
+	 */
+	public WriteFileTable getWriteFileTable()
+	{
+		return writeFileTable;
 	}
 
 	/**
@@ -116,12 +127,16 @@ public class RootTask
 		return cancel;
 	}
 	
+	
+	
 	/**
 	 * 开始读取装扮
 	 */
 	public void start()
 	{
-		GamePacker.progress("读取ATF分组信息");
+		GamePacker.beginTask("世界");
+		
+		GamePacker.progress("读取输入信息");
 		fileTable=new ProjectFileTable(this);
 		fileTable.start();
 		if(isCancel())
@@ -152,9 +167,18 @@ public class RootTask
 		{
 			return;
 		}
-		
-		frameFrameTable=new ImageFrameTable(this);
-		frameFrameTable.start();
+
+		GamePacker.progress("计算图像的裁切信息");
+		imageFrameTable=new ImageFrameTable(this);
+		imageFrameTable.start();
+		if(isCancel())
+		{
+			return;
+		}
+
+		GamePacker.progress("读取文件导出表");
+		writeFileTable=new WriteFileTable(this);
+		writeFileTable.start();
 		if(isCancel())
 		{
 			return;

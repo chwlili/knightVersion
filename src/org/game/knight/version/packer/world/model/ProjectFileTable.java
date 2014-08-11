@@ -3,19 +3,27 @@ package org.game.knight.version.packer.world.model;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
 import org.chw.util.FileUtil;
 import org.chw.util.MD5Util;
+import org.game.knight.version.packer.GamePacker;
 import org.game.knight.version.packer.world.task.RootTask;
 
 public class ProjectFileTable
 {
 	private final RootTask root;
 	
+	private String lastLog;
+	
 	private HashMap<String, ProjectFile> url_file;
+	private HashMap<String, ProjectFile> gid_file;
+
 	private HashMap<String, ProjectImgFile> url_img;
 	private HashMap<String, ProjectMp3File> url_mp3;
 	private HashMap<String, ProjectFile> url_texture;
@@ -25,11 +33,23 @@ public class ProjectFileTable
 
 	/**
 	 * 构造函数
+	 * 
 	 * @param root
 	 */
 	public ProjectFileTable(RootTask root)
 	{
 		this.root = root;
+	}
+
+	/**
+	 * 按GID获取文件
+	 * 
+	 * @param gid
+	 * @return
+	 */
+	public ProjectFile getFileByGID(String gid)
+	{
+		return gid_file.get(gid);
 	}
 
 	/**
@@ -95,7 +115,6 @@ public class ProjectFileTable
 		return url_link.values().toArray(new ProjectFile[url_link.size()]);
 	}
 
-
 	// -----------------------------------------------------------------------------------------------------------------------
 	//
 	// MD5计算
@@ -113,41 +132,44 @@ public class ProjectFileTable
 	{
 		openVerFile();
 
-		finishFiles=new ArrayList<ProjectFile>();
+		finishFiles = new ArrayList<ProjectFile>();
 		inputFiles = FileUtil.listFiles(root.getInputFolder());
-		
-		ExecutorService exec = Executors.newFixedThreadPool(5);
-		for(int i=0;i<5;i++)
+
+		ExecutorService exec = Executors.newCachedThreadPool();
+		for (int i = 0; i < 5; i++)
 		{
 			exec.execute(new Runnable()
 			{
 				@Override
 				public void run()
 				{
-					while(true)
+					while (true)
 					{
-						if(root.isCancel())
+						if (root.isCancel())
+						{
+							break;
+						}
+
+						File file = getNextFile();
+						if (file == null)
 						{
 							break;
 						}
 						
-						File file=getNextFile();
-						if(file==null)
-						{
-							break;
-						}
-						
-						finishFile(file,MD5Util.md5File(file));
+						finishFile(file, MD5Util.md5File(file));
+						Thread.yield();
 					}
 				}
 			});
 		}
 		
-		while(!root.isCancel() && !isFinished())
+		while (!root.isCancel() && !isFinished())
 		{
 			try
 			{
-				Thread.sleep(100);
+				GamePacker.progress(lastLog);
+				Thread.yield();
+				Thread.sleep(50);
 			}
 			catch (InterruptedException e)
 			{
@@ -155,68 +177,89 @@ public class ProjectFileTable
 				break;
 			}
 		}
+		
+		if (isFinished())
+		{
+			initFileTable();
+		}
+		else
+		{
+			//
+		}
 	}
-	
+
 	/**
 	 * 是否已经完成
+	 * 
 	 * @return
 	 */
 	private synchronized boolean isFinished()
 	{
-		return finishFiles.size()==inputFiles.length;
+		return finishFiles.size() == inputFiles.length;
 	}
-	
+
 	/**
 	 * 获取下一个文件
+	 * 
 	 * @return
 	 */
 	private synchronized File getNextFile()
 	{
-		File result=null;
-		if(index<inputFiles.length)
+		File result = null;
+		if (index < inputFiles.length)
 		{
-			result=inputFiles[index];
+			result = inputFiles[index];
 			index++;
 		}
 		return result;
 	}
-	
+
 	/**
 	 * 完成一个文件
+	 * 
 	 * @param file
 	 * @param md5
 	 */
-	private synchronized void finishFile(File file,String md5)
+	private synchronized void finishFile(File file, String md5)
 	{
-		String url=file.getPath().substring(root.getInputFolder().getPath().length()).replaceAll("\\\\", "/");
+		String url = file.getPath().substring(root.getInputFolder().getPath().length()).replaceAll("\\\\", "/");
 
-		String gid="";
-		
-		MD5 oldItem=oldTable.get(url);
-		if(oldItem!=null && oldItem.md5.equals(md5))
+		lastLog="md5(" + finishFiles.size() + "/" + inputFiles.length + "): " + md5+" - "+ url;
+
+		String gid = "";
+
+		MD5 oldItem = oldTable.get(url);
+		if (oldItem != null && oldItem.md5.equals(md5))
 		{
-			gid=oldItem.gid;
+			gid = oldItem.gid;
 		}
 		else
 		{
-			gid=nextID+"";
+			gid = nextID + "";
 			nextID++;
 		}
-		
-		if(!newTable.containsKey(url))
+
+		if (!newTable.containsKey(url))
 		{
 			newTable.put(url, new MD5(url, md5, gid));
 		}
+
+		MD5 newItem = newTable.get(url);
 		
-		MD5 newItem=newTable.get(url);
-		
-		finishFiles.add(new ProjectFile(file, newItem.url, newItem.md5, newItem.gid));
-		if(finishFiles.size()==inputFiles.length)
+		url=url.toLowerCase();
+		if (url.endsWith(".jpg") || url.endsWith(".jpeg") || url.endsWith(".png") || url.endsWith(".gif"))
 		{
-			initFileTable();
+			finishFiles.add(new ProjectImgFile(file, newItem.url, newItem.md5, newItem.gid));
+		}
+		else if (url.endsWith(".mp3"))
+		{
+			finishFiles.add(new ProjectMp3File(file, newItem.url, newItem.md5, newItem.gid));
+		}
+		else
+		{
+			finishFiles.add(new ProjectFile(file, newItem.url, newItem.md5, newItem.gid));
 		}
 	}
-
 
 	/**
 	 * 初始化文件表
@@ -225,7 +268,9 @@ public class ProjectFileTable
 	 */
 	private void initFileTable()
 	{
-		this.url_file=new HashMap<String, ProjectFile>();
+		this.url_file = new HashMap<String, ProjectFile>();
+		this.gid_file = new HashMap<String, ProjectFile>();
+
 		this.url_img = new HashMap<String, ProjectImgFile>();
 		this.url_mp3 = new HashMap<String, ProjectMp3File>();
 		this.url_texture = new HashMap<String, ProjectFile>();
@@ -236,15 +281,16 @@ public class ProjectFileTable
 		for (ProjectFile file : finishFiles)
 		{
 			url_file.put(file.url, file);
+			gid_file.put(file.gid, file);
 
 			String url = file.url.toLowerCase();
-			if (url.endsWith(".jpg") || url.endsWith(".jpeg") || file.url.endsWith(".png") || file.url.endsWith(".gif"))
+			if (url.endsWith(".jpg") || url.endsWith(".jpeg") || url.endsWith(".png") || url.endsWith(".gif"))
 			{
-				url_img.put(file.url, new ProjectImgFile(file));
+				url_img.put(file.url, (ProjectImgFile)file);
 			}
 			else if (url.endsWith(".mp3"))
 			{
-				url_mp3.put(file.url, new ProjectMp3File(file));
+				url_mp3.put(file.url, (ProjectMp3File)file);
 			}
 			else if (url.endsWith(".textures"))
 			{
@@ -271,7 +317,6 @@ public class ProjectFileTable
 	//
 	// -----------------------------------------------------------------------------------------------------------------------
 
-	private File file;
 	private int nextID;
 	private HashMap<String, MD5> oldTable;
 	private HashMap<String, MD5> newTable;
@@ -295,7 +340,7 @@ public class ProjectFileTable
 		this.oldTable = new HashMap<String, MD5>();
 		this.newTable = new HashMap<String, MD5>();
 
-		if (!file.exists())
+		if (!getVerFile().exists())
 		{
 			return;
 		}
@@ -354,6 +399,7 @@ public class ProjectFileTable
 		if (newTable != null)
 		{
 			String[] keys = newTable.keySet().toArray(new String[newTable.size()]);
+			Arrays.sort(keys);
 			for (String key : keys)
 			{
 				MD5 item = newTable.get(key);
@@ -364,18 +410,19 @@ public class ProjectFileTable
 
 		try
 		{
-			FileUtil.writeFile(file, output.toString().getBytes("utf8"));
+			FileUtil.writeFile(getVerFile(), output.toString().getBytes("utf8"));
 		}
 		catch (UnsupportedEncodingException e)
 		{
 			e.printStackTrace();
 		}
 	}
-	
+
 	/**
 	 * MD5项
+	 * 
 	 * @author ds
-	 *
+	 * 
 	 */
 	private static class MD5
 	{
@@ -383,12 +430,12 @@ public class ProjectFileTable
 		 * URL
 		 */
 		public final String url;
-		
+
 		/**
 		 * MD5值
 		 */
 		public final String md5;
-		
+
 		/**
 		 * 全局ID
 		 */
@@ -396,6 +443,7 @@ public class ProjectFileTable
 
 		/**
 		 * 构造函数
+		 * 
 		 * @param url
 		 * @param md5
 		 * @param gid
