@@ -22,9 +22,9 @@ public class ImageFrameTable
 {
 	private RootTask root;
 
-	private GridImg[] clipQueue;
-	private int nextClipIndex;
-	private int finishClipCount;
+	private GridImg[] inputList;
+	private int nextIndex;
+	private int finishedCount;
 	private String lastLog="";
 
 	private HashMap<String, ImageFrame[]> oldTable = new HashMap<String, ImageFrame[]>();
@@ -41,13 +41,32 @@ public class ImageFrameTable
 	}
 
 	/**
+	 * 获取帧信息
+	 * @param img
+	 * @param row
+	 * @param col
+	 * @param index
+	 * @return
+	 */
+	public ImageFrame get(ProjectImgFile img,int row ,int col,int index)
+	{
+		String key=img.gid+"_"+row+"_"+col;
+		ImageFrame[] frames=newTable.get(key);
+		if(frames!=null && index<frames.length)
+		{
+			return frames[index];
+		}
+		return null;
+	}
+	
+	/**
 	 * 是否已经完成
 	 * 
 	 * @return
 	 */
 	private synchronized boolean isFinished()
 	{
-		return finishClipCount == clipQueue.length;
+		return finishedCount >= inputList.length;
 	}
 
 	/**
@@ -58,10 +77,10 @@ public class ImageFrameTable
 	private synchronized GridImg getNextFrames()
 	{
 		GridImg result = null;
-		if (nextClipIndex < clipQueue.length)
+		if (nextIndex < inputList.length)
 		{
-			result = clipQueue[nextClipIndex];
-			nextClipIndex++;
+			result = inputList[nextIndex];
+			nextIndex++;
 		}
 		return result;
 	}
@@ -73,8 +92,8 @@ public class ImageFrameTable
 	 */
 	private synchronized void finishFrames(GridImg img, ImageFrame[] frames)
 	{
-		finishClipCount++;
-		lastLog="计算最小像素区域("+finishClipCount+"/"+clipQueue.length+")："+img.file.url;
+		finishedCount++;
+		lastLog="计算最小像素区域("+finishedCount+"/"+inputList.length+")："+img.file.url;
 		add(frames);
 	}
 
@@ -85,9 +104,9 @@ public class ImageFrameTable
 	{
 		openVer();
 
-		clipQueue = findAllFrame(root);
+		inputList = findAllFrame(root);
 
-		ExecutorService exec = Executors.newFixedThreadPool(5);
+		ExecutorService exec = Executors.newCachedThreadPool();
 		for (int i = 0; i < 5; i++)
 		{
 			exec.execute(new Runnable()
@@ -123,10 +142,7 @@ public class ImageFrameTable
 			}
 		}
 		
-		if(isFinished())
-		{
-			
-		}
+		exec.shutdown();
 	}
 
 	// -----------------------------------------------------------------------------------------------------------------------
@@ -204,11 +220,16 @@ public class ImageFrameTable
 				// index_frameX_frameY_frameW_frameH_clipX_clipY_clipW_clipH ,
 				// ..
 				line = line.trim();
+				if(line.isEmpty())
+				{
+					continue;
+				}
+				
 				String[] parts = line.split("=");
 				if (parts.length == 2)
 				{
 					String[] keys = parts[0].trim().split("_");
-					String[] values = parts[1].trim().split("_");
+					String[] values = parts[1].trim().split(",");
 
 					if (keys.length != 3)
 					{
@@ -282,12 +303,26 @@ public class ImageFrameTable
 	/**
 	 * 保存版本信息
 	 */
-	private void saveVer()
+	public void saveVer()
 	{
-		StringBuilder sb = new StringBuilder();
-		for (String key : newTable.keySet())
+		String[] keys=newTable.keySet().toArray(new String[newTable.size()]);
+		Arrays.sort(keys,new Comparator<String>()
 		{
-			ImageFrame[] frames = newTable.get(key);
+			@Override
+			public int compare(String arg0, String arg1)
+			{
+				arg0=arg0.substring(0,arg0.indexOf("_"));
+				arg1=arg1.substring(0,arg1.indexOf("_"));
+				int val1=Integer.parseInt(arg0);
+				int val2=Integer.parseInt(arg1);
+				return val1-val2;
+			}
+		});
+		
+		StringBuilder sb = new StringBuilder();
+		for (int i=0;i<keys.length;i++)
+		{
+			ImageFrame[] frames = newTable.get(keys[i]);
 			if (frames.length <= 0)
 			{
 				continue;
@@ -298,23 +333,27 @@ public class ImageFrameTable
 				@Override
 				public int compare(ImageFrame o1, ImageFrame o2)
 				{
-					return o1.file.gid.compareTo(o2.file.gid);
+					return o1.index-o2.index;
 				}
 			});
 
 			ImageFrame first = frames[0];
 			sb.append(first.file.gid + "_" + first.row + "_" + first.col);
 			sb.append(" = ");
-			for (int i = 0; i < frames.length; i++)
+			for (int j = 0; j < frames.length; j++)
 			{
-				ImageFrame frame = frames[i];
-				if (i > 0)
+				ImageFrame frame = frames[j];
+				if (j > 0)
 				{
 					sb.append(",");
 				}
 				sb.append(frame.index + "_" + frame.frameX + "_" + frame.frameY + "_" + frame.frameW + "_" + frame.frameH + "_" + frame.clipX + "_" + frame.clipY + "_" + frame.clipW + "_" + frame.clipH);
 			}
-			sb.append("\n");
+			
+			if(i<keys.length-1)
+			{
+				sb.append("\n");
+			}
 		}
 
 		try

@@ -9,6 +9,8 @@ import org.game.knight.version.packer.world.model.ImageFrameTable;
 import org.game.knight.version.packer.world.model.ProjectFileTable;
 import org.game.knight.version.packer.world.model.WorldTable;
 import org.game.knight.version.packer.world.model.WriteFileTable;
+import org.game.knight.version.packer.world.output3d.AtlasTable;
+import org.game.knight.version.packer.world.output3d.SliceImageTable;
 
 public class RootTask
 {
@@ -23,6 +25,9 @@ public class RootTask
 	private WorldTable worldTable;
 	private ImageFrameTable imageFrameTable;
 	private WriteFileTable writeFileTable;
+	
+	private SliceImageTable sliceImgTable;
+	private AtlasTable atlasTable;
 
 	/**
 	 * 构造函数
@@ -139,6 +144,7 @@ public class RootTask
 		GamePacker.progress("读取输入信息");
 		fileTable=new ProjectFileTable(this);
 		fileTable.start();
+		fileTable.saveVer();
 		if(isCancel())
 		{
 			return;
@@ -171,6 +177,7 @@ public class RootTask
 		GamePacker.progress("计算图像的裁切信息");
 		imageFrameTable=new ImageFrameTable(this);
 		imageFrameTable.start();
+		imageFrameTable.saveVer();
 		if(isCancel())
 		{
 			return;
@@ -183,5 +190,24 @@ public class RootTask
 		{
 			return;
 		}
+
+		GamePacker.progress("图像切片");
+		sliceImgTable=new SliceImageTable(this);
+		sliceImgTable.start();
+		sliceImgTable.saveVer();
+		if(isCancel())
+		{
+			return;
+		}
+
+		GamePacker.progress("贴图集");
+		atlasTable=new AtlasTable(this);
+		atlasTable.start();
+		if(isCancel())
+		{
+			return;
+		}
+		
+		writeFileTable.saveVer();
 	}
 }

@@ -2,13 +2,11 @@ package org.game.knight.version.packer.world.model;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
 
 import org.chw.util.FileUtil;
 import org.chw.util.MD5Util;
@@ -18,9 +16,7 @@ import org.game.knight.version.packer.world.task.RootTask;
 public class ProjectFileTable
 {
 	private final RootTask root;
-	
-	private String lastLog;
-	
+
 	private HashMap<String, ProjectFile> url_file;
 	private HashMap<String, ProjectFile> gid_file;
 
@@ -121,19 +117,29 @@ public class ProjectFileTable
 	//
 	// -----------------------------------------------------------------------------------------------------------------------
 
-	private File[] inputFiles;
-	private int index;
-	private ArrayList<ProjectFile> finishFiles;
-
+	private File[] inputList;
+	private int nextIndex;
+	private int finishedCount;
+	private String lastLog;
+	
 	/**
 	 * 执行
 	 */
 	public void start()
 	{
-		openVerFile();
+		openVer();
+		
+		inputList = FileUtil.listFiles(root.getInputFolder());
 
-		finishFiles = new ArrayList<ProjectFile>();
-		inputFiles = FileUtil.listFiles(root.getInputFolder());
+		url_file = new HashMap<String, ProjectFile>();
+		gid_file = new HashMap<String, ProjectFile>();
+
+		url_img = new HashMap<String, ProjectImgFile>();
+		url_mp3 = new HashMap<String, ProjectMp3File>();
+		url_texture = new HashMap<String, ProjectFile>();
+		url_attire = new HashMap<String, ProjectFile>();
+		url_scene = new HashMap<String, ProjectFile>();
+		url_link = new HashMap<String, ProjectFile>();
 
 		ExecutorService exec = Executors.newCachedThreadPool();
 		for (int i = 0; i < 5; i++)
@@ -145,30 +151,24 @@ public class ProjectFileTable
 				{
 					while (true)
 					{
-						if (root.isCancel())
+						File file = getNextFile();
+						if (root.isCancel() || file == null)
 						{
 							break;
 						}
 
-						File file = getNextFile();
-						if (file == null)
-						{
-							break;
-						}
-						
 						finishFile(file, MD5Util.md5File(file));
 						Thread.yield();
 					}
 				}
 			});
 		}
-		
+
 		while (!root.isCancel() && !isFinished())
 		{
 			try
 			{
 				GamePacker.progress(lastLog);
-				Thread.yield();
 				Thread.sleep(50);
 			}
 			catch (InterruptedException e)
@@ -177,15 +177,8 @@ public class ProjectFileTable
 				break;
 			}
 		}
-		
-		if (isFinished())
-		{
-			initFileTable();
-		}
-		else
-		{
-			//
-		}
+
+		exec.shutdown();
 	}
 
 	/**
@@ -195,7 +188,7 @@ public class ProjectFileTable
 	 */
 	private synchronized boolean isFinished()
 	{
-		return finishFiles.size() == inputFiles.length;
+		return finishedCount >= inputList.length;
 	}
 
 	/**
@@ -206,10 +199,11 @@ public class ProjectFileTable
 	private synchronized File getNextFile()
 	{
 		File result = null;
-		if (index < inputFiles.length)
+		if (nextIndex < inputList.length)
 		{
-			result = inputFiles[index];
-			index++;
+			result = inputList[nextIndex];
+			lastLog = "MD5(" + nextIndex + "/" + inputList.length + "): " + result.getPath().substring(root.getInputFolder().getPath().length());
+			nextIndex++;
 		}
 		return result;
 	}
@@ -223,8 +217,6 @@ public class ProjectFileTable
 	private synchronized void finishFile(File file, String md5)
 	{
 		String url = file.getPath().substring(root.getInputFolder().getPath().length()).replaceAll("\\\\", "/");
-
-		lastLog="md5(" + finishFiles.size() + "/" + inputFiles.length + "): " + md5+" - "+ url;
 
 		String gid = "";
 
@@ -245,70 +237,48 @@ public class ProjectFileTable
 		}
 
 		MD5 newItem = newTable.get(url);
-		
-		url=url.toLowerCase();
+
+		ProjectFile myFile = null;
+
+		url = url.toLowerCase();
 		if (url.endsWith(".jpg") || url.endsWith(".jpeg") || url.endsWith(".png") || url.endsWith(".gif"))
 		{
-			finishFiles.add(new ProjectImgFile(file, newItem.url, newItem.md5, newItem.gid));
+			myFile = new ProjectImgFile(file, newItem.url, newItem.md5, newItem.gid);
+			url_img.put(newItem.url, (ProjectImgFile) myFile);
 		}
 		else if (url.endsWith(".mp3"))
 		{
-			finishFiles.add(new ProjectMp3File(file, newItem.url, newItem.md5, newItem.gid));
+			myFile = new ProjectMp3File(file, newItem.url, newItem.md5, newItem.gid);
+			url_mp3.put(newItem.url, (ProjectMp3File) myFile);
+		}
+		else if (url.endsWith(".textures"))
+		{
+			myFile = new ProjectFile(file, newItem.url, newItem.md5, newItem.gid);
+			url_texture.put(newItem.url, myFile);
+		}
+		else if (url.endsWith(".res") || url.endsWith(".attire"))
+		{
+			myFile = new ProjectFile(file, newItem.url, newItem.md5, newItem.gid);
+			url_attire.put(newItem.url, myFile);
+		}
+		else if (url.endsWith(".scene"))
+		{
+			myFile = new ProjectFile(file, newItem.url, newItem.md5, newItem.gid);
+			url_scene.put(newItem.url, myFile);
+		}
+		else if (url.endsWith(".link"))
+		{
+			myFile = new ProjectFile(file, newItem.url, newItem.md5, newItem.gid);
+			url_link.put(newItem.url, myFile);
 		}
 		else
 		{
-			finishFiles.add(new ProjectFile(file, newItem.url, newItem.md5, newItem.gid));
+			myFile = new ProjectFile(file, newItem.url, newItem.md5, newItem.gid);
 		}
-	}
-
-	/**
-	 * 初始化文件表
-	 * 
-	 * @param finishFiles
-	 */
-	private void initFileTable()
-	{
-		this.url_file = new HashMap<String, ProjectFile>();
-		this.gid_file = new HashMap<String, ProjectFile>();
-
-		this.url_img = new HashMap<String, ProjectImgFile>();
-		this.url_mp3 = new HashMap<String, ProjectMp3File>();
-		this.url_texture = new HashMap<String, ProjectFile>();
-		this.url_attire = new HashMap<String, ProjectFile>();
-		this.url_scene = new HashMap<String, ProjectFile>();
-		this.url_link = new HashMap<String, ProjectFile>();
-
-		for (ProjectFile file : finishFiles)
-		{
-			url_file.put(file.url, file);
-			gid_file.put(file.gid, file);
-
-			String url = file.url.toLowerCase();
-			if (url.endsWith(".jpg") || url.endsWith(".jpeg") || url.endsWith(".png") || url.endsWith(".gif"))
-			{
-				url_img.put(file.url, (ProjectImgFile)file);
-			}
-			else if (url.endsWith(".mp3"))
-			{
-				url_mp3.put(file.url, (ProjectMp3File)file);
-			}
-			else if (url.endsWith(".textures"))
-			{
-				url_texture.put(file.url, file);
-			}
-			else if (url.endsWith(".res") || url.endsWith(".attire"))
-			{
-				url_attire.put(file.url, file);
-			}
-			else if (url.endsWith(".scene"))
-			{
-				url_scene.put(file.url, file);
-			}
-			else if (url.endsWith(".link"))
-			{
-				url_link.put(file.url, file);
-			}
-		}
+		url_file.put(newItem.url, myFile);
+		gid_file.put(newItem.gid, myFile);
+		
+		finishedCount++;
 	}
 
 	// -----------------------------------------------------------------------------------------------------------------------
@@ -317,7 +287,7 @@ public class ProjectFileTable
 	//
 	// -----------------------------------------------------------------------------------------------------------------------
 
-	private int nextID;
+	private int nextID = 1;
 	private HashMap<String, MD5> oldTable;
 	private HashMap<String, MD5> newTable;
 
@@ -334,7 +304,7 @@ public class ProjectFileTable
 	/**
 	 * 打开
 	 */
-	private void openVerFile()
+	private void openVer()
 	{
 		this.nextID = 1;
 		this.oldTable = new HashMap<String, MD5>();
@@ -352,8 +322,12 @@ public class ProjectFileTable
 			for (String line : lines)
 			{
 				line = line.trim();
+				if (line.isEmpty())
+				{
+					continue;
+				}
 
-				if (line.startsWith("\\$"))
+				if (line.charAt(0) == '$')
 				{
 					String[] values = line.substring(1).split("=");
 					if (values.length == 2)
@@ -390,7 +364,7 @@ public class ProjectFileTable
 	/**
 	 * 保存
 	 */
-	private void saveVerFile()
+	public void saveVer()
 	{
 		StringBuilder output = new StringBuilder();
 
@@ -398,13 +372,27 @@ public class ProjectFileTable
 
 		if (newTable != null)
 		{
-			String[] keys = newTable.keySet().toArray(new String[newTable.size()]);
-			Arrays.sort(keys);
-			for (String key : keys)
+			MD5[] values = newTable.values().toArray(new MD5[newTable.size()]);
+			Arrays.sort(values, new Comparator<MD5>()
 			{
-				MD5 item = newTable.get(key);
 
-				output.append(item.url + " = " + item.md5 + " = " + item.gid + "\n");
+				@Override
+				public int compare(MD5 arg0, MD5 arg1)
+				{
+					int val1 = Integer.parseInt(arg0.gid);
+					int val2 = Integer.parseInt(arg1.gid);
+					return val1 - val2;
+				}
+			});
+
+			for (int i = 0; i < values.length; i++)
+			{
+				MD5 item = values[i];
+				output.append(item.url + " = " + item.md5 + " = " + item.gid);
+				if (i < values.length - 1)
+				{
+					output.append("\n");
+				}
 			}
 		}
 
