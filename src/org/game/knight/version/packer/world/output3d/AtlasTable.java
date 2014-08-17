@@ -15,7 +15,6 @@ import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
 
-import org.chw.util.FileUtil;
 import org.chw.util.MaxRects;
 import org.chw.util.MaxRects.Rect;
 import org.chw.util.MaxRects.RectSet;
@@ -31,10 +30,23 @@ public class AtlasTable
 {
 	private RootTask root;
 
-	private Group[] inputGroups;
-	private GroupTexture[] textureInputList;
+	private HashMap<AtfParam, ArrayList<AtlasRect[]>> atf_rectListSet;
+	private ArrayList<AtlasRect[]> allRectList;
+	private HashMap<AtlasRect[], AtfParam> rectList_atf;
+	private HashMap<AtlasRect[], Atlas> rectList_atlas;
+
+	private HashMap<String, Atlas[]> newTable;
+	private HashMap<String, Atlas[]> oldTable;
+
+	private int nextIndex;
+	private int finishedCount;
 	private String lastLog;
 
+	/**
+	 * 构造函数
+	 * 
+	 * @param root
+	 */
 	public AtlasTable(RootTask root)
 	{
 		this.root = root;
@@ -45,28 +57,39 @@ public class AtlasTable
 	 */
 	public void start()
 	{
+		atf_rectListSet = new HashMap<AtfParam, ArrayList<AtlasRect[]>>();
+		allRectList = new ArrayList<AtlasRect[]>();
+		rectList_atf = new HashMap<AtlasRect[], AtfParam>();
+		rectList_atlas = new HashMap<AtlasRect[], Atlas>();
+
+		oldTable = new HashMap<String, Atlas[]>();
+		newTable = new HashMap<String, Atlas[]>();
+
 		openVer();
-
-		inputGroups = filterAtfGroup();
-
-		packAll();
 
 		if (root.isCancel())
 		{
 			return;
 		}
 
-		ArrayList<GroupTexture> allAtlas = new ArrayList<GroupTexture>();
-		for (Group group : inputGroups)
+		filterAtfGroup();
+
+		if (root.isCancel())
 		{
-			for (GroupTexture texture : group.textures)
-			{
-				allAtlas.add(texture);
-			}
+			return;
 		}
-		textureInputList = allAtlas.toArray(new GroupTexture[allAtlas.size()]);
 
 		writeAllAtf();
+
+		for (AtfParam key : atf_rectListSet.keySet())
+		{
+			ArrayList<AtlasRect[]> value = atf_rectListSet.get(key);
+			Atlas[] atlasList = new Atlas[value.size()];
+			for (int i = 0; i < value.size(); i++)
+			{
+				atlasList[i] = rectList_atlas.get(value.get(i));
+			}
+		}
 	}
 
 	// -----------------------------------------------------------------------------------------------------
@@ -80,9 +103,9 @@ public class AtlasTable
 	 * 
 	 * @return
 	 */
-	private Group[] filterAtfGroup()
+	private void filterAtfGroup()
 	{
-		HashMap<AtfParam, HashSet<ImageFrame>> groups = new HashMap<AtfParam, HashSet<ImageFrame>>();
+		HashMap<AtfParam, HashSet<ImageFrame>> atf_frameset = new HashMap<AtfParam, HashSet<ImageFrame>>();
 		for (Attire attire : root.getAttireTable().getAllAttire())
 		{
 			for (AttireAction action : attire.actions)
@@ -94,157 +117,61 @@ public class AtlasTable
 						if (anim.times[i] > 0)
 						{
 							AtfParam atf = anim.param;
-							if (!groups.containsKey(atf))
+							if (!atf_frameset.containsKey(atf))
 							{
-								groups.put(atf, new HashSet<ImageFrame>());
+								atf_frameset.put(atf, new HashSet<ImageFrame>());
 							}
 
-							groups.get(atf).add(root.getImageFrameTable().get(anim.img, anim.row, anim.col, i));
+							atf_frameset.get(atf).add(root.getImageFrameTable().get(anim.img, anim.row, anim.col, i));
 						}
 					}
 				}
 			}
 		}
 
-		ArrayList<Group> results = new ArrayList<Group>();
-		for (AtfParam atf : groups.keySet())
+		HashMap<AtfParam, ImageFrame[]> atf_frameArray = new HashMap<AtfParam, ImageFrame[]>();
+		for (AtfParam key : atf_frameset.keySet())
 		{
-			HashSet<ImageFrame> frames = groups.get(atf);
-			results.add(new Group(atf, frames.toArray(new ImageFrame[frames.size()])));
+			HashSet<ImageFrame> value = atf_frameset.get(key);
+			atf_frameArray.put(key, value.toArray(new ImageFrame[value.size()]));
 		}
 
-		return results.toArray(new Group[results.size()]);
-	}
-
-	// -----------------------------------------------------------------------------------------------------
-	//
-	// 矩形打包
-	//
-	// -----------------------------------------------------------------------------------------------------
-
-	private int nextPackIndex;
-	private int finishedPackCount;
-
-	/**
-	 * 获取下一个要打包的组
-	 * 
-	 * @return
-	 */
-	private synchronized Group getNextPack()
-	{
-		Group result = null;
-		if (nextPackIndex < inputGroups.length)
-		{
-			result = inputGroups[nextPackIndex];
-			lastLog = "贴图打包(" + nextPackIndex + "/" + inputGroups.length + "):" + result.atf.id + "(" + result.frames.length + ")";
-			nextPackIndex++;
-		}
-		return result;
-	}
-
-	/**
-	 * 完成一组打包
-	 * 
-	 * @param group
-	 * @param rects
-	 */
-	private synchronized void finishPack(Group group, GroupTexture[] textures)
-	{
-		finishedPackCount++;
-
-		group.textures = textures;
-	}
-
-	/**
-	 * 所有组是否已完成打包
-	 * 
-	 * @return
-	 */
-	private synchronized boolean isPackFinished()
-	{
-		return finishedPackCount >= inputGroups.length;
-	}
-
-	/**
-	 * 打包
-	 */
-	private void packAll()
-	{
-		ExecutorService exec = Executors.newCachedThreadPool();
-		for (int i = 0; i < 5; i++)
-		{
-			exec.execute(new Runnable()
-			{
-				@Override
-				public void run()
-				{
-					while (true)
-					{
-						Group next = getNextPack();
-						if (next == null || root.isCancel())
-						{
-							break;
-						}
-
-						finishPack(next, packGroup(next));
-					}
-				}
-			});
-		}
-		exec.shutdown();
-
-		while (!root.isCancel() && !isPackFinished())
+		for (AtfParam param : atf_frameArray.keySet())
 		{
 			try
 			{
-				GamePacker.progress(lastLog);
-				Thread.sleep(50);
+				MaxRects packer = new MaxRects(param.width, param.height, false);
+				for (ImageFrame frame : atf_frameArray.get(param))
+				{
+					packer.push(frame, frame.clipW, frame.clipH);
+				}
+				packer.pack();
+
+				ArrayList<AtlasRect[]> textures = new ArrayList<AtlasRect[]>();
+
+				ArrayList<RectSet> rectSets = packer.getRectSets();
+				for (int i = 0; i < rectSets.size(); i++)
+				{
+					RectSet rectSet = rectSets.get(i);
+
+					ArrayList<AtlasRect> list = new ArrayList<AtlasRect>();
+					for (Rect rect : rectSet.getRects())
+					{
+						list.add(new AtlasRect((ImageFrame) rect.data, rect.x, rect.y));
+					}
+
+					AtlasRect[] rectList = list.toArray(new AtlasRect[list.size()]);
+					textures.add(rectList);
+					allRectList.add(rectList);
+					rectList_atf.put(rectList, param);
+				}
+				atf_rectListSet.put(param, textures);
 			}
-			catch (InterruptedException e)
+			catch (Exception e)
 			{
 				e.printStackTrace();
-				break;
 			}
 		}
-	}
-
-	/**
-	 * 打包单组
-	 * 
-	 * @param group
-	 */
-	private GroupTexture[] packGroup(Group group)
-	{
-		MaxRects packer = new MaxRects(group.atf.width, group.atf.height, false);
-		for (ImageFrame frame : group.frames)
-		{
-			packer.push(frame, frame.clipW, frame.clipH);
-		}
-
-		try
-		{
-			packer.pack();
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-		}
-
-		ArrayList<RectSet> rectSets = packer.getRectSets();
-		GroupTexture[] result = new GroupTexture[rectSets.size()];
-		for (int i = 0; i < rectSets.size(); i++)
-		{
-			RectSet rectSet = rectSets.get(i);
-
-			ArrayList<AtlasRect> list = new ArrayList<AtlasRect>();
-			for (Rect rect : rectSet.getRects())
-			{
-				list.add(new AtlasRect(group.atf, (ImageFrame) rect.data, rect.x, rect.y));
-			}
-
-			result[i] = new GroupTexture(group, list.toArray(new AtlasRect[list.size()]));
-		}
-		return result;
 	}
 
 	// -----------------------------------------------------------------------------------------------------
@@ -253,22 +180,19 @@ public class AtlasTable
 	//
 	// -----------------------------------------------------------------------------------------------------
 
-	private int textureNext;
-	private int textureWrited;
-
 	/**
 	 * 获取下一个
 	 * 
 	 * @return
 	 */
-	private synchronized GroupTexture getNext()
+	private synchronized AtlasRect[] getNext()
 	{
-		GroupTexture result = null;
-		if (textureNext < textureInputList.length)
+		AtlasRect[] result = null;
+		if (nextIndex < allRectList.size())
 		{
-			result = textureInputList[textureNext];
-			lastLog = "贴图输出(" + textureNext + "/" + textureInputList.length + "):" + result.group.atf.id + "(图像X" + result.rects.length + ")";
-			textureNext++;
+			result = allRectList.get(nextIndex);
+			lastLog = "贴图输出(" + nextIndex + "/" + allRectList.size() + "):" + rectList_atf.get(result).id + "(图像X" + result.length + ")";
+			nextIndex++;
 		}
 
 		return result;
@@ -279,7 +203,7 @@ public class AtlasTable
 	 */
 	private synchronized void finishIncrement()
 	{
-		textureWrited++;
+		finishedCount++;
 	}
 
 	/**
@@ -289,7 +213,7 @@ public class AtlasTable
 	 */
 	private synchronized boolean isFinished()
 	{
-		return textureWrited >= textureInputList.length;
+		return finishedCount >= allRectList.size();
 	}
 
 	/**
@@ -307,13 +231,13 @@ public class AtlasTable
 				{
 					while (true)
 					{
-						GroupTexture next = getNext();
+						AtlasRect[] next = getNext();
 						if (next == null || root.isCancel())
 						{
 							break;
 						}
 
-						writeATF(next);
+						writeATF(rectList_atf.get(next), next);
 						finishIncrement();
 					}
 				}
@@ -341,11 +265,9 @@ public class AtlasTable
 	 * 
 	 * @param rects
 	 */
-	private void writeATF(GroupTexture texture)
+	private void writeATF(AtfParam param, AtlasRect[] rects)
 	{
-		Group group = texture.group;
-		AtlasRect[] rects = Arrays.copyOf(texture.rects, texture.rects.length);
-
+		// 把属于同一个图像文件的帧排到一起，减少绘制图像时切换图像的次数。
 		Arrays.sort(rects, new Comparator<AtlasRect>()
 		{
 			@Override
@@ -355,6 +277,7 @@ public class AtlasTable
 			}
 		});
 
+		// 确定横向和纵向上满足2的次方并且长度最小的尺寸
 		int outputW = 0;
 		int outputH = 0;
 		for (AtlasRect rect : rects)
@@ -365,18 +288,16 @@ public class AtlasTable
 		outputW = TextureHelper.normalizeWH(outputW);
 		outputH = TextureHelper.normalizeWH(outputH);
 
-		File subFile = null;
-		BufferedImage subImage = null;
-
+		// 确定文件输出位置
 		String saveURL = root.getWriteFileTable().getNextExportFile();
 		String pngURL = saveURL + ".png";
 		String atfURL = saveURL + ".atf";
-		String xmlURL = saveURL + ".xml";
 		File pngFile = new File(root.getOutputFolder().getPath() + pngURL);
 		File atfFile = new File(root.getOutputFolder().getPath() + atfURL);
-		File xmlFile = new File(root.getOutputFolder().getPath() + xmlURL);
 
-		StringBuilder atlas = new StringBuilder();
+		// 合并图像
+		File subFile = null;
+		BufferedImage subImage = null;
 		BufferedImage image = new BufferedImage(outputW, outputH, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D graphics = (Graphics2D) image.getGraphics();
 		for (AtlasRect rect : rects)
@@ -399,8 +320,6 @@ public class AtlasTable
 				}
 			}
 
-			atlas.append("\t<SubTexture name=\"" + frame.file.gid + "_" + frame.row + "_" + frame.col + "_" + frame.index + "\" x=\"" + drawX + "\" y=\"" + drawY + "\" width=\"" + frame.clipW + "\" height=\"" + frame.clipH + "\" frameX=\"" + (frame.clipX > 0 ? -frame.clipX : 0) + "\" frameY=\"" + (frame.clipY > 0 ? -frame.clipY : 0) + "\" frameWidth=\"" + frame.frameW + "\" frameHeight=\"" + frame.frameH + "\"/>\n");
-
 			graphics.drawImage(subImage, drawX, drawY, drawX + frame.clipW, drawY + frame.clipH, frame.frameX + frame.clipX, frame.frameY + frame.clipY, frame.frameX + frame.clipX + frame.clipW, frame.frameY + frame.clipY + frame.clipH, null);
 
 			if (root.isCancel())
@@ -409,82 +328,41 @@ public class AtlasTable
 			}
 		}
 		graphics.dispose();
-		
-		StringBuilder xmlCfg=new StringBuilder();
-		xmlCfg.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-		xmlCfg.append("<TextureAtlas imagePath=\"" + ("/" + root.getOutputFolder().getName() + atfURL) + "\">\n");
-		xmlCfg.append(atlas.toString());
-		xmlCfg.append("</TextureAtlas>");
-		
+
+		// 确定XML配置
+		StringBuilder atlas = new StringBuilder();
+		atlas.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+		atlas.append("<TextureAtlas imagePath=\"" + ("/" + root.getOutputFolder().getName() + atfURL) + "\">\n");
+		for (AtlasRect rect : rects)
+		{
+			ImageFrame frame = rect.frame;
+			atlas.append("\t<SubTexture name=\"" + frame.file.gid + "_" + frame.row + "_" + frame.col + "_" + frame.index + "\" x=\"" + rect.x + "\" y=\"" + rect.y + "\" width=\"" + frame.clipW + "\" height=\"" + frame.clipH + "\" frameX=\"" + (frame.clipX > 0 ? -frame.clipX : 0) + "\" frameY=\"" + (frame.clipY > 0 ? -frame.clipY : 0) + "\" frameWidth=\"" + frame.frameW + "\" frameHeight=\"" + frame.frameH + "\"/>\n");
+		}
+		atlas.append("</TextureAtlas>");
+
+		// 输出ATF,组合XML配置
 		try
 		{
 			ImageIO.write(image, "png", pngFile);
 			TextureHelper.png2atf(pngFile, atfFile);
-			
-			RandomAccessFile a=new RandomAccessFile(atfFile, "rw");
+
+			RandomAccessFile a = new RandomAccessFile(atfFile, "rw");
 			a.seek(atfFile.length());
-			a.write(xmlCfg.toString().getBytes("utf8"));
+			a.write(atlas.toString().getBytes("utf8"));
 			a.close();
-			
-			if(pngFile.exists())
+
+			if (pngFile.exists())
 			{
 				pngFile.delete();
 			}
-			
-			texture.outputURL=atfURL;
 		}
 		catch (IOException e)
 		{
 			e.printStackTrace();
 		}
-	}
 
-	// -----------------------------------------------------------------------------------------------------
-	//
-	//
-	//
-	// -----------------------------------------------------------------------------------------------------
-
-	/**
-	 * ATF组
-	 * 
-	 * @author ds
-	 * 
-	 */
-	private static class Group
-	{
-		public final String key;
-		public final AtfParam atf;
-		public final ImageFrame[] frames;
-
-		public GroupTexture[] textures;
-
-		public Group(AtfParam atf, ImageFrame[] frames)
-		{
-			StringBuilder sb = new StringBuilder();
-			sb.append(atf.id + "+" + atf.width + "+" + atf.height + "+" + atf.other);
-			for (ImageFrame frame : frames)
-			{
-				sb.append("+" + frame.file.gid + "_" + frame.row + "_" + frame.col + "_" + frame.index);
-			}
-
-			this.atf = atf;
-			this.frames = frames;
-			this.key = sb.toString();
-		}
-	}
-
-	private static class GroupTexture
-	{
-		public final Group group;
-		public final AtlasRect[] rects;
-		public String outputURL;
-
-		public GroupTexture(Group group, AtlasRect[] rects)
-		{
-			this.group = group;
-			this.rects = rects;
-		}
+		// 记录
+		rectList_atlas.put(rects, new Atlas(param, atfURL, rects));
 	}
 
 	// -------------------------------------------------------------------------------------------------------------------
@@ -493,8 +371,8 @@ public class AtlasTable
 	//
 	// -------------------------------------------------------------------------------------------------------------------
 
-	private HashMap<String, Group> oldTable = new HashMap<String, Group>();
-	private HashMap<String, Group> newTable = new HashMap<String, Group>();
+	// private HashMap<String, Group> oldTable = new HashMap<String, Group>();
+	// private HashMap<String, Group> newTable = new HashMap<String, Group>();
 
 	/**
 	 * 获取版本文件
