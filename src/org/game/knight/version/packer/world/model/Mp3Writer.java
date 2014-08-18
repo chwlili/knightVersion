@@ -39,7 +39,7 @@ public class Mp3Writer
 		{
 			if (!activate(mp3))
 			{
-				String url = root.getWriteFileTable().getNextExportFile() + ".mp3";
+				String url = root.getGlobalOptionTable().getNextExportFile() + ".mp3";
 				File file = new File(root.getOutputFolder().getPath() + url);
 
 				try

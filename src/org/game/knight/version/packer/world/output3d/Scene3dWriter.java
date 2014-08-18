@@ -240,7 +240,7 @@ public class Scene3dWriter
 
 		if (url == null)
 		{
-			url = root.getWriteFileTable().getNextExportFile() + ".cfg";
+			url = root.getGlobalOptionTable().getNextExportFile() + ".cfg";
 			FileUtil.writeFile(new File(root.getOutputFolder().getPath() + url), bytes);
 		}
 

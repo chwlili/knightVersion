@@ -9,7 +9,7 @@ import org.game.knight.version.packer.world.model.ImageFrameTable;
 import org.game.knight.version.packer.world.model.Mp3Writer;
 import org.game.knight.version.packer.world.model.ProjectFileTable;
 import org.game.knight.version.packer.world.model.WorldTable;
-import org.game.knight.version.packer.world.model.WriteFileTable;
+import org.game.knight.version.packer.world.model.GlobalOptionTable;
 import org.game.knight.version.packer.world.output3d.AtlasWriter;
 import org.game.knight.version.packer.world.output3d.Attire3dWrite;
 import org.game.knight.version.packer.world.output3d.Scene3dWriter;
@@ -29,7 +29,7 @@ public class RootTask
 	private AttireTable attireTable;
 	private WorldTable worldTable;
 	private ImageFrameTable imageFrameTable;
-	private WriteFileTable writeFileTable;
+	private GlobalOptionTable globalOptionTable;
 
 	private Mp3Writer mp3Writer;
 	private SliceImageWriter sliceImageWriter;
@@ -120,13 +120,13 @@ public class RootTask
 	}
 
 	/**
-	 * 输出文件表
+	 * 全局选项表
 	 * 
 	 * @return
 	 */
-	public WriteFileTable getWriteFileTable()
+	public GlobalOptionTable getGlobalOptionTable()
 	{
-		return writeFileTable;
+		return globalOptionTable;
 	}
 
 	/**
@@ -227,8 +227,8 @@ public class RootTask
 		}
 
 		GamePacker.progress("读取文件导出表");
-		writeFileTable = new WriteFileTable(this);
-		writeFileTable.start();
+		globalOptionTable = new GlobalOptionTable(this);
+		globalOptionTable.start();
 		if (isCancel())
 		{
 			return;
@@ -279,6 +279,6 @@ public class RootTask
 			return;
 		}
 
-		writeFileTable.saveVer();
+		globalOptionTable.saveVer();
 	}
 }

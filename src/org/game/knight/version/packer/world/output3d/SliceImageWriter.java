@@ -172,12 +172,12 @@ public class SliceImageWriter
 			int col = (int) Math.ceil((double) nativeIMG.getWidth() / SLICE_SIZE);
 
 			String previewURL = null;
-			synchronized (root.getWriteFileTable())
+			synchronized (root.getGlobalOptionTable())
 			{
-				previewURL = root.getWriteFileTable().getNextExportFile();
+				previewURL = root.getGlobalOptionTable().getNextExportFile();
 				for (int i = 0; i < row * col; i++)
 				{
-					root.getWriteFileTable().getNextExportFile();
+					root.getGlobalOptionTable().getNextExportFile();
 				}
 			}
 

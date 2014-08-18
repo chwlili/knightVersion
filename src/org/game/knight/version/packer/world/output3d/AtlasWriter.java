@@ -318,7 +318,7 @@ public class AtlasWriter
 		outputH = TextureHelper.normalizeWH(outputH);
 
 		// 确定文件输出位置
-		String saveURL = root.getWriteFileTable().getNextExportFile();
+		String saveURL = root.getGlobalOptionTable().getNextExportFile();
 		String pngURL = saveURL + ".png";
 		String atfURL = saveURL + ".atf";
 		File pngFile = new File(root.getOutputFolder().getPath() + pngURL);
