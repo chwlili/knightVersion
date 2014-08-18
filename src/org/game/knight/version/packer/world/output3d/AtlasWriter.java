@@ -5,6 +5,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -15,6 +16,7 @@ import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
 
+import org.chw.util.FileUtil;
 import org.chw.util.MaxRects;
 import org.chw.util.MaxRects.Rect;
 import org.chw.util.MaxRects.RectSet;
@@ -26,7 +28,7 @@ import org.game.knight.version.packer.world.model.AttireAnim;
 import org.game.knight.version.packer.world.model.ImageFrame;
 import org.game.knight.version.packer.world.task.RootTask;
 
-public class AtlasTable
+public class AtlasWriter
 {
 	private RootTask root;
 
@@ -35,8 +37,10 @@ public class AtlasTable
 	private HashMap<AtlasRect[], AtfParam> rectList_atf;
 	private HashMap<AtlasRect[], Atlas> rectList_atlas;
 
-	private HashMap<String, Atlas[]> newTable;
-	private HashMap<String, Atlas[]> oldTable;
+	private HashMap<String, AtlasSet> newTable;
+	private HashMap<String, AtlasSet> oldTable;
+	
+	private HashMap<ImageFrame, Atlas> frame_atlas;
 
 	private int nextIndex;
 	private int finishedCount;
@@ -47,7 +51,7 @@ public class AtlasTable
 	 * 
 	 * @param root
 	 */
-	public AtlasTable(RootTask root)
+	public AtlasWriter(RootTask root)
 	{
 		this.root = root;
 	}
@@ -57,20 +61,17 @@ public class AtlasTable
 	 */
 	public void start()
 	{
-		atf_rectListSet = new HashMap<AtfParam, ArrayList<AtlasRect[]>>();
-		allRectList = new ArrayList<AtlasRect[]>();
-		rectList_atf = new HashMap<AtlasRect[], AtfParam>();
-		rectList_atlas = new HashMap<AtlasRect[], Atlas>();
-
-		oldTable = new HashMap<String, Atlas[]>();
-		newTable = new HashMap<String, Atlas[]>();
-
 		openVer();
 
 		if (root.isCancel())
 		{
 			return;
 		}
+
+		atf_rectListSet = new HashMap<AtfParam, ArrayList<AtlasRect[]>>();
+		allRectList = new ArrayList<AtlasRect[]>();
+		rectList_atf = new HashMap<AtlasRect[], AtfParam>();
+		rectList_atlas = new HashMap<AtlasRect[], Atlas>();
 
 		filterAtfGroup();
 
@@ -89,7 +90,31 @@ public class AtlasTable
 			{
 				atlasList[i] = rectList_atlas.get(value.get(i));
 			}
+
+			add(new AtlasSet(key, atlasList));
 		}
+		
+		frame_atlas=new HashMap<ImageFrame, Atlas>();
+		for(AtlasSet set:newTable.values())
+		{
+			for(Atlas atlas:set.atlasList)
+			{
+				for(AtlasRect rect:atlas.rects)
+				{
+					frame_atlas.put(rect.frame, atlas);
+				}
+			}
+		}
+	}
+	
+	/**
+	 * 查找指定图像帧所分配到的纹理文件
+	 * @param frame
+	 * @return
+	 */
+	public Atlas findAtlasByImageFrame(ImageFrame frame)
+	{
+		return frame_atlas.get(frame);
 	}
 
 	// -----------------------------------------------------------------------------------------------------
@@ -122,7 +147,7 @@ public class AtlasTable
 								atf_frameset.put(atf, new HashSet<ImageFrame>());
 							}
 
-							atf_frameset.get(atf).add(root.getImageFrameTable().get(anim.img, anim.row, anim.col, i));
+							atf_frameset.get(atf).add(root.getImageFrameTable().get(anim.img.gid, anim.row, anim.col, i));
 						}
 					}
 				}
@@ -133,7 +158,11 @@ public class AtlasTable
 		for (AtfParam key : atf_frameset.keySet())
 		{
 			HashSet<ImageFrame> value = atf_frameset.get(key);
-			atf_frameArray.put(key, value.toArray(new ImageFrame[value.size()]));
+			ImageFrame[] valueArray = value.toArray(new ImageFrame[value.size()]);
+			if (!activate(key, valueArray))
+			{
+				atf_frameArray.put(key, valueArray);
+			}
 		}
 
 		for (AtfParam param : atf_frameArray.keySet())
@@ -201,8 +230,9 @@ public class AtlasTable
 	/**
 	 * 完成
 	 */
-	private synchronized void finishIncrement()
+	private synchronized void finish(AtlasRect[] rects, Atlas atlas)
 	{
+		rectList_atlas.put(atlas.rects, atlas);
 		finishedCount++;
 	}
 
@@ -222,7 +252,7 @@ public class AtlasTable
 	private void writeAllAtf()
 	{
 		ExecutorService exec = Executors.newCachedThreadPool();
-		for (int i = 0; i < 5; i++)
+		for (int i = 0; i < root.maxThreadCount; i++)
 		{
 			exec.execute(new Runnable()
 			{
@@ -237,13 +267,11 @@ public class AtlasTable
 							break;
 						}
 
-						writeATF(rectList_atf.get(next), next);
-						finishIncrement();
+						finish(next, writeATF(rectList_atf.get(next), next));
 					}
 				}
 			});
 		}
-		exec.shutdown();
 
 		while (!root.isCancel() && !isFinished())
 		{
@@ -258,6 +286,7 @@ public class AtlasTable
 				break;
 			}
 		}
+		exec.shutdown();
 	}
 
 	/**
@@ -265,7 +294,7 @@ public class AtlasTable
 	 * 
 	 * @param rects
 	 */
-	private void writeATF(AtfParam param, AtlasRect[] rects)
+	private Atlas writeATF(AtfParam param, AtlasRect[] rects)
 	{
 		// 把属于同一个图像文件的帧排到一起，减少绘制图像时切换图像的次数。
 		Arrays.sort(rects, new Comparator<AtlasRect>()
@@ -324,7 +353,7 @@ public class AtlasTable
 
 			if (root.isCancel())
 			{
-				return;
+				return null;
 			}
 		}
 		graphics.dispose();
@@ -343,8 +372,10 @@ public class AtlasTable
 		// 输出ATF,组合XML配置
 		try
 		{
+			pngFile.getParentFile().mkdirs();
+			
 			ImageIO.write(image, "png", pngFile);
-			TextureHelper.png2atf(pngFile, atfFile);
+			TextureHelper.png2atf(pngFile, atfFile, param.other);
 
 			RandomAccessFile a = new RandomAccessFile(atfFile, "rw");
 			a.seek(atfFile.length());
@@ -362,7 +393,7 @@ public class AtlasTable
 		}
 
 		// 记录
-		rectList_atlas.put(rects, new Atlas(param, atfURL, rects));
+		return new Atlas(param, atfURL, rects);
 	}
 
 	// -------------------------------------------------------------------------------------------------------------------
@@ -371,8 +402,34 @@ public class AtlasTable
 	//
 	// -------------------------------------------------------------------------------------------------------------------
 
-	// private HashMap<String, Group> oldTable = new HashMap<String, Group>();
-	// private HashMap<String, Group> newTable = new HashMap<String, Group>();
+	/**
+	 * 激活旧的
+	 * 
+	 * @param param
+	 * @param frames
+	 * @return
+	 */
+	private boolean activate(AtfParam param, ImageFrame[] frames)
+	{
+		String key = AtlasSet.createKey(param, frames);
+		if (oldTable.containsKey(key))
+		{
+			newTable.put(key, oldTable.get(key));
+			oldTable.remove(key);
+		}
+		return newTable.containsKey(key);
+	}
+
+	/**
+	 * 添加
+	 * 
+	 * @param set
+	 * @return
+	 */
+	private void add(AtlasSet set)
+	{
+		newTable.put(set.key, set);
+	}
 
 	/**
 	 * 获取版本文件
@@ -381,7 +438,7 @@ public class AtlasTable
 	 */
 	private File getVerFile()
 	{
-		return new File(root.getOutputFolder().getPath() + File.separatorChar + ".ver" + File.separatorChar + ".atlas");
+		return new File(root.getOutputFolder().getPath() + File.separatorChar + ".ver" + File.separatorChar + "3dAtlas");
 	}
 
 	/**
@@ -389,41 +446,111 @@ public class AtlasTable
 	 */
 	private void openVer()
 	{
-		// this.oldTable = new HashMap<String, Group>();
-		// this.newTable = new HashMap<String, Group>();
-		//
-		// if (!getVerFile().exists())
-		// {
-		// return;
-		// }
-		//
-		// try
-		// {
-		// String text = new String(FileUtil.getFileBytes(getVerFile()),
-		// "utf8");
-		// String[] lines = text.split("\\n");
-		// for (String line : lines)
-		// {
-		// line = line.trim();
-		// if (line.isEmpty())
-		// {
-		// continue;
-		// }
-		//
-		// String[] values = line.split("=");
-		// if (values.length == 2)
-		// {
-		// String key = values[0].trim();
-		// String output = values[1].trim();
-		//
-		// oldTable.put(key, output);
-		// }
-		// }
-		// }
-		// catch (UnsupportedEncodingException e)
-		// {
-		// e.printStackTrace();
-		// }
+		this.oldTable = new HashMap<String, AtlasSet>();
+		this.newTable = new HashMap<String, AtlasSet>();
+
+		if (!getVerFile().exists())
+		{
+			return;
+		}
+
+		String text = "";
+
+		try
+		{
+			text = new String(FileUtil.getFileBytes(getVerFile()), "utf8");
+		}
+		catch (UnsupportedEncodingException e)
+		{
+			e.printStackTrace();
+			return;
+		}
+
+		String[] lines = text.split("\\n");
+		for (String line : lines)
+		{
+			line = line.trim();
+			if (line.isEmpty())
+			{
+				continue;
+			}
+
+			String[] values = line.split("=");
+			if (values.length != 2)
+			{
+				continue;
+			}
+
+			// ATFParam:w\+h\+-c d -r
+			String[] paramItems = values[0].trim().split("\\+");
+			AtfParam param = root.getAtfParamTable().findAtfParam(Integer.parseInt(paramItems[0].trim()), Integer.parseInt(paramItems[1].trim()), paramItems[2].trim());
+			if (param == null)
+			{
+				continue;
+			}
+
+			// RECTS:(url(,gid_row_col_index_x_y)+)(\+url(,gid_row_col_index_x_y)+)*
+			ArrayList<Atlas> atlas = new ArrayList<Atlas>();
+			String[] atlasItems = values[1].trim().split("\\+");
+			for (String atlasItem : atlasItems)
+			{
+				String[] atlasValues = atlasItem.trim().split(",");
+
+				String url = atlasValues[0].trim();
+				if (url.isEmpty())
+				{
+					atlas = null;
+					break;
+				}
+
+				ArrayList<AtlasRect> rects = new ArrayList<AtlasRect>();
+				for (int i = 1; i < atlasValues.length; i++)
+				{
+					String[] rectValues = atlasValues[i].trim().split("_");
+					if (rectValues.length != 6)
+					{
+						rects = null;
+						break;
+					}
+
+					ImageFrame frame = root.getImageFrameTable().get(rectValues[0].trim(), Integer.parseInt(rectValues[1].trim()), Integer.parseInt(rectValues[2].trim()), Integer.parseInt(rectValues[3].trim()));
+					if (frame == null)
+					{
+						rects = null;
+						break;
+					}
+
+					try
+					{
+						int placeX = Integer.parseInt(rectValues[4].trim());
+						int placeY = Integer.parseInt(rectValues[5].trim());
+
+						rects.add(new AtlasRect(frame, placeX, placeY));
+					}
+					catch (Error error)
+					{
+						rects = null;
+						break;
+					}
+				}
+
+				if (rects == null)
+				{
+					atlas = null;
+					break;
+				}
+
+				atlas.add(new Atlas(param, url, rects.toArray(new AtlasRect[rects.size()])));
+			}
+
+			if (atlas == null)
+			{
+				continue;
+			}
+
+			AtlasSet atlasSet = new AtlasSet(param, atlas.toArray(new Atlas[atlas.size()]));
+			oldTable.put(atlasSet.key, atlasSet);
+		}
 	}
 
 	/**
@@ -431,52 +558,56 @@ public class AtlasTable
 	 */
 	public void saveVer()
 	{
-		// StringBuilder output = new StringBuilder();
-		//
-		// if (newTable != null)
-		// {
-		// String[] keys = newTable.keySet().toArray(new
-		// String[newTable.size()]);
-		// Arrays.sort(keys, new Comparator<String>()
-		// {
-		// @Override
-		// public int compare(String arg0, String arg1)
-		// {
-		// int val1 = Integer.parseInt(arg0.substring(0, arg0.indexOf("_")));
-		// int val2 = Integer.parseInt(arg1.substring(0, arg1.indexOf("_")));
-		// return val1 - val2;
-		// }
-		// });
-		//
-		// for (int i = 0; i < keys.length; i++)
-		// {
-		// String key = keys[i];
-		// SliceImage img = newTable.get(key);
-		//
-		// output.append(key + " = " + img.previewURL + "," + img.sliceRow + ","
-		// + img.sliceCol + ",");
-		// for (int j = 0; j < img.sliceURLs.length; j++)
-		// {
-		// if (j > 0)
-		// {
-		// output.append(",");
-		// }
-		// output.append(img.sliceURLs[j]);
-		// }
-		// if (i < keys.length - 1)
-		// {
-		// output.append("\n");
-		// }
-		// }
-		// }
-		//
-		// try
-		// {
-		// FileUtil.writeFile(getVerFile(), output.toString().getBytes("utf8"));
-		// }
-		// catch (UnsupportedEncodingException e)
-		// {
-		// e.printStackTrace();
-		// }
+		StringBuilder output = new StringBuilder();
+
+		if (newTable != null)
+		{
+			AtlasSet[] atlasSet = newTable.values().toArray(new AtlasSet[newTable.size()]);
+			Arrays.sort(atlasSet, new Comparator<AtlasSet>()
+			{
+				@Override
+				public int compare(AtlasSet o1, AtlasSet o2)
+				{
+					return o1.key.compareTo(o2.key);
+				}
+			});
+
+			for (int i = 0; i < atlasSet.length; i++)
+			{
+				AtlasSet set = atlasSet[i];
+
+				output.append(set.atfParam.width + "+" + set.atfParam.height + "+" + set.atfParam.other);
+				output.append(" = ");
+
+				for (int j = 0; j < set.atlasList.length; j++)
+				{
+					if (j > 0)
+					{
+						output.append("+");
+					}
+
+					Atlas atlas = set.atlasList[j];
+					output.append(atlas.atfURL);
+					for (AtlasRect rect : atlas.rects)
+					{
+						output.append(",");
+						output.append(rect.frame.file.gid + "_" + rect.frame.row + "_" + rect.frame.col + "_" + rect.frame.index + "_" + rect.x + "_" + rect.y);
+					}
+				}
+				if(i<atlasSet.length-1)
+				{
+					output.append("\n");
+				}
+			}
+		}
+
+		try
+		{
+			FileUtil.writeFile(getVerFile(), output.toString().getBytes("utf8"));
+		}
+		catch (UnsupportedEncodingException e)
+		{
+			e.printStackTrace();
+		}
 	}
 }

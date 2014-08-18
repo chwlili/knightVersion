@@ -4,9 +4,9 @@ import java.util.Hashtable;
 
 public class Attire
 {
-	public final String fileID;
-	public final String key;
-	public final String refKey;
+	public final String gid;
+	public final String nativeName;
+	public final String name;
 	public final int type;
 	public final String[] typeParams;
 	public final AttireHitRect hitRect;
@@ -25,12 +25,10 @@ public class Attire
 	 */
 	public Attire(String fileID, String key, int type, AttireHitRect hitRect,AttireAction[] actions)
 	{
-		this.fileID = fileID;
-		this.key = key;
-		//this.refKey = key;
+		this.gid=fileID+"."+key;
+		this.nativeName = key;
 		this.type = type;
 		this.hitRect=hitRect;
-		//this.typeParams = new String[]{};
 		this.actionTable = new Hashtable<Integer, AttireAction>();
 		this.actions=actions;
 		
@@ -49,11 +47,11 @@ public class Attire
 		}
 		if(!lastName.isEmpty())
 		{
-			this.refKey = lastName;
+			this.name = lastName;
 		}
 		else
 		{
-			this.refKey = key;
+			this.name = key;
 		}
 		
 		lastIDs=lastIDs.trim();

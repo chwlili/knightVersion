@@ -35,6 +35,16 @@ public final class TextureHelper
 	 */
 	public static void png2atf(File input, File output)
 	{
+		png2atf(input, output, " -c d -r -n 0,0 ");
+	}
+
+	/**
+	 * µ÷ÓÃCMD
+	 * 
+	 * @param cmd
+	 */
+	public static void png2atf(File input, File output, String param)
+	{
 		String atfCMD = "png2atf";
 
 		File atfExe = new File(GamePackerConst.getJarDir().getPath() + File.separatorChar + "png2atf.exe");
@@ -42,7 +52,7 @@ public final class TextureHelper
 		{
 			atfCMD = atfExe.getPath();
 		}
-		atfCMD += " -c d -r -n 0,0 -i " + input.getPath() + " -o " + output.getPath();
+		atfCMD += " " + param + " -i " + input.getPath() + " -o " + output.getPath();
 
 		try
 		{

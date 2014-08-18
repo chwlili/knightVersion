@@ -78,7 +78,7 @@ public class WorldTable
 	 */
 	public void start()
 	{
-		ProjectFile[] links = root.getFileTable().getLinkFiles();
+		ProjectFile[] links = root.getFileTable().getAllLinkFiles();
 		if (links.length <= 0)
 		{
 			return;

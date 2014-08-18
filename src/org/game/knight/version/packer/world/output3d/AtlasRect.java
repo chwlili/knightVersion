@@ -1,6 +1,5 @@
 package org.game.knight.version.packer.world.output3d;
 
-import org.game.knight.version.packer.world.model.AtfParam;
 import org.game.knight.version.packer.world.model.ImageFrame;
 
 public class AtlasRect

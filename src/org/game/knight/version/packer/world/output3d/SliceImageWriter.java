@@ -26,7 +26,7 @@ import org.game.knight.version.packer.world.model.SceneAnim;
 import org.game.knight.version.packer.world.model.SceneBackLayer;
 import org.game.knight.version.packer.world.task.RootTask;
 
-public class SliceImageTable
+public class SliceImageWriter
 {
 	/**
 	 * 生成缩略图所用的除数
@@ -53,9 +53,19 @@ public class SliceImageTable
 	 * 
 	 * @param root
 	 */
-	public SliceImageTable(RootTask root)
+	public SliceImageWriter(RootTask root)
 	{
 		this.root = root;
+	}
+	
+	/**
+	 * 获取已切分的图像
+	 * @param img
+	 * @return
+	 */
+	public SliceImage getSliceImage(ProjectImgFile img)
+	{
+		return newTable.get(createKey(img));
 	}
 
 	/**
@@ -68,7 +78,7 @@ public class SliceImageTable
 		inputList = filterSliceImage();
 
 		ExecutorService exec = Executors.newCachedThreadPool();
-		for (int i = 0; i < 5; i++)
+		for (int i = 0; i < root.maxThreadCount; i++)
 		{
 			exec.execute(new Runnable()
 			{
@@ -115,7 +125,7 @@ public class SliceImageTable
 		if (nextIndex < inputList.length)
 		{
 			result = inputList[nextIndex];
-			lastLog="图像切片(" + nextIndex + "/" + inputList.length + ")：" + result.url;
+			lastLog = "图像切片(" + nextIndex + "/" + inputList.length + ")：" + result.url;
 			nextIndex++;
 		}
 		return result;
@@ -133,7 +143,7 @@ public class SliceImageTable
 		{
 			add(img, slice);
 		}
-		
+
 		finishedCount++;
 	}
 
@@ -158,6 +168,18 @@ public class SliceImageTable
 		try
 		{
 			BufferedImage nativeIMG = ImageIO.read(file);
+			int row = (int) Math.ceil((double) nativeIMG.getHeight() / SLICE_SIZE);
+			int col = (int) Math.ceil((double) nativeIMG.getWidth() / SLICE_SIZE);
+
+			String previewURL = null;
+			synchronized (root.getWriteFileTable())
+			{
+				previewURL = root.getWriteFileTable().getNextExportFile();
+				for (int i = 0; i < row * col; i++)
+				{
+					root.getWriteFileTable().getNextExportFile();
+				}
+			}
 
 			int previewW = (int) (nativeIMG.getWidth() / PREVIEW_SCALE);
 			int previewH = (int) (nativeIMG.getHeight() / PREVIEW_SCALE);
@@ -169,13 +191,11 @@ public class SliceImageTable
 			previewGS.drawImage(nativeIMG, 0, 0, previewIMG.getWidth(), previewIMG.getHeight(), 0, 0, nativeIMG.getWidth(), nativeIMG.getHeight(), null);
 			previewGS.dispose();
 
-			String previewURL = root.getWriteFileTable().getNextExportFile();
 			File previewATF = new File(root.getOutputFolder().getPath() + previewURL + ".atf");
 			File previewPNG = new File(root.getOutputFolder().getPath() + previewURL + ".png");
 			previewPNG.getParentFile().mkdirs();
 
 			ImageIO.write(previewIMG, "png", previewPNG);
-
 			TextureHelper.png2atf(previewPNG, previewATF);
 
 			if (previewPNG.exists())
@@ -183,8 +203,7 @@ public class SliceImageTable
 				previewPNG.delete();
 			}
 
-			int row = (int) Math.ceil((double) nativeIMG.getHeight() / SLICE_SIZE);
-			int col = (int) Math.ceil((double) nativeIMG.getWidth() / SLICE_SIZE);
+			int index = 0;
 			ArrayList<String> sliceURLs = new ArrayList<String>();
 			for (int i = 0; i < row; i++)
 			{
@@ -202,8 +221,8 @@ public class SliceImageTable
 					subIGS.drawImage(nativeIMG, 0, 0, drawW, drawH, subX, subY, subX + drawW, subY + drawH, null);
 					subIGS.dispose();
 
-					File subATF = new File(root.getOutputFolder().getPath() + previewURL + "_" + j + "_" + i + ".atf");
-					File subPNG = new File(root.getOutputFolder().getPath() + previewURL + "_" + j + "_" + i + ".png");
+					File subATF = new File(root.getOutputFolder().getPath() + previewURL + "_" + index + ".atf");
+					File subPNG = new File(root.getOutputFolder().getPath() + previewURL + "_" + index + ".png");
 					subPNG.getParentFile().mkdirs();
 
 					ImageIO.write(subIMG, "png", subPNG);
@@ -215,7 +234,8 @@ public class SliceImageTable
 						subPNG.delete();
 					}
 
-					sliceURLs.add(previewURL + "_" + j + "_" + i + ".atf");
+					sliceURLs.add(previewURL + "_" + index + ".atf");
+					index++;
 				}
 			}
 
@@ -309,12 +329,7 @@ public class SliceImageTable
 			newTable.put(key, oldTable.get(key));
 			oldTable.remove(key);
 		}
-		if (newTable.containsKey(key))
-		{
-			flagOutputFile(img, newTable.get(key));
-			return true;
-		}
-		return false;
+		return newTable.containsKey(key);
 	}
 
 	/**
@@ -329,23 +344,6 @@ public class SliceImageTable
 
 		newTable.put(key, slice);
 		oldTable.remove(key);
-		flagOutputFile(img, slice);
-	}
-
-	/**
-	 * 标记输出文件
-	 * 
-	 * @param img
-	 * @param slice
-	 */
-	private void flagOutputFile(ProjectImgFile img, SliceImage slice)
-	{
-		String PREFIX = "3D_SLICE_IMG_";
-		root.getWriteFileTable().addExportedFile(PREFIX + img.gid, slice.previewURL);
-		for (int i = 0; i < slice.sliceURLs.length; i++)
-		{
-			root.getWriteFileTable().addExportedFile(PREFIX + img.gid + "_" + i, slice.sliceURLs[i]);
-		}
 	}
 
 	/**
@@ -355,7 +353,7 @@ public class SliceImageTable
 	 */
 	private File getVerFile()
 	{
-		return new File(root.getOutputFolder().getPath() + File.separatorChar + ".ver" + File.separatorChar + ".slice");
+		return new File(root.getOutputFolder().getPath() + File.separatorChar + ".ver" + File.separatorChar + "3dSlice");
 	}
 
 	/**

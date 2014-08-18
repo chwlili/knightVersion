@@ -116,7 +116,7 @@ public class AttireTable
 		{
 			attireTable.put(url, new HashMap<String,Attire>());
 		}
-		attireTable.get(url).put(attire.key, attire);
+		attireTable.get(url).put(attire.nativeName, attire);
 		allAttres.add(attire);
 	}
 	
@@ -125,7 +125,7 @@ public class AttireTable
 	 */
 	public void start()
 	{
-		ProjectFile[] files=root.getFileTable().getAttireFiles();
+		ProjectFile[] files=root.getFileTable().getAllAttireFiles();
 		for(ProjectFile file:files)
 		{
 			if(root.isCancel())

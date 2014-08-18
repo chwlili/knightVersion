@@ -71,6 +71,25 @@ public class ProjectFileTable
 	}
 
 	/**
+	 * 获取所有MP3文件
+	 * @return
+	 */
+	public ProjectFile[] getAllMp3Files()
+	{
+		return url_mp3.values().toArray(new ProjectFile[url_mp3.size()]);
+	}
+
+	/**
+	 * 获取所有ATF参数文件
+	 * 
+	 * @return
+	 */
+	public ProjectFile[] getAllParamFiles()
+	{
+		return url_texture.values().toArray(new ProjectFile[url_texture.size()]);
+	}
+
+	/**
 	 * 获取场景文件
 	 * 
 	 * @param url
@@ -82,21 +101,11 @@ public class ProjectFileTable
 	}
 
 	/**
-	 * 获取所有ATF参数文件
-	 * 
-	 * @return
-	 */
-	public ProjectFile[] getParamFiles()
-	{
-		return url_texture.values().toArray(new ProjectFile[url_texture.size()]);
-	}
-
-	/**
 	 * 获取所有装扮文件
 	 * 
 	 * @return
 	 */
-	public ProjectFile[] getAttireFiles()
+	public ProjectFile[] getAllAttireFiles()
 	{
 		return url_attire.values().toArray(new ProjectFile[url_attire.size()]);
 	}
@@ -106,7 +115,7 @@ public class ProjectFileTable
 	 * 
 	 * @return
 	 */
-	public ProjectFile[] getLinkFiles()
+	public ProjectFile[] getAllLinkFiles()
 	{
 		return url_link.values().toArray(new ProjectFile[url_link.size()]);
 	}
@@ -121,14 +130,14 @@ public class ProjectFileTable
 	private int nextIndex;
 	private int finishedCount;
 	private String lastLog;
-	
+
 	/**
 	 * 执行
 	 */
 	public void start()
 	{
 		openVer();
-		
+
 		inputList = FileUtil.listFiles(root.getInputFolder());
 
 		url_file = new HashMap<String, ProjectFile>();
@@ -142,7 +151,7 @@ public class ProjectFileTable
 		url_link = new HashMap<String, ProjectFile>();
 
 		ExecutorService exec = Executors.newCachedThreadPool();
-		for (int i = 0; i < 5; i++)
+		for (int i = 0; i < root.maxThreadCount; i++)
 		{
 			exec.execute(new Runnable()
 			{
@@ -277,7 +286,7 @@ public class ProjectFileTable
 		}
 		url_file.put(newItem.url, myFile);
 		gid_file.put(newItem.gid, myFile);
-		
+
 		finishedCount++;
 	}
 
@@ -298,7 +307,7 @@ public class ProjectFileTable
 	 */
 	private File getVerFile()
 	{
-		return new File(root.getOutputFolder().getPath() + File.separatorChar + ".ver" + File.separatorChar + ".md5");
+		return new File(root.getOutputFolder().getPath() + File.separatorChar + ".ver" + File.separatorChar + "md5");
 	}
 
 	/**

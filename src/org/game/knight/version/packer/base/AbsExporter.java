@@ -456,7 +456,7 @@ public abstract class AbsExporter
 	/**
 	 * 获取所有已导出文件的URL
 	 * 
-	 * @param key
+	 * @param nativeName
 	 * @return
 	 */
 	public String[] getExportedFileUrls()

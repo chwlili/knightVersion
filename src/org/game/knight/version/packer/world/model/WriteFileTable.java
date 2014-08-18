@@ -110,7 +110,7 @@ public class WriteFileTable
 	 */
 	private File getVerFile()
 	{
-		return new File(root.getOutputFolder().getPath() + File.separatorChar + ".ver" + File.separatorChar + ".write");
+		return new File(root.getOutputFolder().getPath() + File.separatorChar + ".ver" + File.separatorChar + "option");
 	}
 
 	/**

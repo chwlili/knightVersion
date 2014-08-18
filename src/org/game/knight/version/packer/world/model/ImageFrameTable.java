@@ -48,9 +48,9 @@ public class ImageFrameTable
 	 * @param index
 	 * @return
 	 */
-	public ImageFrame get(ProjectImgFile img,int row ,int col,int index)
+	public ImageFrame get(String fileID,int row ,int col,int index)
 	{
-		String key=img.gid+"_"+row+"_"+col;
+		String key=fileID+"_"+row+"_"+col;
 		ImageFrame[] frames=newTable.get(key);
 		if(frames!=null && index<frames.length)
 		{
@@ -107,7 +107,7 @@ public class ImageFrameTable
 		inputList = findAllFrame(root);
 
 		ExecutorService exec = Executors.newCachedThreadPool();
-		for (int i = 0; i < 5; i++)
+		for (int i = 0; i < root.maxThreadCount; i++)
 		{
 			exec.execute(new Runnable()
 			{
@@ -159,7 +159,7 @@ public class ImageFrameTable
 	 * @param col
 	 * @return
 	 */
-	private boolean has(String gid, int row, int col)
+	private boolean active(String gid, int row, int col)
 	{
 		String key = gid + "_" + row + "_" + col;
 		if (oldTable.containsKey(key))
@@ -194,7 +194,7 @@ public class ImageFrameTable
 	 */
 	private File getVerFile()
 	{
-		return new File(root.getOutputFolder().getPath() + File.separatorChar + ".ver" + File.separatorChar + ".clip");
+		return new File(root.getOutputFolder().getPath() + File.separatorChar + ".ver" + File.separatorChar + "clip");
 	}
 
 	/**
@@ -383,14 +383,14 @@ public class ImageFrameTable
 		{
 			for (SceneBackLayer layer : scene.backLayers)
 			{
-				if (!has(layer.img.imgFile.gid, 1, 1))
+				if (!active(layer.img.imgFile.gid, 1, 1))
 				{
 					frameMap.put(layer.img.imgFile.gid + "_1_1", new GridImg(layer.img.imgFile, 1, 1));
 				}
 			}
 			for (SceneForeLayer layer : scene.foreLayers)
 			{
-				if (!has(layer.img.imgFile.gid, 1, 1))
+				if (!active(layer.img.imgFile.gid, 1, 1))
 				{
 					frameMap.put(layer.img.imgFile.gid + "_1_1", new GridImg(layer.img.imgFile, 1, 1));
 				}
@@ -405,7 +405,7 @@ public class ImageFrameTable
 				{
 					for (int i = 0; i < anim.times.length; i++)
 					{
-						if (!has(anim.img.gid, anim.row, anim.col))
+						if (!active(anim.img.gid, anim.row, anim.col))
 						{
 							frameMap.put(anim.img.gid + "_" + anim.row + "_" + anim.col, new GridImg(anim.img, anim.row, anim.col));
 						}
