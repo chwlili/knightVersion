@@ -33,7 +33,7 @@ public class Mp3Writer
 	public void start()
 	{
 		openVer();
-		
+
 		ProjectFile[] mp3s = root.getFileTable().getAllMp3Files();
 		for (ProjectFile mp3 : mp3s)
 		{
@@ -55,9 +55,10 @@ public class Mp3Writer
 			}
 		}
 	}
-	
+
 	/**
 	 * 获取MP3文件的URL
+	 * 
 	 * @param file
 	 * @return
 	 */
@@ -65,7 +66,6 @@ public class Mp3Writer
 	{
 		return newTable.get(file.gid);
 	}
-
 
 	// -------------------------------------------------------------------------------------------------------------------
 	//
@@ -203,6 +203,14 @@ public class Mp3Writer
 		catch (UnsupportedEncodingException e)
 		{
 			e.printStackTrace();
+			GamePacker.error(e);
+			return;
+		}
+
+		// 记录输出文件
+		for (String url : newTable.values())
+		{
+			root.addOutputFile(url);
 		}
 	}
 }

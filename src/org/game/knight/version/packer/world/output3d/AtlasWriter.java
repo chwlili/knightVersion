@@ -39,7 +39,7 @@ public class AtlasWriter
 
 	private HashMap<String, AtlasSet> newTable;
 	private HashMap<String, AtlasSet> oldTable;
-	
+
 	private HashMap<ImageFrame, Atlas> frame_atlas;
 
 	private int nextIndex;
@@ -93,22 +93,23 @@ public class AtlasWriter
 
 			add(new AtlasSet(key, atlasList));
 		}
-		
-		frame_atlas=new HashMap<ImageFrame, Atlas>();
-		for(AtlasSet set:newTable.values())
+
+		frame_atlas = new HashMap<ImageFrame, Atlas>();
+		for (AtlasSet set : newTable.values())
 		{
-			for(Atlas atlas:set.atlasList)
+			for (Atlas atlas : set.atlasList)
 			{
-				for(AtlasRect rect:atlas.rects)
+				for (AtlasRect rect : atlas.rects)
 				{
 					frame_atlas.put(rect.frame, atlas);
 				}
 			}
 		}
 	}
-	
+
 	/**
 	 * 查找指定图像帧所分配到的纹理文件
+	 * 
 	 * @param frame
 	 * @return
 	 */
@@ -373,7 +374,7 @@ public class AtlasWriter
 		try
 		{
 			pngFile.getParentFile().mkdirs();
-			
+
 			ImageIO.write(image, "png", pngFile);
 			TextureHelper.png2atf(pngFile, atfFile, param.other);
 
@@ -594,7 +595,7 @@ public class AtlasWriter
 						output.append(rect.frame.file.gid + "_" + rect.frame.row + "_" + rect.frame.col + "_" + rect.frame.index + "_" + rect.x + "_" + rect.y);
 					}
 				}
-				if(i<atlasSet.length-1)
+				if (i < atlasSet.length - 1)
 				{
 					output.append("\n");
 				}
@@ -608,6 +609,17 @@ public class AtlasWriter
 		catch (UnsupportedEncodingException e)
 		{
 			e.printStackTrace();
+			GamePacker.error(e);
+			return;
+		}
+
+		//记录输出文件
+		for (AtlasSet set : newTable.values())
+		{
+			for (Atlas atlas : set.atlasList)
+			{
+				root.addOutputFile(atlas.atfURL);
+			}
 		}
 	}
 }

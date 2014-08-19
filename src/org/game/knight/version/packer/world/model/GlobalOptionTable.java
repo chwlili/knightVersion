@@ -41,6 +41,7 @@ public class GlobalOptionTable
 		{
 			nextID = Integer.parseInt(oldTable.get(NEXT_ID));
 		}
+		newTable.put(NEXT_ID, nextID + "");
 	}
 
 	/**
@@ -101,7 +102,7 @@ public class GlobalOptionTable
 					continue;
 				}
 
-				String[] items = line.substring(1).split("=");
+				String[] items = line.split("=");
 				if (items.length == 2)
 				{
 					String key = items[0].trim();

@@ -62,8 +62,8 @@ public class Attire3dWrite
 	 */
 	private void writeAttireConfig()
 	{
-		Attire[] attires=root.getAttireTable().getAllAttire();
-		Arrays.sort(attires,new Comparator<Attire>()
+		Attire[] attires = root.getAttireTable().getAllAttire();
+		Arrays.sort(attires, new Comparator<Attire>()
 		{
 			@Override
 			public int compare(Attire o1, Attire o2)
@@ -71,12 +71,12 @@ public class Attire3dWrite
 				return o1.gid.compareTo(o2.gid);
 			}
 		});
-		
+
 		// 统计所有的贴图文件地址
 		HashSet<String> atfURLs = new HashSet<String>();
 		for (Attire attire : root.getAttireTable().getAllAttire())
 		{
-			if (/*attire.isAnimAttire() || */attire.nativeName.startsWith("0_"))
+			if (/* attire.isAnimAttire() || */attire.nativeName.startsWith("0_"))
 			{
 				continue;
 			}
@@ -274,7 +274,7 @@ public class Attire3dWrite
 		StringBuilder output = new StringBuilder();
 		for (String key : keys)
 		{
-			output.append(key + " = " + newTable.get(key)+"\n");
+			output.append(key + " = " + newTable.get(key) + "\n");
 		}
 
 		try
@@ -284,6 +284,11 @@ public class Attire3dWrite
 		catch (UnsupportedEncodingException e)
 		{
 			e.printStackTrace();
+			GamePacker.error(e);
+			return;
 		}
+
+		// 记录输出文件
+		root.addOutputFile(outputURL);
 	}
 }

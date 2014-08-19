@@ -1,18 +1,22 @@
 package org.game.knight.version.packer.world.task;
 
 import java.io.File;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 
+import org.chw.util.FileUtil;
 import org.game.knight.version.packer.GamePacker;
 import org.game.knight.version.packer.world.model.AtfParamTable;
 import org.game.knight.version.packer.world.model.AttireTable;
+import org.game.knight.version.packer.world.model.GlobalOptionTable;
 import org.game.knight.version.packer.world.model.ImageFrameTable;
 import org.game.knight.version.packer.world.model.Mp3Writer;
 import org.game.knight.version.packer.world.model.ProjectFileTable;
 import org.game.knight.version.packer.world.model.WorldTable;
-import org.game.knight.version.packer.world.model.GlobalOptionTable;
 import org.game.knight.version.packer.world.output3d.AtlasWriter;
-import org.game.knight.version.packer.world.output3d.Attire3dWrite;
-import org.game.knight.version.packer.world.output3d.Scene3dWriter;
+import org.game.knight.version.packer.world.output3d.Config3dWriter;
 import org.game.knight.version.packer.world.output3d.SliceImageWriter;
 
 public class RootTask
@@ -23,6 +27,7 @@ public class RootTask
 
 	private final File inputFolder;
 	private final File outputFolder;
+	private final ArrayList<String> outputFiles;
 
 	private ProjectFileTable fileTable;
 	private AtfParamTable paramTable;
@@ -34,9 +39,8 @@ public class RootTask
 	private Mp3Writer mp3Writer;
 	private SliceImageWriter sliceImageWriter;
 	private AtlasWriter atlasWriter;
-	private Attire3dWrite attire3dWriter;
-	private Scene3dWriter scene3dWriter;
-	
+	private Config3dWriter config3dWriter;
+
 	/**
 	 * 构造函数
 	 * 
@@ -47,6 +51,7 @@ public class RootTask
 	{
 		this.inputFolder = inputFolder;
 		this.outputFolder = outputFolder;
+		this.outputFiles = new ArrayList<String>();
 	}
 
 	/**
@@ -67,6 +72,16 @@ public class RootTask
 	public File getOutputFolder()
 	{
 		return outputFolder;
+	}
+
+	/**
+	 * 添加输出文件
+	 * 
+	 * @param url
+	 */
+	public synchronized void addOutputFile(String url)
+	{
+		outputFiles.add(url);
 	}
 
 	/**
@@ -261,24 +276,78 @@ public class RootTask
 			return;
 		}
 
-		GamePacker.progress("输出装扮配置");
-		attire3dWriter=new Attire3dWrite(this);
-		attire3dWriter.start();
-		attire3dWriter.saveVer();
-		if(isCancel())
-		{
-			return;
-		}
-
-		GamePacker.progress("输出场景配置");
-		scene3dWriter=new Scene3dWriter(this);
-		scene3dWriter.start();
-		scene3dWriter.saveVer();
-		if(isCancel())
+		GamePacker.progress("输出3D配置");
+		config3dWriter = new Config3dWriter(this);
+		config3dWriter.start();
+		if (isCancel())
 		{
 			return;
 		}
 
 		globalOptionTable.saveVer();
+
+		writerVer();
+	}
+
+	/**
+	 * 输出 /db.ver
+	 */
+	private void writerVer()
+	{
+		String[] urls = outputFiles.toArray(new String[outputFiles.size()]);
+		Arrays.sort(urls, new Comparator<String>()
+		{
+			@Override
+			public int compare(String o1, String o2)
+			{
+				o1 = o1.substring(o1.lastIndexOf("/") + 1, o1.lastIndexOf("."));
+				o2 = o2.substring(o2.lastIndexOf("/") + 1, o2.lastIndexOf("."));
+				String[] list1 = o1.split("[^\\d]+");
+				String[] list2 = o2.split("[^\\d]+");
+
+				int length = Math.min(list1.length, list2.length);
+				for (int i = 0; i < length; i++)
+				{
+					try
+					{
+						int id1 = Integer.parseInt(list1[i]);
+						int id2 = Integer.parseInt(list2[i]);
+						if (id1 != id2)
+						{
+							return id1 - id2;
+						}
+					}
+					catch (NumberFormatException e)
+					{
+						if (!list1[i].equals(list2[i]))
+						{
+							return list1[i].compareTo(list2[i]);
+						}
+					}
+				}
+				return 0;
+			}
+		});
+
+		StringBuilder sb = new StringBuilder();
+		for (String url : urls)
+		{
+			if (sb.length() > 0)
+			{
+				sb.append("\n");
+			}
+			sb.append(url);
+		}
+
+		try
+		{
+			FileUtil.writeFile(new File(getOutputFolder().getPath() + "/db.ver"), sb.toString().getBytes("utf8"));
+		}
+		catch (UnsupportedEncodingException e)
+		{
+			e.printStackTrace();
+			GamePacker.error(e);
+			return;
+		}
 	}
 }

@@ -57,9 +57,10 @@ public class SliceImageWriter
 	{
 		this.root = root;
 	}
-	
+
 	/**
 	 * 获取已切分的图像
+	 * 
 	 * @param img
 	 * @return
 	 */
@@ -466,6 +467,18 @@ public class SliceImageWriter
 		catch (UnsupportedEncodingException e)
 		{
 			e.printStackTrace();
+			GamePacker.error(e);
+			return;
+		}
+
+		//记录输出文件
+		for (SliceImage img : newTable.values())
+		{
+			root.addOutputFile(img.previewURL);
+			for (String url : img.sliceURLs)
+			{
+				root.addOutputFile(url);
+			}
 		}
 	}
 }

@@ -10,6 +10,10 @@ import org.chw.util.FileUtil;
 import org.chw.util.MD5Util;
 import org.chw.util.TextUtil;
 import org.game.knight.version.packer.GamePacker;
+import org.game.knight.version.packer.world.model.Attire;
+import org.game.knight.version.packer.world.model.AttireAction;
+import org.game.knight.version.packer.world.model.AttireAnim;
+import org.game.knight.version.packer.world.model.ImageFrame;
 import org.game.knight.version.packer.world.model.Scene;
 import org.game.knight.version.packer.world.model.SceneAnim;
 import org.game.knight.version.packer.world.model.SceneBackLayer;
@@ -24,13 +28,17 @@ import org.game.knight.version.packer.world.model.SceneNpc;
 import org.game.knight.version.packer.world.model.ScenePart;
 import org.game.knight.version.packer.world.model.SceneSection;
 import org.game.knight.version.packer.world.model.SceneTrap;
+import org.game.knight.version.packer.world.model.WorldCity;
 import org.game.knight.version.packer.world.task.RootTask;
 
 public class Scene3dWriter
 {
 	private RootTask root;
 
+	private String worldCfgURL;
 	private HashMap<Scene, String> scene_url;
+	private HashMap<Scene, String> scene_files;
+	private HashMap<Scene, Integer> scene_size;
 
 	private HashMap<String, String> newTable;
 	private HashMap<String, String> oldTable;
@@ -46,14 +54,35 @@ public class Scene3dWriter
 	}
 
 	/**
-	 * 获取场景配置的输出路径
+	 * 获取世界配置URL
+	 * 
+	 * @return
+	 */
+	public String getWorldCfgURL()
+	{
+		return worldCfgURL;
+	}
+
+	/**
+	 * 获取场景配置的URL
 	 * 
 	 * @param scene
 	 * @return
 	 */
-	public String getSceneCfgURL(Scene scene)
+	public String getSceneURLs(Scene scene)
 	{
-		return scene_url.get(scene);
+		return scene_files.get(scene);
+	}
+
+	/**
+	 * 获取场景配置的总大小
+	 * 
+	 * @param scene
+	 * @return
+	 */
+	public int getSceneSize(Scene scene)
+	{
+		return scene_size.get(scene);
 	}
 
 	/**
@@ -64,6 +93,10 @@ public class Scene3dWriter
 		openVer();
 
 		writerAllSceneCfg();
+
+		writerWorldCfg();
+
+		measure();
 	}
 
 	/**
@@ -249,6 +282,184 @@ public class Scene3dWriter
 		scene_url.put(scene, url);
 	}
 
+	private void measure()
+	{
+		scene_files = new HashMap<Scene, String>();
+		scene_size = new HashMap<Scene, Integer>();
+
+		for (WorldCity city : root.getWorldTable().getCitys())
+		{
+			for (Scene scene : city.scenes)
+			{
+				HashSet<String> urls = new HashSet<String>();
+				HashSet<Attire> attires = new HashSet<Attire>();
+
+				urls.add(scene_url.get(scene));
+
+				for (SceneBackLayer layer : scene.backLayers)
+				{
+					if (layer.img != null)
+					{
+						SliceImage slice = root.getSliceImageWriter().getSliceImage(layer.img.imgFile);
+						if (slice != null)
+						{
+							urls.add(slice.previewURL);
+						}
+					}
+				}
+				for (SceneForeLayer layer : scene.foreLayers)
+				{
+					if (layer.img != null)
+					{
+						SliceImage slice = root.getSliceImageWriter().getSliceImage(layer.img.imgFile);
+						if (slice != null)
+						{
+							urls.add(slice.previewURL);
+						}
+					}
+				}
+				for (SceneAnim anim : scene.backAnims)
+				{
+					if (anim.attire != null)
+					{
+						attires.add(anim.attire);
+					}
+				}
+				for (SceneAnim anim : scene.anims)
+				{
+					if (anim.attire != null)
+					{
+						attires.add(anim.attire);
+					}
+				}
+				for (SceneNpc npc : scene.npcs)
+				{
+					if (npc.attire != null)
+					{
+						attires.add(npc.attire);
+					}
+				}
+				for (SceneDoor door : scene.doors)
+				{
+					if (door.attire != null)
+					{
+						attires.add(door.attire);
+					}
+				}
+				for (ScenePart part : scene.parts)
+				{
+					for (SceneMonsterTimer timer : part.timers)
+					{
+						for (SceneMonsterBatch batch : timer.getBatchList())
+						{
+							for (SceneMonster monster : batch.getMonsters())
+							{
+								if (monster.attire != null)
+								{
+									attires.add(monster.attire);
+								}
+							}
+						}
+					}
+				}
+				for (Attire attire : attires)
+				{
+					for (AttireAction action : attire.actions)
+					{
+						for (AttireAnim anim : action.anims)
+						{
+							for (int i = 0; i < anim.times.length; i++)
+							{
+								if (i > 0)
+								{
+									ImageFrame frame = root.getImageFrameTable().get(anim.img.gid, anim.row, anim.col, i);
+									if (frame != null)
+									{
+										Atlas atlas = root.getAtlasTable().findAtlasByImageFrame(frame);
+										if (atlas != null)
+										{
+											urls.add(atlas.atfURL);
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+
+				String[] urlArray = urls.toArray(new String[urls.size()]);
+				Arrays.sort(urlArray);
+
+				int sceneLength = 0;
+				StringBuilder urlString = new StringBuilder();
+				for (int i = 0; i < urlArray.length; i++)
+				{
+					String url = urlArray[i];
+					File file = new File(root.getOutputFolder().getPath() + url);
+
+					if (i > 0)
+					{
+						urlString.append(",");
+					}
+					urlString.append(urlArray[i]);
+					sceneLength += file.length();
+				}
+
+				scene_files.put(scene, urlString.toString());
+				scene_size.put(scene, sceneLength);
+			}
+		}
+	}
+
+	/**
+	 * 输出世界配置
+	 */
+	private void writerWorldCfg()
+	{
+		// 生成配置内容
+		GamePacker.progress("生成世界配置");
+		StringBuilder sb = new StringBuilder();
+		sb.append("<worldDB>\n");
+		sb.append("\t<citys>\n");
+		for (WorldCity city : root.getWorldTable().getCitys())
+		{
+			sb.append(String.format("\t\t<city id=\"%s\" name=\"%s\">\n", city.id, city.name));
+			for (Scene scene : city.scenes)
+			{
+				sb.append(String.format("\t\t\t<scene id=\"%s\" name=\"%s\" type=\"%s\" group=\"%s\" level=\"%s\" achieve=\"%s\" finishQuest=\"%s\" acceptQuest=\"%s\" />\n", scene.sceneID, scene.sceneName, scene.sceneType, scene.sceneGroup, 0, "-", "-", "-"));
+			}
+			sb.append("\t\t</city>\n");
+		}
+		sb.append("\t</citys>\n");
+		sb.append("</worldDB>");
+
+		// 存储文件
+		byte[] bytes = null;
+		try
+		{
+			bytes = sb.toString().getBytes("UTF-8");
+		}
+		catch (UnsupportedEncodingException e)
+		{
+			e.printStackTrace();
+			GamePacker.error(e);
+			return;
+		}
+
+		String md5 = /* (zip ? "zlib_" : "")+ */MD5Util.md5Bytes(bytes);
+		String url = oldTable.get(md5);
+
+		if (url == null)
+		{
+			url = root.getGlobalOptionTable().getNextExportFile() + ".cfg";
+			FileUtil.writeFile(new File(root.getOutputFolder().getPath() + url), bytes);
+		}
+
+		newTable.put(md5, url);
+
+		worldCfgURL = url;
+	}
+
 	// -------------------------------------------------------------------------------------------------------------------
 	//
 	// 版本信息
@@ -335,6 +546,14 @@ public class Scene3dWriter
 		catch (UnsupportedEncodingException e)
 		{
 			e.printStackTrace();
+			GamePacker.error(e);
+			return;
+		}
+
+		// 记录输出文件
+		for (String url : newTable.values())
+		{
+			root.addOutputFile(url);
 		}
 	}
 }
