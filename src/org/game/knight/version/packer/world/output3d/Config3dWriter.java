@@ -73,8 +73,8 @@ public class Config3dWriter
 		// txt.append(String.format("\t\t<config name=\"%s\" path=\"%s\" size=\"%s\"/>\n",
 		// "uiAvatar", getExportedFileUrl(avatarFileKey),
 		// getExportedFileSize(avatarFileKey)));
-		txt.append(String.format("\t\t<config name=\"%s\" path=\"%s\" size=\"%s\"/>\n", "attire", attireURL, attireFile.length()));
-		txt.append(String.format("\t\t<config name=\"%s\" path=\"%s\" size=\"%s\"/>\n", "world", worldURL, worldFile.length()));
+		txt.append(String.format("\t\t<config name=\"%s\" path=\"%s\" size=\"%s\"/>\n", "attire", root.localToCdnURL(attireURL), attireFile.length()));
+		txt.append(String.format("\t\t<config name=\"%s\" path=\"%s\" size=\"%s\"/>\n", "world", root.localToCdnURL(worldURL), worldFile.length()));
 		txt.append("\t</configs>\n");
 		txt.append(getAttireSummay());
 		txt.append(getSceneSummay());
@@ -242,7 +242,7 @@ public class Config3dWriter
 		txt.append("\t\t<files>\n");
 		for (String key : keys)
 		{
-			txt.append(String.format("\t\t\t<file id=\"%s\" url=\"%s\" size=\"%s\" />\n", url_id.get(key), key, url_size.get(key)));
+			txt.append(String.format("\t\t\t<file id=\"%s\" url=\"%s\" size=\"%s\" />\n", url_id.get(key), root.localToCdnURL(key), url_size.get(key)));
 		}
 		txt.append("\t\t</files>\n");
 

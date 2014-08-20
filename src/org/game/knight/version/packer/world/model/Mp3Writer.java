@@ -3,11 +3,13 @@ package org.game.knight.version.packer.world.model;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 
 import org.chw.util.FileUtil;
+import org.chw.util.MD5Util;
 import org.game.knight.version.packer.GamePacker;
 import org.game.knight.version.packer.world.task.RootTask;
 
@@ -34,24 +36,38 @@ public class Mp3Writer
 	{
 		openVer();
 
+		ArrayList<ProjectFile> newMp3s = new ArrayList<ProjectFile>();
+
 		ProjectFile[] mp3s = root.getFileTable().getAllMp3Files();
 		for (ProjectFile mp3 : mp3s)
 		{
 			if (!activate(mp3))
 			{
-				String url = root.getGlobalOptionTable().getNextExportFile() + ".mp3";
-				File file = new File(root.getOutputFolder().getPath() + url);
+				newMp3s.add(mp3);
+			}
+		}
 
-				try
-				{
-					FileUtil.copyTo(file, mp3);
-					add(mp3, url);
-				}
-				catch (IOException e)
-				{
-					e.printStackTrace();
-					GamePacker.error(e);
-				}
+		for (int i = 0; i < newMp3s.size(); i++)
+		{
+			ProjectFile mp3 = newMp3s.get(i);
+
+			String url = root.getGlobalOptionTable().getNextExportFile() + ".mp3";
+			File file = new File(root.getOutputFolder().getPath() + url);
+
+			GamePacker.progress("Êä³öMP3ÎÄ¼þ(" + (i + 1) + "/" + newMp3s.size() + ")£º" + url);
+
+			try
+			{
+				FileUtil.copyTo(file, mp3);
+				root.addFileSuffix(file);
+				add(mp3, url);
+			}
+			catch (IOException e)
+			{
+				e.printStackTrace();
+				GamePacker.error(e);
+				root.cancel();
+				return;
 			}
 		}
 	}

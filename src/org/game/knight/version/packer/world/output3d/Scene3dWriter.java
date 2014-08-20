@@ -129,7 +129,7 @@ public class Scene3dWriter
 		String bgsPath = "";
 		if (scene.bgs != null)
 		{
-			bgsPath = root.getMp3Writer().getMp3URL(scene.bgs);
+			bgsPath = root.localToCdnURL(root.getMp3Writer().getMp3URL(scene.bgs));
 		}
 
 		int[] sectionArr = new int[scene.sections.length];
@@ -162,7 +162,7 @@ public class Scene3dWriter
 				continue;
 			}
 
-			sb.append("\t\t<layer x=\"" + layer.x + "\" y=\"" + layer.y + "\" speed=\"" + layer.speed + "\" width=\"" + img.img.width + "\" height=\"" + img.img.height + "\" preview=\"" + img.previewURL + "\" row=\"" + img.sliceRow + "\" col=\"" + img.sliceCol + "\" />\n");
+			sb.append("\t\t<layer x=\"" + layer.x + "\" y=\"" + layer.y + "\" speed=\"" + layer.speed + "\" imgW=\"" + img.img.width + "\" imgH=\"" + img.img.height + "\" preview=\"" + root.localToCdnURL(img.previewURL) + "\" row=\"" + img.sliceRow + "\" col=\"" + img.sliceCol + "\" />\n");
 		}
 		sb.append("\t</layers>\n");
 
@@ -180,7 +180,7 @@ public class Scene3dWriter
 				continue;
 			}
 
-			sb.append("\t\t<layer x=\"" + layer.x + "\" y=\"" + layer.y + "\" width=\"" + layer.w + "\" speed=\"" + layer.speed + "\" width=\"" + img.img.width + "\" height=\"" + img.img.height + "\" preview=\"" + img.previewURL + "\" row=\"" + img.sliceRow + "\" col=\"" + img.sliceCol + "\" />\n");
+			sb.append("\t\t<layer x=\"" + layer.x + "\" y=\"" + layer.y + "\" width=\"" + layer.w + "\" speed=\"" + layer.speed + "\" imgW=\"" + img.img.width + "\" imgH=\"" + img.img.height + "\" preview=\"" + root.localToCdnURL(img.previewURL) + "\" row=\"" + img.sliceRow + "\" col=\"" + img.sliceCol + "\" />\n");
 		}
 		sb.append("\t</foreLayers>\n");
 
@@ -273,8 +273,11 @@ public class Scene3dWriter
 
 		if (url == null)
 		{
-			url = root.getGlobalOptionTable().getNextExportFile() + ".cfg";
-			FileUtil.writeFile(new File(root.getOutputFolder().getPath() + url), bytes);
+			url = root.getGlobalOptionTable().getNextExportFile() + ".xml";
+
+			File outputFile = new File(root.getOutputFolder().getPath() + url);
+			FileUtil.writeFile(outputFile, bytes);
+			root.addFileSuffix(outputFile);
 		}
 
 		newTable.put(md5, url);
@@ -293,8 +296,6 @@ public class Scene3dWriter
 			{
 				HashSet<String> urls = new HashSet<String>();
 				HashSet<Attire> attires = new HashSet<Attire>();
-
-				urls.add(scene_url.get(scene));
 
 				for (SceneBackLayer layer : scene.backLayers)
 				{
@@ -392,16 +393,19 @@ public class Scene3dWriter
 
 				int sceneLength = 0;
 				StringBuilder urlString = new StringBuilder();
+
+				String cfgURL = scene_url.get(scene);
+				File cfgFile = new File(root.getOutputFolder().getPath() + cfgURL);
+				urlString.append(root.localToCdnURL(cfgURL));
+				sceneLength += cfgFile.length();
+
 				for (int i = 0; i < urlArray.length; i++)
 				{
 					String url = urlArray[i];
 					File file = new File(root.getOutputFolder().getPath() + url);
 
-					if (i > 0)
-					{
-						urlString.append(",");
-					}
-					urlString.append(urlArray[i]);
+					urlString.append(",");
+					urlString.append(root.localToCdnURL(urlArray[i]));
 					sceneLength += file.length();
 				}
 
@@ -452,7 +456,10 @@ public class Scene3dWriter
 		if (url == null)
 		{
 			url = root.getGlobalOptionTable().getNextExportFile() + ".cfg";
-			FileUtil.writeFile(new File(root.getOutputFolder().getPath() + url), bytes);
+
+			File outputFile = new File(root.getOutputFolder().getPath() + url);
+			FileUtil.writeFile(outputFile, bytes);
+			root.addFileSuffix(outputFile);
 		}
 
 		newTable.put(md5, url);

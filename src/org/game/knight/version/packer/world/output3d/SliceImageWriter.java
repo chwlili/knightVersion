@@ -4,6 +4,7 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -196,8 +197,27 @@ public class SliceImageWriter
 			File previewPNG = new File(root.getOutputFolder().getPath() + previewURL + ".png");
 			previewPNG.getParentFile().mkdirs();
 
+			StringBuilder previewAtlas = new StringBuilder();
+			previewAtlas.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+			previewAtlas.append("<TextureAtlas imagePath=\"" + ("/" + root.getOutputFolder().getName() + previewURL) + ".atf\">\n");
+			previewAtlas.append("\t<SubTexture name=\"def\" x=\"0\" y=\"0\" width=\"" + previewW + "\" height=\"" + previewH + "\" frameX=\"0\" frameY=\"0\" frameWidth=\"" + previewW + "\" frameHeight=\"" + previewH + "\"/>\n");
+			previewAtlas.append("</TextureAtlas>");
+
 			ImageIO.write(previewIMG, "png", previewPNG);
 			TextureHelper.png2atf(previewPNG, previewATF);
+
+			byte[] previewAtlasCfg = previewAtlas.toString().getBytes("utf8");
+
+			RandomAccessFile a = new RandomAccessFile(previewATF, "rw");
+			a.seek(previewATF.length());
+			a.write(previewAtlasCfg);
+			a.write((previewAtlasCfg.length >>> 24) & 0xFF);
+			a.write((previewAtlasCfg.length >>> 16) & 0xFF);
+			a.write((previewAtlasCfg.length >>> 8) & 0xFF);
+			a.write(previewAtlasCfg.length & 0xFF);
+			a.close();
+
+			root.addFileSuffix(previewATF);
 
 			if (previewPNG.exists())
 			{
@@ -226,9 +246,27 @@ public class SliceImageWriter
 					File subPNG = new File(root.getOutputFolder().getPath() + previewURL + "_" + index + ".png");
 					subPNG.getParentFile().mkdirs();
 
-					ImageIO.write(subIMG, "png", subPNG);
+					StringBuilder subAtlas = new StringBuilder();
+					subAtlas.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+					subAtlas.append("<TextureAtlas imagePath=\"" + ("/" + root.getOutputFolder().getName() + previewURL + "_" + index) + ".atf\">\n");
+					subAtlas.append("\t<SubTexture name=\"def\" x=\"0\" y=\"0\" width=\"" + subW + "\" height=\"" + subH + "\" frameX=\"0\" frameY=\"0\" frameWidth=\"" + subW + "\" frameHeight=\"" + subH + "\"/>\n");
+					subAtlas.append("</TextureAtlas>");
 
+					ImageIO.write(subIMG, "png", subPNG);
 					TextureHelper.png2atf(subPNG, subATF);
+
+					byte[] subAtlasCfg = subAtlas.toString().getBytes("utf8");
+
+					RandomAccessFile subAppender = new RandomAccessFile(subATF, "rw");
+					subAppender.seek(subATF.length());
+					subAppender.write(subAtlasCfg);
+					subAppender.write((subAtlasCfg.length >>> 24) & 0xFF);
+					subAppender.write((subAtlasCfg.length >>> 16) & 0xFF);
+					subAppender.write((subAtlasCfg.length >>> 8) & 0xFF);
+					subAppender.write(subAtlasCfg.length & 0xFF);
+					subAppender.close();
+					
+					root.addFileSuffix(subATF);
 
 					if (subPNG.exists())
 					{
@@ -471,7 +509,7 @@ public class SliceImageWriter
 			return;
 		}
 
-		//记录输出文件
+		// 记录输出文件
 		for (SliceImage img : newTable.values())
 		{
 			root.addOutputFile(img.previewURL);

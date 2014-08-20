@@ -1,6 +1,9 @@
 package org.game.knight.version.packer.world.task;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -82,6 +85,21 @@ public class RootTask
 	public synchronized void addOutputFile(String url)
 	{
 		outputFiles.add(url);
+	}
+
+	/**
+	 * 本地路径到CDN路径
+	 * 
+	 * @param url
+	 * @return
+	 */
+	public String localToCdnURL(String url)
+	{
+		if (url != null && !url.isEmpty())
+		{
+			return "/" + getOutputFolder().getName() + url;
+		}
+		return "";
 	}
 
 	/**
@@ -287,6 +305,69 @@ public class RootTask
 		globalOptionTable.saveVer();
 
 		writerVer();
+	}
+
+	private static final byte[] suffix = new byte[] { 0, 0, 0, 0, 0x4D, 0x44, 0x35, 0 };
+
+	/**
+	 * 添加文件后缀
+	 * 
+	 * @param file
+	 */
+	public void addFileSuffix(File file)
+	{
+		if (!file.exists())
+		{
+			return;
+		}
+
+		RandomAccessFile writer = null;
+		try
+		{
+			writer = new RandomAccessFile(file, "rw");
+			writer.seek(file.length() - suffix.length);
+
+			boolean added = true;
+			for (int j = 0; j < suffix.length; j++)
+			{
+				if (writer.readByte() != suffix[j])
+				{
+					added = false;
+					break;
+				}
+			}
+
+			if (!added)
+			{
+				writer.seek(file.length());
+				for (int j = 0; j < suffix.length; j++)
+				{
+					writer.writeByte(suffix[j]);
+				}
+			}
+		}
+		catch (FileNotFoundException e)
+		{
+			e.printStackTrace();
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+		finally
+		{
+			if (writer != null)
+			{
+				try
+				{
+					writer.close();
+				}
+				catch (IOException e)
+				{
+					e.printStackTrace();
+				}
+			}
+		}
 	}
 
 	/**

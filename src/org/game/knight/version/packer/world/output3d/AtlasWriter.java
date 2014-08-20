@@ -378,10 +378,18 @@ public class AtlasWriter
 			ImageIO.write(image, "png", pngFile);
 			TextureHelper.png2atf(pngFile, atfFile, param.other);
 
+			byte[] xmlBytes = atlas.toString().getBytes("utf8");
+
 			RandomAccessFile a = new RandomAccessFile(atfFile, "rw");
 			a.seek(atfFile.length());
-			a.write(atlas.toString().getBytes("utf8"));
+			a.write(xmlBytes);
+			a.write((xmlBytes.length >>> 24) & 0xFF);
+			a.write((xmlBytes.length >>> 16) & 0xFF);
+			a.write((xmlBytes.length >>> 8) & 0xFF);
+			a.write(xmlBytes.length & 0xFF);
 			a.close();
+
+			root.addFileSuffix(atfFile);
 
 			if (pngFile.exists())
 			{
@@ -613,7 +621,7 @@ public class AtlasWriter
 			return;
 		}
 
-		//记录输出文件
+		// 记录输出文件
 		for (AtlasSet set : newTable.values())
 		{
 			for (Atlas atlas : set.atlasList)

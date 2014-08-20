@@ -76,11 +76,6 @@ public class Attire3dWrite
 		HashSet<String> atfURLs = new HashSet<String>();
 		for (Attire attire : root.getAttireTable().getAllAttire())
 		{
-			if (/* attire.isAnimAttire() || */attire.nativeName.startsWith("0_"))
-			{
-				continue;
-			}
-
 			for (AttireAction action : attire.actions)
 			{
 				for (AttireAnim anim : action.anims)
@@ -125,16 +120,11 @@ public class Attire3dWrite
 			int atfID = atfURL_refID.get(atfURL);
 			File file = new File(root.getOutputFolder().getPath() + atfURL);
 
-			attireText.append(String.format("\t\t<texture id=\"%s\" path=\"%s\" size=\"%s\" />\n", atfID, atfURL, file.length()));
+			attireText.append(String.format("\t\t<texture id=\"%s\" path=\"%s\" size=\"%s\" />\n", atfID, root.localToCdnURL(atfURL), file.length()));
 		}
 		attireText.append("\t</textures>\n");
 		for (Attire attire : root.getAttireTable().getAllAttire())
 		{
-			if (attire.isAnimAttire() || attire.nativeName.startsWith("0_"))
-			{
-				continue;
-			}
-
 			attireText.append(String.format("\t<attire id=\"%s\" name=\"%s\" x=\"%s\" y=\"%s\" width=\"%s\" height=\"%s\">\n", attire.gid, attire.name, attire.hitRect.x, attire.hitRect.y, attire.hitRect.width, attire.hitRect.height));
 			for (AttireAction action : attire.actions)
 			{
@@ -155,7 +145,7 @@ public class Attire3dWrite
 								Atlas atlas = root.getAtlasTable().findAtlasByImageFrame(frame);
 								if (atlas != null)
 								{
-									attireText.append("\t\t\t\t<frame texture=\"" + atlas.atfURL + "\" frameID=\"" + frame.file.gid + "_" + frame.row + "_" + frame.col + "_" + i + "\" frameW=\"" + frame.frameW + "\" frameH=\"" + frame.frameH + "\" delay=\"" + delay + "\"/>\n");
+									attireText.append("\t\t\t\t<frame texture=\"" + root.localToCdnURL(atlas.atfURL) + "\" frameID=\"" + frame.file.gid + "_" + frame.row + "_" + frame.col + "_" + i + "\" frameW=\"" + frame.frameW + "\" frameH=\"" + frame.frameH + "\" delay=\"" + delay + "\"/>\n");
 								}
 							}
 						}
@@ -164,7 +154,7 @@ public class Attire3dWrite
 				}
 				for (AttireAudio audio : action.audios)
 				{
-					attireText.append(String.format("\t\t\t<audio path=\"%s\" loop=\"%s\" volume=\"%s\"/>\n", root.getMp3Writer().getMp3URL(audio.mp3), audio.loop, audio.volume));
+					attireText.append(String.format("\t\t\t<audio path=\"%s\" loop=\"%s\" volume=\"%s\"/>\n", root.localToCdnURL(root.getMp3Writer().getMp3URL(audio.mp3)), audio.loop, audio.volume));
 				}
 				attireText.append("\t\t</action>\n");
 			}
@@ -191,7 +181,10 @@ public class Attire3dWrite
 		if (url == null)
 		{
 			url = root.getGlobalOptionTable().getNextExportFile() + ".cfg";
-			FileUtil.writeFile(new File(root.getOutputFolder().getPath() + url), bytes);
+
+			File outputFile = new File(root.getOutputFolder().getPath() + url);
+			FileUtil.writeFile(outputFile, bytes);
+			root.addFileSuffix(outputFile);
 		}
 
 		newTable.put(md5, url);
