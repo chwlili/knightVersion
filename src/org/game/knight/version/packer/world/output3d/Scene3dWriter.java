@@ -155,14 +155,18 @@ public class Scene3dWriter
 			{
 				continue;
 			}
-
-			SliceImage img = root.getSliceImageWriter().getSliceImage(layer.img.imgFile);
+			ImageFrame frame = root.getImageFrameTable().get(layer.img.imgFile.gid, 1, 1, 0);
+			if (frame == null)
+			{
+				continue;
+			}
+			SliceImage img = root.getSliceImageWriter().getSliceImage(frame);
 			if (img == null)
 			{
 				continue;
 			}
 
-			sb.append("\t\t<layer x=\"" + layer.x + "\" y=\"" + layer.y + "\" speed=\"" + layer.speed + "\" imgW=\"" + img.img.width + "\" imgH=\"" + img.img.height + "\" preview=\"" + root.localToCdnURL(img.previewURL) + "\" row=\"" + img.sliceRow + "\" col=\"" + img.sliceCol + "\" />\n");
+			sb.append("\t\t<layer offsetX=\"" + layer.x + "\" offsetY=\"" + layer.y + "\" scrollSpeed=\"" + layer.speed + "\" clipX=\"" + img.frame.clipX + "\" clipY=\"" + img.frame.clipY + "\" clipW=\"" + img.frame.clipW + "\" clipH=\"" + img.frame.clipH + "\" imgW=\"" + img.frame.frameW + "\" imgH=\"" + img.frame.frameH + "\" previewURL=\"" + root.localToCdnURL(img.previewURL) + "\" sliceRow=\"" + img.sliceRow + "\" sliceCol=\"" + img.sliceCol + "\" />\n");
 		}
 		sb.append("\t</layers>\n");
 
@@ -173,14 +177,18 @@ public class Scene3dWriter
 			{
 				continue;
 			}
-
-			SliceImage img = root.getSliceImageWriter().getSliceImage(layer.img.imgFile);
+			ImageFrame frame = root.getImageFrameTable().get(layer.img.imgFile.gid, 1, 1, 0);
+			if (frame == null)
+			{
+				continue;
+			}
+			SliceImage img = root.getSliceImageWriter().getSliceImage(frame);
 			if (img == null)
 			{
 				continue;
 			}
 
-			sb.append("\t\t<layer x=\"" + layer.x + "\" y=\"" + layer.y + "\" width=\"" + layer.w + "\" speed=\"" + layer.speed + "\" imgW=\"" + img.img.width + "\" imgH=\"" + img.img.height + "\" preview=\"" + root.localToCdnURL(img.previewURL) + "\" row=\"" + img.sliceRow + "\" col=\"" + img.sliceCol + "\" />\n");
+			sb.append("\t\t<layer x=\"" + layer.x + "\" y=\"" + layer.y + "\" width=\"" + layer.w + "\" speed=\"" + layer.speed + "\" clipX=\"" + img.frame.clipX + "\" clipY=\"" + img.frame.clipY + "\" clipW=\"" + img.frame.clipW + "\" clipH=\"" + img.frame.clipH + "\" imgW=\"" + img.frame.frameW + "\" imgH=\"" + img.frame.frameH + "\" previewURL=\"" + root.localToCdnURL(img.previewURL) + "\" sliceRow=\"" + img.sliceRow + "\" sliceCol=\"" + img.sliceCol + "\" />\n");
 		}
 		sb.append("\t</foreLayers>\n");
 
@@ -301,10 +309,14 @@ public class Scene3dWriter
 				{
 					if (layer.img != null)
 					{
-						SliceImage slice = root.getSliceImageWriter().getSliceImage(layer.img.imgFile);
-						if (slice != null)
+						ImageFrame frame = root.getImageFrameTable().get(layer.img.imgFile.gid, 1, 1, 0);
+						if (frame != null)
 						{
-							urls.add(slice.previewURL);
+							SliceImage slice = root.getSliceImageWriter().getSliceImage(frame);
+							if (slice != null)
+							{
+								urls.add(slice.previewURL);
+							}
 						}
 					}
 				}
@@ -312,10 +324,14 @@ public class Scene3dWriter
 				{
 					if (layer.img != null)
 					{
-						SliceImage slice = root.getSliceImageWriter().getSliceImage(layer.img.imgFile);
-						if (slice != null)
+						ImageFrame frame = root.getImageFrameTable().get(layer.img.imgFile.gid, 1, 1, 0);
+						if (frame != null)
 						{
-							urls.add(slice.previewURL);
+							SliceImage slice = root.getSliceImageWriter().getSliceImage(frame);
+							if (slice != null)
+							{
+								urls.add(slice.previewURL);
+							}
 						}
 					}
 				}

@@ -67,12 +67,13 @@ public class Config3dWriter
 		String worldURL = sceneWriter.getWorldCfgURL();
 		File worldFile = new File(root.getOutputFolder().getPath() + worldURL);
 
+		String uiAttireURL = root.getUIAttireWriter().getCfgFileURL();
+		File uiAttireFile = new File(root.getOutputFolder().getPath() + uiAttireURL);
+
 		StringBuilder txt = new StringBuilder();
 		txt.append("<project>\n");
 		txt.append("\t<configs>\n");
-		// txt.append(String.format("\t\t<config name=\"%s\" path=\"%s\" size=\"%s\"/>\n",
-		// "uiAvatar", getExportedFileUrl(avatarFileKey),
-		// getExportedFileSize(avatarFileKey)));
+		txt.append(String.format("\t\t<config name=\"%s\" path=\"%s\" size=\"%s\"/>\n", "uiAvatar", root.localToCdnURL(uiAttireURL), uiAttireFile.length()));
 		txt.append(String.format("\t\t<config name=\"%s\" path=\"%s\" size=\"%s\"/>\n", "attire", root.localToCdnURL(attireURL), attireFile.length()));
 		txt.append(String.format("\t\t<config name=\"%s\" path=\"%s\" size=\"%s\"/>\n", "world", root.localToCdnURL(worldURL), worldFile.length()));
 		txt.append("\t</configs>\n");

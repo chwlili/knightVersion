@@ -21,7 +21,8 @@ public class AttireTable
 
 	private HashMap<String, HashMap<String, AttireBitmap>> bitmapTable = new HashMap<String, HashMap<String, AttireBitmap>>();
 	private HashMap<String, HashMap<String, Attire>> attireTable = new HashMap<String, HashMap<String, Attire>>();
-	private ArrayList<Attire> allAttres=new ArrayList<Attire>();
+	private ArrayList<Attire> allAttres = new ArrayList<Attire>();
+	private ArrayList<AttireBitmap> allBitmaps = new ArrayList<AttireBitmap>();
 
 	/**
 	 * 构造函数
@@ -32,59 +33,62 @@ public class AttireTable
 	{
 		this.root = root;
 	}
-	
+
 	/**
 	 * 获取图像
+	 * 
 	 * @param url
 	 * @param id
 	 * @return
 	 */
-	public AttireBitmap getBitmap(String url,String id)
+	public AttireBitmap getBitmap(String url, String id)
 	{
-		if(bitmapTable.containsKey(url))
+		if (bitmapTable.containsKey(url))
 		{
-			if(bitmapTable.get(url).containsKey(id))
+			if (bitmapTable.get(url).containsKey(id))
 			{
 				return bitmapTable.get(url).get(id);
 			}
 		}
 		return null;
 	}
-	
-	/**
-	 * 获取所有图像
-	 * @return
-	 */
-	public AttireBitmap[] getAllBitmap()
-	{
-		return bitmapTable.values().toArray(new AttireBitmap[bitmapTable.size()]);
-	}
-	
+
 	/**
 	 * 获取装扮
+	 * 
 	 * @param url
 	 * @param id
 	 * @return
 	 */
-	public Attire getAttire(String url,String id)
+	public Attire getAttire(String url, String id)
 	{
-		if(attireTable.containsKey(url))
+		if (attireTable.containsKey(url))
 		{
-			if(attireTable.get(url).containsKey(id))
+			if (attireTable.get(url).containsKey(id))
 			{
 				return attireTable.get(url).get(id);
 			}
 		}
 		return null;
 	}
-	
+
 	/**
 	 * 获取所有装扮
+	 * 
 	 * @return
 	 */
 	public Attire[] getAllAttire()
 	{
 		return allAttres.toArray(new Attire[allAttres.size()]);
+	}
+
+	/**
+	 * 获取所有的引用图像
+	 * @return
+	 */
+	public AttireBitmap[] getAllBitmaps()
+	{
+		return allBitmaps.toArray(new AttireBitmap[allBitmaps.size()]);
 	}
 
 	/**
@@ -96,11 +100,12 @@ public class AttireTable
 	private void addBitmap(ProjectFile file, AttireBitmap bitmap)
 	{
 		String url = file.url;
-		if(!bitmapTable.containsKey(url))
+		if (!bitmapTable.containsKey(url))
 		{
 			bitmapTable.put(url, new HashMap<String, AttireBitmap>());
 		}
 		bitmapTable.get(url).put(bitmap.id, bitmap);
+		allBitmaps.add(bitmap);
 	}
 
 	/**
@@ -111,32 +116,32 @@ public class AttireTable
 	 */
 	private void addAttire(ProjectFile file, Attire attire)
 	{
-		String url=file.url;
-		if(!attireTable.containsKey(url))
+		String url = file.url;
+		if (!attireTable.containsKey(url))
 		{
-			attireTable.put(url, new HashMap<String,Attire>());
+			attireTable.put(url, new HashMap<String, Attire>());
 		}
 		attireTable.get(url).put(attire.nativeName, attire);
 		allAttres.add(attire);
 	}
-	
+
 	/**
 	 * 构建
 	 */
 	public void start()
 	{
-		ProjectFile[] files=root.getFileTable().getAllAttireFiles();
-		for(ProjectFile file:files)
+		ProjectFile[] files = root.getFileTable().getAllAttireFiles();
+		for (ProjectFile file : files)
 		{
-			if(root.isCancel())
+			if (root.isCancel())
 			{
 				return;
 			}
-			
+
 			open(file);
 		}
 	}
-	
+
 	/**
 	 * 打开
 	 * 

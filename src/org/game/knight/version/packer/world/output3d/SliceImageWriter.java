@@ -18,13 +18,11 @@ import javax.imageio.ImageIO;
 
 import org.chw.util.FileUtil;
 import org.game.knight.version.packer.GamePacker;
+import org.game.knight.version.packer.world.model.Attire;
 import org.game.knight.version.packer.world.model.AttireAction;
 import org.game.knight.version.packer.world.model.AttireAnim;
-import org.game.knight.version.packer.world.model.ProjectFile;
-import org.game.knight.version.packer.world.model.ProjectImgFile;
-import org.game.knight.version.packer.world.model.Scene;
-import org.game.knight.version.packer.world.model.SceneAnim;
-import org.game.knight.version.packer.world.model.SceneBackLayer;
+import org.game.knight.version.packer.world.model.AttireBitmap;
+import org.game.knight.version.packer.world.model.ImageFrame;
 import org.game.knight.version.packer.world.task.RootTask;
 
 public class SliceImageWriter
@@ -40,7 +38,7 @@ public class SliceImageWriter
 	private static final int SLICE_SIZE = 256;
 
 	private RootTask root;
-	private ProjectImgFile[] inputList;
+	private ImageFrame[] inputList;
 	private int nextIndex;
 	private int finishedCount;
 
@@ -65,9 +63,9 @@ public class SliceImageWriter
 	 * @param img
 	 * @return
 	 */
-	public SliceImage getSliceImage(ProjectImgFile img)
+	public SliceImage getSliceImage(ImageFrame frame)
 	{
-		return newTable.get(createKey(img));
+		return newTable.get(createKey(frame));
 	}
 
 	/**
@@ -89,7 +87,7 @@ public class SliceImageWriter
 				{
 					while (true)
 					{
-						ProjectImgFile file = getNextFile();
+						ImageFrame file = getNextFile();
 						if (file == null || root.isCancel())
 						{
 							break;
@@ -121,13 +119,13 @@ public class SliceImageWriter
 	 * 
 	 * @return
 	 */
-	private synchronized ProjectImgFile getNextFile()
+	private synchronized ImageFrame getNextFile()
 	{
-		ProjectImgFile result = null;
+		ImageFrame result = null;
 		if (nextIndex < inputList.length)
 		{
 			result = inputList[nextIndex];
-			lastLog = "图像切片(" + nextIndex + "/" + inputList.length + ")：" + result.url;
+			lastLog = "图像切片(" + nextIndex + "/" + inputList.length + ")：" + result.file.url;
 			nextIndex++;
 		}
 		return result;
@@ -139,7 +137,7 @@ public class SliceImageWriter
 	 * @param img
 	 * @param slice
 	 */
-	private synchronized void finishFile(ProjectImgFile img, SliceImage slice)
+	private synchronized void finishFile(ImageFrame img, SliceImage slice)
 	{
 		if (img != null && slice != null)
 		{
@@ -162,16 +160,16 @@ public class SliceImageWriter
 	/**
 	 * 切片图像
 	 * 
-	 * @param file
+	 * @param frame
 	 * @return
 	 */
-	private SliceImage sliceImage(ProjectImgFile file)
+	private SliceImage sliceImage(ImageFrame frame)
 	{
 		try
 		{
-			BufferedImage nativeIMG = ImageIO.read(file);
-			int row = (int) Math.ceil((double) nativeIMG.getHeight() / SLICE_SIZE);
-			int col = (int) Math.ceil((double) nativeIMG.getWidth() / SLICE_SIZE);
+			BufferedImage nativeIMG = ImageIO.read(frame.file);
+			int row = (int) Math.ceil((double) frame.clipH / SLICE_SIZE);
+			int col = (int) Math.ceil((double) frame.clipW / SLICE_SIZE);
 
 			String previewURL = null;
 			synchronized (root.getGlobalOptionTable())
@@ -183,14 +181,14 @@ public class SliceImageWriter
 				}
 			}
 
-			int previewW = (int) (nativeIMG.getWidth() / PREVIEW_SCALE);
-			int previewH = (int) (nativeIMG.getHeight() / PREVIEW_SCALE);
+			int previewW = (int) (frame.clipW / PREVIEW_SCALE);
+			int previewH = (int) (frame.clipH / PREVIEW_SCALE);
 			previewW = TextureHelper.normalizeWH(previewW);
 			previewH = TextureHelper.normalizeWH(previewH);
 
 			BufferedImage previewIMG = new BufferedImage(previewW, previewH, BufferedImage.TYPE_INT_ARGB);
 			Graphics2D previewGS = (Graphics2D) previewIMG.getGraphics();
-			previewGS.drawImage(nativeIMG, 0, 0, previewIMG.getWidth(), previewIMG.getHeight(), 0, 0, nativeIMG.getWidth(), nativeIMG.getHeight(), null);
+			previewGS.drawImage(nativeIMG, 0, 0, previewIMG.getWidth(), previewIMG.getHeight(), frame.frameX + frame.clipX, frame.frameY + frame.clipY, frame.frameX + frame.clipX + frame.clipW, frame.frameY + frame.clipY + frame.clipH, null);
 			previewGS.dispose();
 
 			File previewATF = new File(root.getOutputFolder().getPath() + previewURL + ".atf");
@@ -230,12 +228,12 @@ public class SliceImageWriter
 			{
 				for (int j = 0; j < col; j++)
 				{
-					int subX = j * SLICE_SIZE;
-					int subY = i * SLICE_SIZE;
-					int subW = TextureHelper.normalizeWH(Math.min(SLICE_SIZE, nativeIMG.getWidth() - subX));
-					int subH = TextureHelper.normalizeWH(Math.min(SLICE_SIZE, nativeIMG.getHeight() - subY));
-					int drawW = Math.min(SLICE_SIZE, nativeIMG.getWidth() - subX);
-					int drawH = Math.min(SLICE_SIZE, nativeIMG.getHeight() - subY);
+					int subX = frame.frameX + frame.clipX + j * SLICE_SIZE;
+					int subY = frame.frameY + frame.clipY + i * SLICE_SIZE;
+					int subW = TextureHelper.normalizeWH(Math.min(SLICE_SIZE, frame.frameX + frame.clipX + frame.clipW - subX));
+					int subH = TextureHelper.normalizeWH(Math.min(SLICE_SIZE, frame.frameY + frame.clipY + frame.clipH - subY));
+					int drawW = Math.min(SLICE_SIZE, frame.frameX + frame.clipX + frame.clipW - subX);
+					int drawH = Math.min(SLICE_SIZE, frame.frameY + frame.clipY + frame.clipH - subY);
 
 					BufferedImage subIMG = new BufferedImage(subW, subH, BufferedImage.TYPE_INT_ARGB);
 					Graphics2D subIGS = (Graphics2D) subIMG.getGraphics();
@@ -265,7 +263,7 @@ public class SliceImageWriter
 					subAppender.write((subAtlasCfg.length >>> 8) & 0xFF);
 					subAppender.write(subAtlasCfg.length & 0xFF);
 					subAppender.close();
-					
+
 					root.addFileSuffix(subATF);
 
 					if (subPNG.exists())
@@ -278,7 +276,7 @@ public class SliceImageWriter
 				}
 			}
 
-			return new SliceImage(file, previewURL + ".atf", row, col, sliceURLs.toArray(new String[sliceURLs.size()]));
+			return new SliceImage(frame, previewURL + ".atf", row, col, sliceURLs.toArray(new String[sliceURLs.size()]));
 		}
 		catch (IOException e)
 		{
@@ -299,41 +297,51 @@ public class SliceImageWriter
 	 * 
 	 * @return
 	 */
-	private ProjectImgFile[] filterSliceImage()
+	private ImageFrame[] filterSliceImage()
 	{
-		HashSet<ProjectImgFile> imgFiles = new HashSet<ProjectImgFile>();
+		HashSet<ImageFrame> imgFiles = new HashSet<ImageFrame>();
 
-		Scene[] scenes = root.getWorldTable().getAllScene();
-		for (Scene scene : scenes)
+		for (AttireBitmap bitmap : root.getAttireTable().getAllBitmaps())
 		{
-			for (SceneBackLayer layer : scene.backLayers)
+			ImageFrame frame = root.getImageFrameTable().get(bitmap.imgFile.gid, 1, 1, 0);
+			if (frame != null)
 			{
-				if (!activate(layer.img.imgFile))
+				if (!activate(frame))
 				{
-					imgFiles.add(layer.img.imgFile);
+					imgFiles.add(frame);
 				}
 			}
-			for (SceneAnim role : scene.backAnims)
+		}
+		for (Attire attire : root.getAttireTable().getAllAttire())
+		{
+			if (!attire.isAnimAttire())
 			{
-				if (role.attire == null)
-				{
-					continue;
-				}
+				continue;
+			}
 
-				for (AttireAction action : role.attire.actions)
+			for (AttireAction action : attire.actions)
+			{
+				for (AttireAnim anim : action.anims)
 				{
-					for (AttireAnim anim : action.anims)
+					for (int i = 0; i < anim.times.length; i++)
 					{
-						if (!activate(anim.img))
+						if (anim.times.length > 0)
 						{
-							imgFiles.add(anim.img);
+							ImageFrame frame = root.getImageFrameTable().get(anim.img.gid, anim.row, anim.col, i);
+							if (frame != null)
+							{
+								if (!activate(frame))
+								{
+									imgFiles.add(frame);
+								}
+							}
 						}
 					}
 				}
 			}
 		}
 
-		return imgFiles.toArray(new ProjectImgFile[imgFiles.size()]);
+		return imgFiles.toArray(new ImageFrame[imgFiles.size()]);
 	}
 
 	// ------------------------------------------------------------------------------------------------------------
@@ -345,12 +353,12 @@ public class SliceImageWriter
 	/**
 	 * 生成版本信息中所用的KEY
 	 * 
-	 * @param img
+	 * @param frame
 	 * @return
 	 */
-	private String createKey(ProjectImgFile img)
+	private String createKey(ImageFrame frame)
 	{
-		return img.gid + "_" + PREVIEW_SCALE + "_" + SLICE_SIZE;
+		return "{scale:" + PREVIEW_SCALE + " , cell:" + SLICE_SIZE + "} + " + frame.file.gid + "_" + frame.row + "_" + frame.col + "_" + frame.index;
 	}
 
 	/**
@@ -359,9 +367,9 @@ public class SliceImageWriter
 	 * @param img
 	 * @return
 	 */
-	private boolean activate(ProjectImgFile img)
+	private boolean activate(ImageFrame frame)
 	{
-		String key = createKey(img);
+		String key = createKey(frame);
 
 		if (oldTable.containsKey(key))
 		{
@@ -377,9 +385,9 @@ public class SliceImageWriter
 	 * @param img
 	 * @param slice
 	 */
-	private void add(ProjectImgFile img, SliceImage slice)
+	private void add(ImageFrame frame, SliceImage slice)
 	{
-		String key = createKey(img);
+		String key = createKey(frame);
 
 		newTable.put(key, slice);
 		oldTable.remove(key);
@@ -423,28 +431,40 @@ public class SliceImageWriter
 				String[] values = line.split("=");
 				if (values.length == 2)
 				{
-					String[] keys = values[0].split("_");
+					String[] keys = values[0].trim().split("\\+");
 					String[] params = values[1].trim().split(",");
 
-					if (keys.length == 3)
+					if (keys.length == 2 && params.length > 3)
 					{
-						String gid = keys[0].trim();
-						String scale = keys[1].trim();
-						String sliceSize = keys[2].trim();
-
-						ProjectFile img = root.getFileTable().getFileByGID(gid);
-
-						if (img != null && img instanceof ProjectImgFile && params.length > 3)
+						keys = keys[1].trim().split("_");
+						if (keys.length == 4)
 						{
-							String previewURL = params[0].trim();
-							int sliceRow = Integer.parseInt(params[1].trim());
-							int sliceCol = Integer.parseInt(params[2].trim());
-							String[] sliceURLs = new String[params.length - 3];
-							for (int i = 3; i < params.length; i++)
+							try
 							{
-								sliceURLs[i - 3] = params[i];
+								int gid = Integer.parseInt(keys[0].trim());
+								int row = Integer.parseInt(keys[1].trim());
+								int col = Integer.parseInt(keys[2].trim());
+								int index = Integer.parseInt(keys[3].trim());
+
+								ImageFrame frame = root.getImageFrameTable().get(gid + "", row, col, index);
+								if (frame != null)
+								{
+									String previewURL = params[0].trim();
+									int sliceRow = Integer.parseInt(params[1].trim());
+									int sliceCol = Integer.parseInt(params[2].trim());
+									String[] sliceURLs = new String[params.length - 3];
+									for (int i = 3; i < params.length; i++)
+									{
+										sliceURLs[i - 3] = params[i];
+									}
+
+									oldTable.put(values[0].trim(), new SliceImage(frame, previewURL, sliceRow, sliceCol, sliceURLs));
+								}
 							}
-							oldTable.put(gid + "_" + scale + "_" + sliceSize, new SliceImage((ProjectImgFile) img, previewURL, sliceRow, sliceCol, sliceURLs));
+							catch (NumberFormatException e)
+							{
+								// ..
+							}
 						}
 					}
 				}
@@ -471,9 +491,34 @@ public class SliceImageWriter
 				@Override
 				public int compare(String arg0, String arg1)
 				{
-					int val1 = Integer.parseInt(arg0.substring(0, arg0.indexOf("_")));
-					int val2 = Integer.parseInt(arg1.substring(0, arg1.indexOf("_")));
-					return val1 - val2;
+					String val1 = arg0.substring(arg0.indexOf("+") + 1).trim();
+					String val2 = arg1.substring(arg1.indexOf("+") + 1).trim();
+
+					String[] items1 = val1.split("_");
+					String[] items2 = val2.split("_");
+					int length = Math.min(items1.length, items2.length);
+					for (int i = 0; i < length; i++)
+					{
+						String item1 = items1[i].trim();
+						String item2 = items2[i].trim();
+						try
+						{
+							int int1 = Integer.parseInt(item1);
+							int int2 = Integer.parseInt(item2);
+							if (int1 != int2)
+							{
+								return int1 - int2;
+							}
+						}
+						catch (NumberFormatException e)
+						{
+							if (!item1.endsWith(item2))
+							{
+								return item1.compareTo(item2);
+							}
+						}
+					}
+					return 0;
 				}
 			});
 

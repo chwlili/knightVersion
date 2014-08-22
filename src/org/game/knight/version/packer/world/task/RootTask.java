@@ -17,6 +17,7 @@ import org.game.knight.version.packer.world.model.GlobalOptionTable;
 import org.game.knight.version.packer.world.model.ImageFrameTable;
 import org.game.knight.version.packer.world.model.Mp3Writer;
 import org.game.knight.version.packer.world.model.ProjectFileTable;
+import org.game.knight.version.packer.world.model.GameUIAttireWriter;
 import org.game.knight.version.packer.world.model.WorldTable;
 import org.game.knight.version.packer.world.output3d.AtlasWriter;
 import org.game.knight.version.packer.world.output3d.Config3dWriter;
@@ -32,12 +33,13 @@ public class RootTask
 	private final File outputFolder;
 	private final ArrayList<String> outputFiles;
 
+	private GlobalOptionTable globalOptionTable;
 	private ProjectFileTable fileTable;
 	private AtfParamTable paramTable;
 	private AttireTable attireTable;
 	private WorldTable worldTable;
 	private ImageFrameTable imageFrameTable;
-	private GlobalOptionTable globalOptionTable;
+	private GameUIAttireWriter gameUIAttireWriter;
 
 	private Mp3Writer mp3Writer;
 	private SliceImageWriter sliceImageWriter;
@@ -151,6 +153,15 @@ public class RootTask
 	{
 		return imageFrameTable;
 	}
+	
+	/**
+	 * 获取UI装扮输出器
+	 * @return
+	 */
+	public GameUIAttireWriter getUIAttireWriter()
+	{
+		return gameUIAttireWriter;
+	}
 
 	/**
 	 * 全局选项表
@@ -217,6 +228,14 @@ public class RootTask
 	{
 		GamePacker.beginTask("世界");
 
+		GamePacker.progress("读取全局信息");
+		globalOptionTable = new GlobalOptionTable(this);
+		globalOptionTable.start();
+		if (isCancel())
+		{
+			return;
+		}
+
 		GamePacker.progress("读取输入信息");
 		fileTable = new ProjectFileTable(this);
 		fileTable.start();
@@ -259,13 +278,10 @@ public class RootTask
 			return;
 		}
 
-		GamePacker.progress("读取文件导出表");
-		globalOptionTable = new GlobalOptionTable(this);
-		globalOptionTable.start();
-		if (isCancel())
-		{
-			return;
-		}
+		GamePacker.progress("输出UI装扮数据");
+		gameUIAttireWriter=new GameUIAttireWriter(this);
+		gameUIAttireWriter.start();
+		gameUIAttireWriter.saveVer();
 
 		GamePacker.progress("输出MP3文件");
 		mp3Writer = new Mp3Writer(this);

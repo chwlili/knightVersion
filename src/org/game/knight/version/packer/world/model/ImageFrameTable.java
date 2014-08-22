@@ -25,7 +25,7 @@ public class ImageFrameTable
 	private GridImg[] inputList;
 	private int nextIndex;
 	private int finishedCount;
-	private String lastLog="";
+	private String lastLog = "";
 
 	private HashMap<String, ImageFrame[]> oldTable = new HashMap<String, ImageFrame[]>();
 	private HashMap<String, ImageFrame[]> newTable = new HashMap<String, ImageFrame[]>();
@@ -42,23 +42,24 @@ public class ImageFrameTable
 
 	/**
 	 * 获取帧信息
+	 * 
 	 * @param img
 	 * @param row
 	 * @param col
 	 * @param index
 	 * @return
 	 */
-	public ImageFrame get(String fileID,int row ,int col,int index)
+	public ImageFrame get(String fileID, int row, int col, int index)
 	{
-		String key=fileID+"_"+row+"_"+col;
-		ImageFrame[] frames=newTable.get(key);
-		if(frames!=null && index<frames.length)
+		String key = fileID + "_" + row + "_" + col;
+		ImageFrame[] frames = newTable.get(key);
+		if (frames != null && index < frames.length)
 		{
 			return frames[index];
 		}
 		return null;
 	}
-	
+
 	/**
 	 * 是否已经完成
 	 * 
@@ -93,7 +94,7 @@ public class ImageFrameTable
 	private synchronized void finishFrames(GridImg img, ImageFrame[] frames)
 	{
 		finishedCount++;
-		lastLog="计算最小像素区域("+finishedCount+"/"+inputList.length+")："+img.file.url;
+		lastLog = "计算最小像素区域(" + finishedCount + "/" + inputList.length + ")：" + img.file.url;
 		add(frames);
 	}
 
@@ -141,7 +142,7 @@ public class ImageFrameTable
 				break;
 			}
 		}
-		
+
 		exec.shutdown();
 	}
 
@@ -220,11 +221,11 @@ public class ImageFrameTable
 				// index_frameX_frameY_frameW_frameH_clipX_clipY_clipW_clipH ,
 				// ..
 				line = line.trim();
-				if(line.isEmpty())
+				if (line.isEmpty())
 				{
 					continue;
 				}
-				
+
 				String[] parts = line.split("=");
 				if (parts.length == 2)
 				{
@@ -237,6 +238,11 @@ public class ImageFrameTable
 					}
 
 					ProjectFile file = root.getFileTable().getFileByGID(keys[0]);
+					if (file == null)
+					{
+						continue;
+					}
+
 					int row = 0;
 					int col = 0;
 					ArrayList<ImageFrame> frames = new ArrayList<ImageFrame>();
@@ -305,22 +311,22 @@ public class ImageFrameTable
 	 */
 	public void saveVer()
 	{
-		String[] keys=newTable.keySet().toArray(new String[newTable.size()]);
-		Arrays.sort(keys,new Comparator<String>()
+		String[] keys = newTable.keySet().toArray(new String[newTable.size()]);
+		Arrays.sort(keys, new Comparator<String>()
 		{
 			@Override
 			public int compare(String arg0, String arg1)
 			{
-				arg0=arg0.substring(0,arg0.indexOf("_"));
-				arg1=arg1.substring(0,arg1.indexOf("_"));
-				int val1=Integer.parseInt(arg0);
-				int val2=Integer.parseInt(arg1);
-				return val1-val2;
+				arg0 = arg0.substring(0, arg0.indexOf("_")).trim();
+				arg1 = arg1.substring(0, arg1.indexOf("_")).trim();
+				int val1 = Integer.parseInt(arg0);
+				int val2 = Integer.parseInt(arg1);
+				return val1 - val2;
 			}
 		});
-		
+
 		StringBuilder sb = new StringBuilder();
-		for (int i=0;i<keys.length;i++)
+		for (int i = 0; i < keys.length; i++)
 		{
 			ImageFrame[] frames = newTable.get(keys[i]);
 			if (frames.length <= 0)
@@ -333,7 +339,7 @@ public class ImageFrameTable
 				@Override
 				public int compare(ImageFrame o1, ImageFrame o2)
 				{
-					return o1.index-o2.index;
+					return o1.index - o2.index;
 				}
 			});
 
@@ -349,8 +355,8 @@ public class ImageFrameTable
 				}
 				sb.append(frame.index + "_" + frame.frameX + "_" + frame.frameY + "_" + frame.frameW + "_" + frame.frameH + "_" + frame.clipX + "_" + frame.clipY + "_" + frame.clipW + "_" + frame.clipH);
 			}
-			
-			if(i<keys.length-1)
+
+			if (i < keys.length - 1)
 			{
 				sb.append("\n");
 			}

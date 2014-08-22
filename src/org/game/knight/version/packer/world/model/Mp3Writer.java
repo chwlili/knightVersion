@@ -9,7 +9,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 
 import org.chw.util.FileUtil;
-import org.chw.util.MD5Util;
 import org.game.knight.version.packer.GamePacker;
 import org.game.knight.version.packer.world.task.RootTask;
 
