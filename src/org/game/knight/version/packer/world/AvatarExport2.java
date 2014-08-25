@@ -2,18 +2,15 @@ package org.game.knight.version.packer.world;
 
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
 
@@ -30,7 +27,8 @@ import org.game.knight.version.packer.world.model.Attire;
 import org.game.knight.version.packer.world.model.AttireAction;
 import org.game.knight.version.packer.world.model.AttireAnim;
 import org.game.knight.version.packer.world.model.AttireAudio;
-import org.game.knight.version.packer.world.model.AttireFile;
+import org.game.knight.version.packer.world.model.AttireBitmap;
+import org.game.knight.version.packer.world.model.ImageFrame;
 import org.game.knight.version.packer.world.model.ProjectImgFile;
 import org.game.knight.version.packer.world.model.Scene;
 import org.game.knight.version.packer.world.model.SceneAnim;
@@ -46,10 +44,25 @@ import org.game.knight.version.packer.world.model.SceneNpc;
 import org.game.knight.version.packer.world.model.ScenePart;
 import org.game.knight.version.packer.world.model.SceneSection;
 import org.game.knight.version.packer.world.model.SceneTrap;
+import org.game.knight.version.packer.world.model.GameUIAttireWriter.SWFBitmap;
+import org.game.knight.version.packer.world.model.GameUIAttireWriter.SWFFile;
+import org.game.knight.version.packer.world.task.RootTask;
 
 public class AvatarExport2
 {
-	private static final String AVATAR2_FRAME_PACK = "knight.avatar2.frames";
+	private static final String UI_AVATAR_FRAME_PACK = "knight.ui.avatar";
+
+	private RootTask root;
+	private HashMap<String, String> newTable;
+	private HashMap<String, String> oldTable;
+
+	private ArrayList<AttireAnim> newAnims;
+	private ArrayList<AttireAnim> allAnims;
+	private Hashtable<AttireAnim, SWFFile> anim_file;
+
+	private int nextIndex = 0;
+	private int finishedCount = 0;
+	private String lastLog;
 
 	private WorldExporter world;
 
@@ -70,10 +83,9 @@ public class AvatarExport2
 	 * 
 	 * @param world
 	 */
-	public AvatarExport2(WorldExporter world)
+	public AvatarExport2(RootTask root)
 	{
-
-		this.world = world;
+		this.root = root;
 	}
 
 	/**
@@ -85,23 +97,48 @@ public class AvatarExport2
 	{
 		return versionData.toString();
 	}
-	
+
 	public String getCfgFileKey()
 	{
 		return cfgFileKey;
 	}
 
+	private static class SWFFile
+	{
+		public final SWFBitmap[] bitmaps;
+		public final String url;
+
+		public SWFFile(SWFBitmap[] bitmaps, String url)
+		{
+			this.bitmaps = bitmaps;
+			this.url = url;
+		}
+	}
+
+	private static class SWFBitmap
+	{
+		public final String typeID;
+		public final ImageFrame frame;
+		public final int time;
+
+		public SWFBitmap(String typeID, ImageFrame frame, int time)
+		{
+			this.typeID = typeID;
+			this.frame = frame;
+			this.time = time;
+		}
+	}
+	
+	
 	public void export(Hashtable<String, Scene> scenes, Hashtable<String, AttireFile> attires, WorldAttires attireManager, boolean zip, boolean mobile) throws IOException
 	{
 		versionData = new StringBuilder();
 
-		openHistoryFile(new File(world.getDestDir().getPath() + "/.ver/avatar2"));
+		openVer();
 
 		exportAttires1(attires, attireManager, zip);
 
 		exportScenes(scenes, zip, mobile);
-
-		saveHistoryFile();
 	}
 
 	/**
@@ -109,98 +146,75 @@ public class AvatarExport2
 	 * 
 	 * @throws IOException
 	 */
-	private void exportAttires1(Hashtable<String, AttireFile> attires, WorldAttires attireManager, boolean zip) throws IOException
+	private void exportAttires1() throws IOException
 	{
-		final Hashtable<String, ArrayList<Region>> boundle_regions = new Hashtable<String, ArrayList<Region>>();
+		final Hashtable<String, ArrayList<ImageFrame>> boundle_regions = new Hashtable<String, ArrayList<ImageFrame>>();
 		final Hashtable<String, String> boundle_fileID = new Hashtable<String, String>();
 		final ArrayList<String> boundle_news = new ArrayList<String>();
 
-		final Hashtable<Region, ProjectImgFile> region_img = new Hashtable<Region, ProjectImgFile>();
-		final Hashtable<Region, String> region_frameTypeName = new Hashtable<Region, String>();
+		final Hashtable<ImageFrame, ProjectImgFile> region_img = new Hashtable<ImageFrame, ProjectImgFile>();
+		final Hashtable<ImageFrame, String> region_frameTypeName = new Hashtable<ImageFrame, String>();
 
 		GamePacker.progress("分析装扮数据");
-		for (AttireFile attireFile : attires.values())
+		for (AttireBitmap bitmap : root.getAttireTable().getAllBitmaps())
 		{
-			for (ProjectImgFile img : attireFile.getAllImgs())
+			ImageFrame frame = root.getImageFrameTable().get(bitmap.imgFile.gid, 1, 1, 0);
+			if (frame == null)
 			{
-				String bagID = attireFile.getImgGroupID(img);
-				String imgSHA = world.getChecksumTable().getGID(img.url);
-
-				Region region = new Region(imgSHA, 0, 0, 0, img.width, img.height, 0, 0, img.width, img.height, 0, 0, 0);
-				if (region != null)
-				{
-					if (!boundle_regions.containsKey(bagID))
-					{
-						boundle_regions.put(bagID, new ArrayList<Region>());
-					}
-
-					ArrayList<Region> regions = boundle_regions.get(bagID);
-					if (!regions.contains(region))
-					{
-						regions.add(region);
-
-						String frameID = "2dfile_" + imgSHA + "_" + 1 + "_" + 1 + "_" + "frame" + 0;
-						String frameTypeName = getValue(frameID);
-						if (frameTypeName == null)
-						{
-							frameTypeName = "$" + getNextClassID();
-						}
-
-						putValue(frameID, frameTypeName);
-
-						region_frameTypeName.put(region, frameTypeName);
-						region_img.put(region, img);
-
-						img_typeName.put(img, frameTypeName);
-					}
-				}
+				continue;
 			}
 
-			for (Attire attire : attireFile.getAllAttires())
+			String bagID = bitmap.atfParam.id;
+			if (!boundle_regions.containsKey(bagID))
 			{
-				for (AttireAction action : attire.getActions())
+				boundle_regions.put(bagID, new ArrayList<ImageFrame>());
+			}
+
+			ArrayList<ImageFrame> regions = boundle_regions.get(bagID);
+			if (!regions.contains(frame))
+			{
+				regions.add(frame);
+
+				region_frameTypeName.put(frame, "$2d_" + bitmap.imgFile.gid + "_" + 1 + "_" + 1 + "_0");
+			}
+		}
+
+		for (Attire attire : root.getAttireTable().getAllAttire())
+		{
+			for (AttireAction action : attire.actions)
+			{
+				for (AttireAnim anim : action.anims)
 				{
-					for (AttireAnim anim : action.animList)
+					String bagID = anim.param.id;
+
+					int rowCount = anim.row;
+					int colCount = anim.col;
+					int regionCount = rowCount * colCount;
+
+					for (int i = 0; i < regionCount; i++)
 					{
-						String bagID = anim.bagID;
-						String imgSHA = world.getChecksumTable().getGID(anim.img.url);
-
-						int rowCount = anim.row;
-						int colCount = anim.col;
-						int regionCount = rowCount * colCount;
-
-						for (int i = 0; i < regionCount; i++)
+						if (anim.times[i] <= 0)
 						{
-							int delay = anim.times[i];
-							if (delay > 0)
-							{
-								Region region = attireManager.getTextureRegion(anim.bagID, imgSHA, anim.row, anim.col, i);
-								if (region != null)
-								{
-									if (!boundle_regions.containsKey(bagID))
-									{
-										boundle_regions.put(bagID, new ArrayList<Region>());
-									}
+							continue;
+						}
 
-									ArrayList<Region> regions = boundle_regions.get(bagID);
-									if (!regions.contains(region))
-									{
-										regions.add(region);
+						ImageFrame frame = root.getImageFrameTable().get(anim.img.gid, anim.row, anim.col, i);
+						if (frame == null)
+						{
+							continue;
+						}
 
-										String frameID = "2dframe_" + imgSHA + "_" + rowCount + "_" + colCount + "_" + "frame" + i;
-										String frameTypeName = getValue(frameID);
-										if (frameTypeName == null)
-										{
-											frameTypeName = "$" + getNextClassID();
-										}
+						if (!boundle_regions.containsKey(bagID))
+						{
+							boundle_regions.put(bagID, new ArrayList<ImageFrame>());
+						}
 
-										putValue(frameID, frameTypeName);
+						ArrayList<ImageFrame> regions = boundle_regions.get(bagID);
+						if (!regions.contains(frame))
+						{
+							regions.add(frame);
 
-										region_frameTypeName.put(region, frameTypeName);
-										region_img.put(region, anim.img);
-									}
-								}
-							}
+							region_frameTypeName.put(frame, "$2d_" + anim.img.gid + "_" + rowCount + "_" + colCount + "_" + "frame" + i);
 						}
 					}
 				}
@@ -210,18 +224,18 @@ public class AvatarExport2
 		GamePacker.progress("分析装扮数据");
 		for (String key : boundle_regions.keySet())
 		{
-			ArrayList<Region> regions = boundle_regions.get(key);
-			Collections.sort(regions, new Comparator<Region>()
+			ArrayList<ImageFrame> regions = boundle_regions.get(key);
+			Collections.sort(regions, new Comparator<ImageFrame>()
 			{
 				@Override
-				public int compare(Region o1, Region o2)
+				public int compare(ImageFrame o1, ImageFrame o2)
 				{
 					return region_frameTypeName.get(o1).compareTo(region_frameTypeName.get(o2));
 				}
 			});
 
 			StringBuilder fileIDStream = new StringBuilder();
-			for (Region region : regions)
+			for (ImageFrame region : regions)
 			{
 				if (fileIDStream.length() > 0)
 				{
@@ -354,7 +368,7 @@ public class AvatarExport2
 					}
 					for (AttireAudio audio : action.audioList)
 					{
-						String audioURL = world.exportFile(world.getChecksumTable().getGID(audio.mp3.url), MD5Util.addSuffix(FileUtil.getFileBytes(audio.mp3.file)),"mp3");
+						String audioURL = world.exportFile(world.getChecksumTable().getGID(audio.mp3.url), MD5Util.addSuffix(FileUtil.getFileBytes(audio.mp3.file)), "mp3");
 						attireText.append(String.format("\t\t\t<audio path=\"%s\" loop=\"%s\" volume=\"%s\"/>\n", audioURL, audio.loop, audio.volume));
 					}
 
@@ -394,7 +408,7 @@ public class AvatarExport2
 		StringBuilder equips = new StringBuilder();
 		StringBuilder effects = new StringBuilder();
 		StringBuilder labels = new StringBuilder();
-		StringBuilder horses=new StringBuilder();
+		StringBuilder horses = new StringBuilder();
 		for (AttireFile attireFile : attires.values())
 		{
 			for (Attire attire : attireFile.getAllAttires())
@@ -458,8 +472,8 @@ public class AvatarExport2
 						{
 							if (action.animList.size() > 0)
 							{
-								ActionInfo info=getActionID(action);
-								
+								ActionInfo info = getActionID(action);
+
 								equips.append(String.format("\t\t\t<action id=\"%s\" size=\"%s\" files=\"%s\"/>\n", action.id, info.size, info.urls));
 
 								String[] urls = info.urls.split("\\,");
@@ -493,8 +507,8 @@ public class AvatarExport2
 					{
 						if (action.animList.size() > 0)
 						{
-							ActionInfo info=getActionID(action);
-							
+							ActionInfo info = getActionID(action);
+
 							effects.append(String.format("\t\t\t<action id=\"%s\" size=\"%s\" files=\"%s\"/>\n", action.id, info.size, info.urls));
 
 							String[] urls = info.urls.split("\\,");
@@ -511,7 +525,7 @@ public class AvatarExport2
 							}
 						}
 					}
-					
+
 					effects.append(String.format("\t\t</effect>\n"));
 				}
 				else if (params[0].equals("4"))
@@ -536,8 +550,8 @@ public class AvatarExport2
 						{
 							if (action.animList.size() > 0)
 							{
-								ActionInfo info=getActionID(action);
-								
+								ActionInfo info = getActionID(action);
+
 								roles.append(String.format("\t\t\t<action id=\"%s\" size=\"%s\" files=\"%s\"/>\n", action.id, info.size, info.urls));
 
 								String[] urls = info.urls.split("\\,");
@@ -564,9 +578,9 @@ public class AvatarExport2
 				else if (params[0].equals("7"))
 				{
 				}
-				else if(params[0].equals("8"))
+				else if (params[0].equals("8"))
 				{
-					horses.append(String.format("\t\t<horse horseID=\"%s\" name=\"%s\">\n", params[1],attire.getRefKey()));
+					horses.append(String.format("\t\t<horse horseID=\"%s\" name=\"%s\">\n", params[1], attire.getRefKey()));
 
 					if (params.length >= 2)
 					{
@@ -574,10 +588,10 @@ public class AvatarExport2
 						{
 							if (action.animList.size() > 0)
 							{
-								ActionInfo info=getActionID(action);
-								
+								ActionInfo info = getActionID(action);
+
 								roles.append(String.format("\t\t\t<action id=\"%s\" size=\"%s\" files=\"%s\"/>\n", action.id, info.size, info.urls));
-	
+
 								String[] urls = info.urls.split("\\,");
 								for (String url : urls)
 								{
@@ -678,7 +692,7 @@ public class AvatarExport2
 			String bgsPath = "";
 			if (scene.getBackSound() != null)
 			{
-				bgsPath = world.exportFile("md5"+world.getChecksumTable().getGID(scene.getBackSound().url), scene.getBackSound().file);
+				bgsPath = world.exportFile("md5" + world.getChecksumTable().getGID(scene.getBackSound().url), scene.getBackSound().file);
 			}
 
 			int[] sectionArr = new int[scene.getSections().size()];
@@ -887,179 +901,143 @@ public class AvatarExport2
 		versionData.append(sceneData.toString());
 	}
 
-	// ---------------------------------------------------------------------------------------------------------
-	//
-	// 版本库处理
-	//
-	// ---------------------------------------------------------------------------------------------------------
 
-	private int nextClassID = 0;
-	private Hashtable<String, String> old_table;
-	private Hashtable<String, String> new_table;
-
-	private File historyFile;
+	// -------------------------------------------------------------------------------------------------------------------
+	//
+	// 版本信息
+	//
+	// -------------------------------------------------------------------------------------------------------------------
 
 	/**
-	 * 获取下一个类型的ID
+	 * 激活
+	 * 
+	 * @param file
+	 * @return
+	 */
+	private boolean activate(String fileID)
+	{
+		if (oldTable.containsKey(fileID))
+		{
+			newTable.put(fileID, oldTable.get(fileID));
+			oldTable.remove(fileID);
+		}
+		return newTable.containsKey(fileID);
+	}
+
+	/**
+	 * 添加
+	 * 
+	 * @param file
+	 * @return
+	 */
+	private void add(String fileID, String url)
+	{
+		newTable.put(fileID, url);
+	}
+
+	/**
+	 * 获取版本文件
 	 * 
 	 * @return
 	 */
-	private int getNextClassID()
+	private File getVerFile()
 	{
-		int result = nextClassID;
-		nextClassID++;
-		return result;
+		return new File(root.getOutputFolder().getPath() + File.separatorChar + ".ver" + File.separatorChar + "uiAttire");
 	}
 
 	/**
-	 * 获取值
-	 * 
-	 * @param key
-	 * @return
+	 * 打开版本信息
 	 */
-	private String getValue(String key)
+	private void openVer()
 	{
-		if (old_table.containsKey(key))
-		{
-			new_table.put(key, old_table.get(key));
-			old_table.remove(key);
-		}
-		if (new_table.containsKey(key))
-		{
-			return new_table.get(key);
-		}
+		this.oldTable = new HashMap<String, String>();
+		this.newTable = new HashMap<String, String>();
 
-		return null;
-	}
-
-	/**
-	 * 写入值
-	 * 
-	 * @param key
-	 * @param value
-	 */
-	private void putValue(String key, String value)
-	{
-		if (old_table.containsKey(key))
-		{
-			old_table.remove(key);
-		}
-		new_table.put(key, value);
-	}
-
-	/**
-	 * 打开历史文件
-	 */
-	private void openHistoryFile(File file)
-	{
-		historyFile = file;
-
-		old_table = new Hashtable<String, String>();
-		new_table = new Hashtable<String, String>();
-
-		if (!historyFile.exists())
+		if (!getVerFile().exists())
 		{
 			return;
 		}
 
-		BufferedReader input = null;
+		String text = null;
+
 		try
 		{
-			input = new BufferedReader(new InputStreamReader(new FileInputStream(historyFile), "UTF-8"));
-			while (true)
-			{
-				String line = input.readLine();
-				if (line == null)
-				{
-					break;
-				}
-
-				line.trim();
-
-				if (line.isEmpty())
-				{
-					continue;
-				}
-
-				String[] parts = line.split("=");
-				String key = parts[0].trim();
-				String val = parts[1].trim();
-
-				if (key.isEmpty() || val.isEmpty())
-				{
-					continue;
-				}
-
-				if (key.charAt(0) == '$')
-				{
-					String propName = key.substring(1);
-					String propValue = val;
-
-					if (propName.equals("nextClassID"))
-					{
-						nextClassID = Integer.parseInt(propValue);
-					}
-				}
-				else
-				{
-					old_table.put(key, val);
-				}
-			}
+			text = new String(FileUtil.getFileBytes(getVerFile()), "utf8");
 		}
 		catch (UnsupportedEncodingException e)
 		{
 			e.printStackTrace();
+			return;
 		}
-		catch (FileNotFoundException e)
+
+		String[] lines = text.split("\\n");
+		for (String line : lines)
 		{
-			e.printStackTrace();
-		}
-		catch (IOException e)
-		{
-			e.printStackTrace();
-		}
-		finally
-		{
-			if (input != null)
+			String[] items = line.split("=");
+			if (items.length != 2)
 			{
-				try
-				{
-					input.close();
-				}
-				catch (IOException e)
-				{
-					e.printStackTrace();
-				}
+				continue;
 			}
+
+			String key = items[0].trim();
+			if (key.isEmpty())
+			{
+				continue;
+			}
+
+			String url = items[1].trim();
+			if (url.isEmpty())
+			{
+				continue;
+			}
+
+			oldTable.put(key, url);
 		}
 	}
 
 	/**
-	 * 保存历史文件
+	 * 保存版本信息
 	 */
-	private void saveHistoryFile()
+	public void saveVer()
 	{
 		StringBuilder output = new StringBuilder();
 
-		output.append("$nextClassID = " + nextClassID + "\n");
-
-		String[] keys = new_table.keySet().toArray(new String[new_table.size()]);
-		Arrays.sort(keys);
-
-		for (String key : keys)
+		if (newTable == null)
 		{
-			output.append(key + " = " + new_table.get(key) + "\n");
+			return;
 		}
 
-		// 保存到文件
+		String[] keys = newTable.keySet().toArray(new String[newTable.size()]);
+		Arrays.sort(keys);
+
+		for (int i = 0; i < keys.length; i++)
+		{
+			String key = keys[i];
+			String url = newTable.get(key);
+
+			output.append(key + " = " + url);
+
+			if (i < keys.length - 1)
+			{
+				output.append("\n");
+			}
+		}
+
 		try
 		{
-			byte[] bytes = output.toString().getBytes("UTF-8");
-			FileUtil.writeFile(historyFile, bytes);
+			FileUtil.writeFile(getVerFile(), output.toString().getBytes("utf8"));
 		}
 		catch (UnsupportedEncodingException e)
 		{
 			e.printStackTrace();
+			GamePacker.error(e);
+			return;
+		}
+
+		// 记录输出文件
+		for (String url : newTable.values())
+		{
+			root.addOutputFile(url);
 		}
 	}
 }

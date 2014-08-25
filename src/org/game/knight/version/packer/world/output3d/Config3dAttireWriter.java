@@ -17,7 +17,7 @@ import org.game.knight.version.packer.world.model.AttireAudio;
 import org.game.knight.version.packer.world.model.ImageFrame;
 import org.game.knight.version.packer.world.task.RootTask;
 
-public class Attire3dWrite
+public class Config3dAttireWriter
 {
 	private RootTask root;
 	private String outputURL;
@@ -30,7 +30,7 @@ public class Attire3dWrite
 	 * 
 	 * @param root
 	 */
-	public Attire3dWrite(RootTask root)
+	public Config3dAttireWriter(RootTask root)
 	{
 		this.root = root;
 	}
@@ -144,11 +144,11 @@ public class Attire3dWrite
 							{
 								SliceImage slice = root.getSliceImageWriter().getSliceImage(frame);
 								Atlas atlas = root.getAtlasTable().findAtlasByImageFrame(frame);
-//								if (slice != null)
-//								{
-//									attireText.append(String.format("<frame frameW=\"%s\" frameH=\"%s\" clipX=\"%s\" clipY=\"%s\" clipW=\"%s\" clipH=\"%s\" sliceRow=\"%s\" sliceCol=\"%s\" previewURL=\"%s\" delay=\"%s\"/>", slice.frame.frameW, slice.frame.frameH, slice.frame.clipX, slice.frame.clipY, slice.frame.clipW, slice.frame.clipH, slice.sliceRow, slice.sliceCol, slice.previewURL, delay));
-//								}
-//								else 
+								if (slice != null)
+								{
+									attireText.append(String.format("\t\t\t\t<frame frameW=\"%s\" frameH=\"%s\" clipX=\"%s\" clipY=\"%s\" clipW=\"%s\" clipH=\"%s\" sliceRow=\"%s\" sliceCol=\"%s\" previewURL=\"%s\" delay=\"%s\"/>\n", slice.frame.frameW, slice.frame.frameH, slice.frame.clipX, slice.frame.clipY, slice.frame.clipW, slice.frame.clipH, slice.sliceRow, slice.sliceCol, root.localToCdnURL(slice.previewURL), delay));
+								}
+								else 
 								if (atlas != null)
 								{
 									attireText.append("\t\t\t\t<frame texture=\"" + root.localToCdnURL(atlas.atfURL) + "\" frameID=\"" + frame.file.gid + "_" + frame.row + "_" + frame.col + "_" + i + "\" frameW=\"" + frame.frameW + "\" frameH=\"" + frame.frameH + "\" delay=\"" + delay + "\"/>\n");

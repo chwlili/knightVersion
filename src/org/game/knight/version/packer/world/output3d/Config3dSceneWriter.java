@@ -31,7 +31,7 @@ import org.game.knight.version.packer.world.model.SceneTrap;
 import org.game.knight.version.packer.world.model.WorldCity;
 import org.game.knight.version.packer.world.task.RootTask;
 
-public class Scene3dWriter
+public class Config3dSceneWriter
 {
 	private RootTask root;
 
@@ -48,7 +48,7 @@ public class Scene3dWriter
 	 * 
 	 * @param root
 	 */
-	public Scene3dWriter(RootTask root)
+	public Config3dSceneWriter(RootTask root)
 	{
 		this.root = root;
 	}
@@ -310,13 +310,10 @@ public class Scene3dWriter
 					if (layer.img != null)
 					{
 						ImageFrame frame = root.getImageFrameTable().get(layer.img.imgFile.gid, 1, 1, 0);
-						if (frame != null)
+						SliceImage slice = root.getSliceImageWriter().getSliceImage(frame);
+						if (slice != null)
 						{
-							SliceImage slice = root.getSliceImageWriter().getSliceImage(frame);
-							if (slice != null)
-							{
-								urls.add(slice.previewURL);
-							}
+							urls.add(slice.previewURL);
 						}
 					}
 				}
@@ -325,13 +322,10 @@ public class Scene3dWriter
 					if (layer.img != null)
 					{
 						ImageFrame frame = root.getImageFrameTable().get(layer.img.imgFile.gid, 1, 1, 0);
-						if (frame != null)
+						SliceImage slice = root.getSliceImageWriter().getSliceImage(frame);
+						if (slice != null)
 						{
-							SliceImage slice = root.getSliceImageWriter().getSliceImage(frame);
-							if (slice != null)
-							{
-								urls.add(slice.previewURL);
-							}
+							urls.add(slice.previewURL);
 						}
 					}
 				}
@@ -349,20 +343,20 @@ public class Scene3dWriter
 						attires.add(anim.attire);
 					}
 				}
-				for (SceneNpc npc : scene.npcs)
-				{
-					if (npc.attire != null)
-					{
-						attires.add(npc.attire);
-					}
-				}
-				for (SceneDoor door : scene.doors)
-				{
-					if (door.attire != null)
-					{
-						attires.add(door.attire);
-					}
-				}
+//				for (SceneNpc npc : scene.npcs)
+//				{
+//					if (npc.attire != null)
+//					{
+//						attires.add(npc.attire);
+//					}
+//				}
+//				for (SceneDoor door : scene.doors)
+//				{
+//					if (door.attire != null)
+//					{
+//						attires.add(door.attire);
+//					}
+//				}
 				for (ScenePart part : scene.parts)
 				{
 					for (SceneMonsterTimer timer : part.timers)
@@ -379,6 +373,7 @@ public class Scene3dWriter
 						}
 					}
 				}
+				
 				for (Attire attire : attires)
 				{
 					for (AttireAction action : attire.actions)
@@ -387,16 +382,23 @@ public class Scene3dWriter
 						{
 							for (int i = 0; i < anim.times.length; i++)
 							{
-								if (i > 0)
+								if (anim.times[i] <= 0)
 								{
-									ImageFrame frame = root.getImageFrameTable().get(anim.img.gid, anim.row, anim.col, i);
-									if (frame != null)
+									continue;
+								}
+								
+								ImageFrame frame = root.getImageFrameTable().get(anim.img.gid, anim.row, anim.col, i);
+								SliceImage slice = root.getSliceImageWriter().getSliceImage(frame);
+								if (slice != null)
+								{
+									urls.add(slice.previewURL);
+								}
+								else
+								{
+									Atlas atlas = root.getAtlasTable().findAtlasByImageFrame(frame);
+									if (atlas != null)
 									{
-										Atlas atlas = root.getAtlasTable().findAtlasByImageFrame(frame);
-										if (atlas != null)
-										{
-											urls.add(atlas.atfURL);
-										}
+										urls.add(atlas.atfURL);
 									}
 								}
 							}

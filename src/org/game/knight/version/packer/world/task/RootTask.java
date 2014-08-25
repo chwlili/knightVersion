@@ -20,7 +20,7 @@ import org.game.knight.version.packer.world.model.ProjectFileTable;
 import org.game.knight.version.packer.world.model.GameUIAttireWriter;
 import org.game.knight.version.packer.world.model.WorldTable;
 import org.game.knight.version.packer.world.output3d.AtlasWriter;
-import org.game.knight.version.packer.world.output3d.Config3dWriter;
+import org.game.knight.version.packer.world.output3d.Config3d;
 import org.game.knight.version.packer.world.output3d.SliceImageWriter;
 
 public class RootTask
@@ -44,7 +44,7 @@ public class RootTask
 	private Mp3Writer mp3Writer;
 	private SliceImageWriter sliceImageWriter;
 	private AtlasWriter atlasWriter;
-	private Config3dWriter config3dWriter;
+	private Config3d config3dWriter;
 
 	/**
 	 * 构造函数
@@ -311,7 +311,7 @@ public class RootTask
 		}
 
 		GamePacker.progress("输出3D配置");
-		config3dWriter = new Config3dWriter(this);
+		config3dWriter = new Config3d(this);
 		config3dWriter.start();
 		if (isCancel())
 		{

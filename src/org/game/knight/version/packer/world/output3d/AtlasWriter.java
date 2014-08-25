@@ -142,13 +142,18 @@ public class AtlasWriter
 					{
 						if (anim.times[i] > 0)
 						{
-							AtfParam atf = anim.param;
-							if (!atf_frameset.containsKey(atf))
+							ImageFrame frame = root.getImageFrameTable().get(anim.img.gid, anim.row, anim.col, i);
+							SliceImage slice = root.getSliceImageWriter().getSliceImage(frame);
+							if (slice == null)
 							{
-								atf_frameset.put(atf, new HashSet<ImageFrame>());
-							}
+								AtfParam atf = anim.param;
+								if (!atf_frameset.containsKey(atf))
+								{
+									atf_frameset.put(atf, new HashSet<ImageFrame>());
+								}
 
-							atf_frameset.get(atf).add(root.getImageFrameTable().get(anim.img.gid, anim.row, anim.col, i));
+								atf_frameset.get(atf).add(root.getImageFrameTable().get(anim.img.gid, anim.row, anim.col, i));
+							}
 						}
 					}
 				}

@@ -16,22 +16,22 @@ import org.game.knight.version.packer.world.model.ImageFrame;
 import org.game.knight.version.packer.world.model.Scene;
 import org.game.knight.version.packer.world.task.RootTask;
 
-public class Config3dWriter
+public class Config3d
 {
 	private RootTask root;
-	private Attire3dWrite attireWriter;
-	private Scene3dWriter sceneWriter;
+	private Config3dAttireWriter attireWriter;
+	private Config3dSceneWriter sceneWriter;
 
 	/**
 	 * ¹¹Ôìº¯Êý
 	 * 
 	 * @param root
 	 */
-	public Config3dWriter(RootTask root)
+	public Config3d(RootTask root)
 	{
 		this.root = root;
-		this.attireWriter = new Attire3dWrite(root);
-		this.sceneWriter = new Scene3dWriter(root);
+		this.attireWriter = new Config3dAttireWriter(root);
+		this.sceneWriter = new Config3dSceneWriter(root);
 	}
 
 	/**
@@ -206,19 +206,33 @@ public class Config3dWriter
 						if (anim.times[i] > 0)
 						{
 							ImageFrame frame = root.getImageFrameTable().get(anim.img.gid, anim.row, anim.col, i);
-							if (frame != null)
+							if (frame == null)
+							{
+								continue;
+							}
+							
+							if (!action_urls.containsKey(action))
+							{
+								action_urls.put(action, new HashSet<String>());
+							}
+
+							SliceImage slice = root.getSliceImageWriter().getSliceImage(frame);
+							if(slice!=null)
+							{
+								String url = slice.previewURL;
+								File file = new File(root.getOutputFolder().getPath() + url);
+
+								url_size.put(url, (int) file.length());
+								action_urls.get(action).add(url);
+							}
+							else
 							{
 								Atlas atlas = root.getAtlasTable().findAtlasByImageFrame(frame);
 								if (atlas != null)
 								{
-									if (!action_urls.containsKey(action))
-									{
-										action_urls.put(action, new HashSet<String>());
-									}
-
 									String url = atlas.atfURL;
 									File file = new File(root.getOutputFolder().getPath() + url);
-
+	
 									url_size.put(url, (int) file.length());
 									action_urls.get(action).add(url);
 								}

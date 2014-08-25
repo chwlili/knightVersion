@@ -636,10 +636,7 @@ public class WorldTable
 			Attire attire = getAttireRes(path);
 			if (attire != null)
 			{
-				if (npcID != 0)
-				{
-					npcs.add(new SceneNpc(name, npcID, x, y, direction, attire));
-				}
+				npcs.add(new SceneNpc(name, npcID, x, y, direction, attire));
 			}
 			else
 			{
