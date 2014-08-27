@@ -138,6 +138,11 @@ public class AtlasWriter
 			{
 				for (AttireAnim anim : action.anims)
 				{
+					if(anim.useSlice)
+					{
+						continue;
+					}
+					
 					for (int i = 0; i < anim.times.length; i++)
 					{
 						if (anim.times[i] > 0)

@@ -314,15 +314,15 @@ public class SliceImageWriter
 		}
 		for (Attire attire : root.getAttireTable().getAllAttire())
 		{
-			if (!attire.isAnimAttire())
-			{
-				continue;
-			}
-
 			for (AttireAction action : attire.actions)
 			{
 				for (AttireAnim anim : action.anims)
 				{
+					if(!anim.useSlice)
+					{
+						continue;
+					}
+					
 					for (int i = 0; i < anim.times.length; i++)
 					{
 						if (anim.times.length > 0)

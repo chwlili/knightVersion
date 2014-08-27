@@ -1,4 +1,4 @@
-package org.game.knight.version.packer.world.output3d;
+package org.game.knight.version.packer.world.output2d;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
@@ -32,9 +32,10 @@ import org.game.knight.version.packer.world.model.SceneTrap;
 import org.game.knight.version.packer.world.model.WorldCity;
 import org.game.knight.version.packer.world.task.RootTask;
 
-public class Config3dSceneWriter
+public class Config2dSceneWriter
 {
 	private RootTask root;
+	private AttireSwfWriter attireSWFWriter;
 
 	private String worldCfgURL;
 	private HashMap<Scene, String> scene_url;
@@ -49,9 +50,28 @@ public class Config3dSceneWriter
 	 * 
 	 * @param root
 	 */
-	public Config3dSceneWriter(RootTask root)
+	public Config2dSceneWriter(RootTask root, AttireSwfWriter attireSWFWriter)
 	{
 		this.root = root;
+		this.attireSWFWriter = attireSWFWriter;
+	}
+
+	/**
+	 * 开始
+	 */
+	public void start()
+	{
+		GamePacker.progress("输出装扮配置");
+
+		openVer();
+
+		writerAllSceneCfg();
+
+		writerWorldCfg();
+
+		measureSceneLoadInfo();
+
+		saveVer();
 	}
 
 	/**
@@ -87,20 +107,6 @@ public class Config3dSceneWriter
 	}
 
 	/**
-	 * 开始
-	 */
-	public void start()
-	{
-		openVer();
-
-		writerAllSceneCfg();
-
-		writerWorldCfg();
-
-		measureSceneLoadInfo();
-	}
-
-	/**
 	 * 输出所有场景配置
 	 */
 	private void writerAllSceneCfg()
@@ -125,7 +131,7 @@ public class Config3dSceneWriter
 	 */
 	private void writeSceneCfg(Scene scene)
 	{
-		GamePacker.progress("输出场景", scene.sceneID + "." + scene.sceneName);
+		GamePacker.progress("输出场景 : " + scene.sceneName + " (" + scene.file.getPath() + ")");
 
 		String bgsPath = "";
 		if (scene.bgs != null)
@@ -142,6 +148,7 @@ public class Config3dSceneWriter
 		StringBuilder sb = new StringBuilder();
 		sb.append("<scene id=\"" + scene.sceneID + "\" type=\"" + scene.sceneType + "\" name=\"" + scene.sceneName + "\" group=\"" + scene.sceneGroup + "\" bgs=\"" + bgsPath + "\" defaultX=\"" + scene.defaultX + "\" defaultY=\"" + scene.defaultY + "\" sceneWidth=\"" + scene.sceneW + "\" sceneHeight=\"" + scene.sceneH + "\" viewOffsetX=\"" + scene.viewX + "\" viewOffsetY=\"" + scene.viewY + "\" beginX=\"" + scene.beginX + "\" timeLimit=\"" + Math.abs(scene.timeLimit) + "\" timeLimitType=\"" + (scene.timeLimit > 0 ? 1 : (scene.timeLimit < 0 ? 2 : 0)) + "\" sections=\"" + TextUtil.formatIntArray(sectionArr) + "\" >\n");
 		sb.append("\t<grid><![CDATA[" + scene.grid + "]]></grid>\n");
+
 		sb.append("\t<sections>\n");
 		for (SceneSection section : scene.sections)
 		{
@@ -152,65 +159,57 @@ public class Config3dSceneWriter
 		sb.append("\t<layers>\n");
 		for (SceneBackLayer layer : scene.backLayers)
 		{
-			if (layer.img == null)
+			if (layer.img != null)
 			{
-				continue;
+				ImageFrame frame = root.getImageFrameTable().get(layer.img.imgFile.gid, 1, 1, 0);
+				String fileURL = root.localToCdnURL(attireSWFWriter.getFrameFileURL(frame));
+				String typeID = attireSWFWriter.getFrameClassID(frame);
+				sb.append("\t\t<layer x=\"" + layer.x + "\" y=\"" + layer.y + "\" speed=\"" + layer.speed + "\" fileURL=\"" + fileURL + "\" fileType=\"" + typeID + "\" />\n");
 			}
-			ImageFrame frame = root.getImageFrameTable().get(layer.img.imgFile.gid, 1, 1, 0);
-			if (frame == null)
-			{
-				continue;
-			}
-			SliceImage img = root.getSliceImageWriter().getSliceImage(frame);
-			if (img == null)
-			{
-				continue;
-			}
-
-			sb.append("\t\t<layer offsetX=\"" + layer.x + "\" offsetY=\"" + layer.y + "\" scrollSpeed=\"" + layer.speed + "\" clipX=\"" + img.frame.clipX + "\" clipY=\"" + img.frame.clipY + "\" clipW=\"" + img.frame.clipW + "\" clipH=\"" + img.frame.clipH + "\" imgW=\"" + img.frame.frameW + "\" imgH=\"" + img.frame.frameH + "\" previewURL=\"" + root.localToCdnURL(img.previewURL) + "\" sliceRow=\"" + img.sliceRow + "\" sliceCol=\"" + img.sliceCol + "\" />\n");
 		}
 		sb.append("\t</layers>\n");
 
 		sb.append("\t<foreLayers>\n");
 		for (SceneForeLayer layer : scene.foreLayers)
 		{
-			if (layer.img == null)
+			if (layer.img != null)
 			{
-				continue;
-			}
-			ImageFrame frame = root.getImageFrameTable().get(layer.img.imgFile.gid, 1, 1, 0);
-			if (frame == null)
-			{
-				continue;
-			}
-			SliceImage img = root.getSliceImageWriter().getSliceImage(frame);
-			if (img == null)
-			{
-				continue;
-			}
+				ImageFrame frame = root.getImageFrameTable().get(layer.img.imgFile.gid, 1, 1, 0);
+				String fileURL = root.localToCdnURL(attireSWFWriter.getFrameFileURL(frame));
+				String typeID = attireSWFWriter.getFrameClassID(frame);
 
-			sb.append("\t\t<layer x=\"" + layer.x + "\" y=\"" + layer.y + "\" width=\"" + layer.w + "\" speed=\"" + layer.speed + "\" clipX=\"" + img.frame.clipX + "\" clipY=\"" + img.frame.clipY + "\" clipW=\"" + img.frame.clipW + "\" clipH=\"" + img.frame.clipH + "\" imgW=\"" + img.frame.frameW + "\" imgH=\"" + img.frame.frameH + "\" previewURL=\"" + root.localToCdnURL(img.previewURL) + "\" sliceRow=\"" + img.sliceRow + "\" sliceCol=\"" + img.sliceCol + "\" />\n");
+				sb.append("\t\t<layer x=\"" + layer.x + "\" y=\"" + layer.y + "\" width=\"" + layer.w + "\" speed=\"" + layer.speed + "\" fileURL=\"" + fileURL + "\" fileType=\"" + typeID + "\"/>\n");
+			}
 		}
 		sb.append("\t</foreLayers>\n");
 
 		sb.append("\t<backAnims>\n");
 		for (SceneAnim anim : scene.backAnims)
 		{
-			sb.append("\t\t<anim x=\"" + anim.x + "\" y=\"" + anim.y + "\" offsetX=\"" + anim.offsetX + "\" offsetY=\"" + anim.offsetY + "\" direction=\"" + anim.direction + "\" attire=\"" + (anim.attire != null ? anim.attire.gid : "") + "\"/>\n");
+			if (anim.attire != null)
+			{
+				sb.append("\t\t<anim x=\"" + anim.x + "\" y=\"" + anim.y + "\" offsetX=\"" + anim.offsetX + "\" offsetY=\"" + anim.offsetY + "\" direction=\"" + anim.direction + "\" attire=\"" + anim.attire.gid + "\"/>\n");
+			}
 		}
 		sb.append("\t</backAnims>\n");
 
 		sb.append("\t<anims>\n");
 		for (SceneAnim anim : scene.anims)
 		{
-			sb.append("\t\t<anim x=\"" + anim.x + "\" y=\"" + anim.y + "\" offsetX=\"" + anim.offsetX + "\" offsetY=\"" + anim.offsetY + "\" direction=\"" + anim.direction + "\" attire=\"" + (anim.attire != null ? anim.attire.gid : "") + "\"/>\n");
+			if (anim.attire != null)
+			{
+				sb.append("\t\t<anim x=\"" + anim.x + "\" y=\"" + anim.y + "\" offsetX=\"" + anim.offsetX + "\" offsetY=\"" + anim.offsetY + "\" direction=\"" + anim.direction + "\" attire=\"" + anim.attire.gid + "\"/>\n");
+			}
 		}
 		sb.append("\t</anims>\n");
 
 		sb.append("\t<npcs>\n");
 		for (SceneNpc npc : scene.npcs)
 		{
-			sb.append("\t\t<npc id=\"" + npc.id + "\" x=\"" + npc.x + "\" y=\"" + npc.y + "\" direction=\"" + npc.direction + "\" attire=\"" + (npc.attire != null ? npc.attire.gid : "") + "\"/>\n");
+			if (npc.attire != null)
+			{
+				sb.append("\t\t<npc id=\"" + npc.id + "\" x=\"" + npc.x + "\" y=\"" + npc.y + "\" direction=\"" + npc.direction + "\" attire=\"" + npc.attire.gid + "\"/>\n");
+			}
 		}
 		sb.append("\t</npcs>\n");
 
@@ -253,8 +252,11 @@ public class Config3dSceneWriter
 					{
 						if (!monsterIDs.contains(monster.monsterID))
 						{
-							sb.append("\t\t<monster id=\"" + monster.monsterID + "\" x=\"" + monster.x + "\" y=\"" + monster.y + "\" dir=\"" + monster.dir + "\" attire=\"" + (monster.attire != null ? monster.attire.gid : "") + "\" />\n");
-							monsterIDs.add(monster.monsterID);
+							if (monster.attire != null)
+							{
+								sb.append("\t\t<monster id=\"" + monster.monsterID + "\" attire=\"" + monster.attire.gid + "\" />\n");
+								monsterIDs.add(monster.monsterID);
+							}
 						}
 					}
 				}
@@ -354,7 +356,6 @@ public class Config3dSceneWriter
 		worldCfgURL = url;
 	}
 
-
 	/**
 	 * 计算场景加载信息
 	 */
@@ -375,10 +376,10 @@ public class Config3dSceneWriter
 					if (layer.img != null)
 					{
 						ImageFrame frame = root.getImageFrameTable().get(layer.img.imgFile.gid, 1, 1, 0);
-						SliceImage slice = root.getSliceImageWriter().getSliceImage(frame);
-						if (slice != null)
+						String fileURL = attireSWFWriter.getFrameFileURL(frame);
+						if (fileURL != null)
 						{
-							urls.add(slice.previewURL);
+							urls.add(fileURL);
 						}
 					}
 				}
@@ -387,10 +388,10 @@ public class Config3dSceneWriter
 					if (layer.img != null)
 					{
 						ImageFrame frame = root.getImageFrameTable().get(layer.img.imgFile.gid, 1, 1, 0);
-						SliceImage slice = root.getSliceImageWriter().getSliceImage(frame);
-						if (slice != null)
+						String fileURL = attireSWFWriter.getFrameFileURL(frame);
+						if (fileURL != null)
 						{
-							urls.add(slice.previewURL);
+							urls.add(fileURL);
 						}
 					}
 				}
@@ -408,20 +409,20 @@ public class Config3dSceneWriter
 						attires.add(anim.attire);
 					}
 				}
-//				for (SceneNpc npc : scene.npcs)
-//				{
-//					if (npc.attire != null)
-//					{
-//						attires.add(npc.attire);
-//					}
-//				}
-//				for (SceneDoor door : scene.doors)
-//				{
-//					if (door.attire != null)
-//					{
-//						attires.add(door.attire);
-//					}
-//				}
+				// for (SceneNpc npc : scene.npcs)
+				// {
+				// if (npc.attire != null)
+				// {
+				// attires.add(npc.attire);
+				// }
+				// }
+				// for (SceneDoor door : scene.doors)
+				// {
+				// if (door.attire != null)
+				// {
+				// attires.add(door.attire);
+				// }
+				// }
 				for (ScenePart part : scene.parts)
 				{
 					for (SceneMonsterTimer timer : part.timers)
@@ -438,7 +439,7 @@ public class Config3dSceneWriter
 						}
 					}
 				}
-				
+
 				for (Attire attire : attires)
 				{
 					for (AttireAction action : attire.actions)
@@ -451,20 +452,12 @@ public class Config3dSceneWriter
 								{
 									continue;
 								}
-								
+
 								ImageFrame frame = root.getImageFrameTable().get(anim.img.gid, anim.row, anim.col, i);
-								SliceImage slice = root.getSliceImageWriter().getSliceImage(frame);
-								if (slice != null)
+								String fileURL = attireSWFWriter.getFrameFileURL(frame);
+								if (fileURL != null)
 								{
-									urls.add(slice.previewURL);
-								}
-								else
-								{
-									Atlas atlas = root.getAtlasTable().findAtlasByImageFrame(frame);
-									if (atlas != null)
-									{
-										urls.add(atlas.atfURL);
-									}
+									urls.add(fileURL);
 								}
 							}
 						}
@@ -511,7 +504,7 @@ public class Config3dSceneWriter
 	 */
 	private File getVerFile()
 	{
-		return new File(root.getOutputFolder().getPath() + File.separatorChar + ".ver" + File.separatorChar + "3dScene");
+		return new File(root.getOutputFolder().getPath() + File.separatorChar + ".ver" + File.separatorChar + "2dScene");
 	}
 
 	/**

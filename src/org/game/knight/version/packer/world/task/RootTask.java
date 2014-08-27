@@ -19,6 +19,7 @@ import org.game.knight.version.packer.world.model.Mp3Writer;
 import org.game.knight.version.packer.world.model.ProjectFileTable;
 import org.game.knight.version.packer.world.model.GameUIAttireWriter;
 import org.game.knight.version.packer.world.model.WorldTable;
+import org.game.knight.version.packer.world.output2d.Config2d;
 import org.game.knight.version.packer.world.output3d.AtlasWriter;
 import org.game.knight.version.packer.world.output3d.Config3d;
 import org.game.knight.version.packer.world.output3d.SliceImageWriter;
@@ -31,6 +32,7 @@ public class RootTask
 
 	private final File inputFolder;
 	private final File outputFolder;
+	private final boolean zip;
 	private final ArrayList<String> outputFiles;
 
 	private GlobalOptionTable globalOptionTable;
@@ -45,6 +47,7 @@ public class RootTask
 	private SliceImageWriter sliceImageWriter;
 	private AtlasWriter atlasWriter;
 	private Config3d config3dWriter;
+	private Config2d config2dWriter;
 
 	/**
 	 * 构造函数
@@ -52,10 +55,12 @@ public class RootTask
 	 * @param inputFolder
 	 * @param outputFolder
 	 */
-	public RootTask(File inputFolder, File outputFolder)
+	public RootTask(File inputFolder, File outputFolder, boolean zip)
 	{
 		this.inputFolder = inputFolder;
 		this.outputFolder = outputFolder;
+		this.zip=zip;
+		
 		this.outputFiles = new ArrayList<String>();
 	}
 
@@ -78,6 +83,15 @@ public class RootTask
 	{
 		return outputFolder;
 	}
+	
+	/**
+	 * ZIP压缩
+	 * @return
+	 */
+	public boolean hasZIP()
+	{
+		return zip;
+	}
 
 	/**
 	 * 添加输出文件
@@ -86,7 +100,7 @@ public class RootTask
 	 */
 	public synchronized void addOutputFile(String url)
 	{
-		outputFiles.add(url);
+		outputFiles.add("/" + getOutputFolder().getName() + url);
 	}
 
 	/**
@@ -153,9 +167,10 @@ public class RootTask
 	{
 		return imageFrameTable;
 	}
-	
+
 	/**
 	 * 获取UI装扮输出器
+	 * 
 	 * @return
 	 */
 	public GameUIAttireWriter getUIAttireWriter()
@@ -279,7 +294,7 @@ public class RootTask
 		}
 
 		GamePacker.progress("输出UI装扮数据");
-		gameUIAttireWriter=new GameUIAttireWriter(this);
+		gameUIAttireWriter = new GameUIAttireWriter(this);
 		gameUIAttireWriter.start();
 		gameUIAttireWriter.saveVer();
 
@@ -313,6 +328,14 @@ public class RootTask
 		GamePacker.progress("输出3D配置");
 		config3dWriter = new Config3d(this);
 		config3dWriter.start();
+		if (isCancel())
+		{
+			return;
+		}
+
+		GamePacker.progress("输出2D配置");
+		config2dWriter = new Config2d(this);
+		config2dWriter.start();
 		if (isCancel())
 		{
 			return;

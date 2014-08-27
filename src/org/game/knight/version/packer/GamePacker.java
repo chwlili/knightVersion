@@ -901,8 +901,15 @@ public class GamePacker extends Composite
 		{
 			getTask(execThread).cancel();
 		}
+		
+		if(worldWriter!=null)
+		{
+			worldWriter.cancel();
+		}
 	}
 
+	private RootTask worldWriter;
+	
 	/**
 	 * Ö´ÐÐµ¼³ö
 	 */
@@ -976,8 +983,8 @@ public class GamePacker extends Composite
 				{
 					//WorldExporter world = new WorldExporter(new File(worldPath), new File(cdnPath + File.separatorChar + "world"), zip, isMobile, writeRegionImg);
 					//world.publish();
-					RootTask world=new RootTask(new File(worldPath), new File(cdnPath + File.separatorChar + "world"));
-					world.start();
+					worldWriter=new RootTask(new File(worldPath), new File(cdnPath + File.separatorChar + "world"),zip);
+					worldWriter.start();
 				}
 
 				if (codeSelected)

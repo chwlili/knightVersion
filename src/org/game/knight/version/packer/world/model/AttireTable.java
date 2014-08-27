@@ -84,6 +84,7 @@ public class AttireTable
 
 	/**
 	 * 获取所有的引用图像
+	 * 
 	 * @return
 	 */
 	public AttireBitmap[] getAllBitmaps()
@@ -237,7 +238,7 @@ public class AttireTable
 			AtfParam param = root.getAtfParamTable().getAtfParam(paramID);
 			if (img != null)
 			{
-				AttireAnim anim = new AttireAnim(1, 3, 1, 0, 0, 1, 1, false, img, row, col, delays, param);
+				AttireAnim anim = new AttireAnim(1, 3, 1, 0, 0, 1, 1, false, img, row, col, delays, param, true);
 				AttireAction action = new AttireAction(1, new AttireHitRect(0, 0, 0, 0, 0, 0), new AttireAnim[] { anim }, new AttireAudio[] {});
 				Attire attire = new Attire(file.gid, attireID, 1, new AttireHitRect(0, 0, 0, 0, 0, 0), new AttireAction[] { action });
 
@@ -396,7 +397,7 @@ public class AttireTable
 							{
 								actionID_anims.put(actionID, new ArrayList<AttireAnim>());
 							}
-							actionID_anims.get(actionID).add(new AttireAnim(actionID, gID, lID, x, y, scaleX, scaleY, flip, img, row, col, delays, param));
+							actionID_anims.get(actionID).add(new AttireAnim(actionID, gID, lID, x, y, scaleX, scaleY, flip, img, row, col, delays, param, false));
 						}
 						else
 						{

@@ -92,85 +92,6 @@ public class Config3d
 	}
 
 	/**
-	 * 获取场景配置汇总
-	 * 
-	 * @return
-	 */
-	private String getSceneSummay()
-	{
-		Scene[] scenes = root.getWorldTable().getAllScene();
-		Arrays.sort(scenes, new Comparator<Scene>()
-		{
-			@Override
-			public int compare(Scene o1, Scene o2)
-			{
-				return o1.sceneID - o2.sceneID;
-			}
-		});
-
-		StringBuilder txt = new StringBuilder();
-		txt.append("\t<scenes>\n");
-		for (Scene scene : scenes)
-		{
-			txt.append(String.format("\t\t<scene id=\"%s\" type=\"%s\" size=\"%s\" files=\"%s\" />\n", scene.sceneID, scene.sceneType, sceneWriter.getSceneSize(scene), sceneWriter.getSceneURLs(scene)));
-		}
-		txt.append("\t</scenes>\n");
-		return txt.toString();
-	}
-
-	/**
-	 * 过滤装扮
-	 * 
-	 * @param attire
-	 * @return
-	 */
-	private boolean filterAttire(Attire attire)
-	{
-		if (attire.isAnimAttire() || attire.nativeName.startsWith("0_"))
-		{
-			return false;
-		}
-
-		String[] params = attire.typeParams;
-		if (params.length == 0)
-		{
-			return false;
-		}
-
-		int type = 0;
-
-		try
-		{
-			type = Integer.parseInt(params[0]);
-		}
-		catch (NumberFormatException exception)
-		{
-		}
-
-		switch (type)
-		{
-			case 1:
-				return params.length >= 3;// 装扮: 1_职业ID_职业等级_名称
-			case 2:
-				return params.length >= 4;// 装备: 2_起始ID_结束ID_职业ID_名称
-			case 3:
-				return true;// 效果: 3_名称
-			case 4:
-				return false;// 怪物: 4_名称
-			case 5:
-				return false;// 标签: 5_名称
-			case 6:
-				return params.length >= 2;// 刀光: 6_职业ID_名称
-			case 7:
-				return false;// ???
-			case 8:
-				return true;// 坐骑: 8_坐骑ID_名称
-		}
-
-		return false;
-	}
-
-	/**
 	 * 获取装扮配置汇总
 	 * 
 	 * @param txt
@@ -210,14 +131,14 @@ public class Config3d
 							{
 								continue;
 							}
-							
+
 							if (!action_urls.containsKey(action))
 							{
 								action_urls.put(action, new HashSet<String>());
 							}
 
 							SliceImage slice = root.getSliceImageWriter().getSliceImage(frame);
-							if(slice!=null)
+							if (slice != null)
 							{
 								String url = slice.previewURL;
 								File file = new File(root.getOutputFolder().getPath() + url);
@@ -232,7 +153,7 @@ public class Config3d
 								{
 									String url = atlas.atfURL;
 									File file = new File(root.getOutputFolder().getPath() + url);
-	
+
 									url_size.put(url, (int) file.length());
 									action_urls.get(action).add(url);
 								}
@@ -416,6 +337,85 @@ public class Config3d
 		txt.append(horses);
 		txt.append("\t</attires>\n");
 
+		return txt.toString();
+	}
+
+	/**
+	 * 过滤装扮
+	 * 
+	 * @param attire
+	 * @return
+	 */
+	private boolean filterAttire(Attire attire)
+	{
+		if (attire.isAnimAttire() || attire.nativeName.startsWith("0_"))
+		{
+			return false;
+		}
+
+		String[] params = attire.typeParams;
+		if (params.length == 0)
+		{
+			return false;
+		}
+
+		int type = 0;
+
+		try
+		{
+			type = Integer.parseInt(params[0]);
+		}
+		catch (NumberFormatException exception)
+		{
+		}
+
+		switch (type)
+		{
+			case 1:
+				return params.length >= 3;// 装扮: 1_职业ID_职业等级_名称
+			case 2:
+				return params.length >= 4;// 装备: 2_起始ID_结束ID_职业ID_名称
+			case 3:
+				return true;// 效果: 3_名称
+			case 4:
+				return false;// 怪物: 4_名称
+			case 5:
+				return false;// 标签: 5_名称
+			case 6:
+				return params.length >= 2;// 刀光: 6_职业ID_名称
+			case 7:
+				return false;// ???
+			case 8:
+				return true;// 坐骑: 8_坐骑ID_名称
+		}
+
+		return false;
+	}
+
+	/**
+	 * 获取场景配置汇总
+	 * 
+	 * @return
+	 */
+	private String getSceneSummay()
+	{
+		Scene[] scenes = root.getWorldTable().getAllScene();
+		Arrays.sort(scenes, new Comparator<Scene>()
+		{
+			@Override
+			public int compare(Scene o1, Scene o2)
+			{
+				return o1.sceneID - o2.sceneID;
+			}
+		});
+
+		StringBuilder txt = new StringBuilder();
+		txt.append("\t<scenes>\n");
+		for (Scene scene : scenes)
+		{
+			txt.append(String.format("\t\t<scene id=\"%s\" type=\"%s\" size=\"%s\" files=\"%s\" />\n", scene.sceneID, scene.sceneType, sceneWriter.getSceneSize(scene), sceneWriter.getSceneURLs(scene)));
+		}
+		txt.append("\t</scenes>\n");
 		return txt.toString();
 	}
 }

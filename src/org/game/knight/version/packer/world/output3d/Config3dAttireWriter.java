@@ -9,6 +9,7 @@ import java.util.HashSet;
 
 import org.chw.util.FileUtil;
 import org.chw.util.MD5Util;
+import org.chw.util.ZlibUtil;
 import org.game.knight.version.packer.GamePacker;
 import org.game.knight.version.packer.world.model.Attire;
 import org.game.knight.version.packer.world.model.AttireAction;
@@ -148,8 +149,7 @@ public class Config3dAttireWriter
 								{
 									attireText.append(String.format("\t\t\t\t<frame frameW=\"%s\" frameH=\"%s\" clipX=\"%s\" clipY=\"%s\" clipW=\"%s\" clipH=\"%s\" sliceRow=\"%s\" sliceCol=\"%s\" previewURL=\"%s\" delay=\"%s\"/>\n", slice.frame.frameW, slice.frame.frameH, slice.frame.clipX, slice.frame.clipY, slice.frame.clipW, slice.frame.clipH, slice.sliceRow, slice.sliceCol, root.localToCdnURL(slice.previewURL), delay));
 								}
-								else 
-								if (atlas != null)
+								else if (atlas != null)
 								{
 									attireText.append("\t\t\t\t<frame texture=\"" + root.localToCdnURL(atlas.atfURL) + "\" frameID=\"" + frame.file.gid + "_" + frame.row + "_" + frame.col + "_" + i + "\" frameW=\"" + frame.frameW + "\" frameH=\"" + frame.frameH + "\" delay=\"" + delay + "\"/>\n");
 								}
@@ -173,6 +173,10 @@ public class Config3dAttireWriter
 		try
 		{
 			bytes = attireText.toString().getBytes("UTF-8");
+			if (root.hasZIP())
+			{
+				bytes = ZlibUtil.compress(bytes);
+			}
 		}
 		catch (UnsupportedEncodingException e)
 		{
@@ -181,7 +185,7 @@ public class Config3dAttireWriter
 			return;
 		}
 
-		String md5 = /* (zip ? "zlib_" : "")+ */MD5Util.md5Bytes(bytes);
+		String md5 = MD5Util.md5Bytes(bytes);
 		String url = oldTable.get(md5);
 
 		if (url == null)

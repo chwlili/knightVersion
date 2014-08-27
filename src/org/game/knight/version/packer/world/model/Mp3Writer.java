@@ -65,7 +65,6 @@ public class Mp3Writer
 			{
 				e.printStackTrace();
 				GamePacker.error(e);
-				root.cancel();
 				return;
 			}
 		}
