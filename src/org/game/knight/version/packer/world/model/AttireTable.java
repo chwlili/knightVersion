@@ -279,7 +279,7 @@ public class AttireTable
 				int width = XmlUtil.parseInt(sizeNode.attributeValue("width"), 0);
 				int height = XmlUtil.parseInt(sizeNode.attributeValue("height"), 0);
 				int nameX = XmlUtil.parseInt(sizeNode.attributeValue("nameX"), 0);
-				int nameY = XmlUtil.parseInt(sizeNode.attributeValue("nameY"), height);
+				int nameY = XmlUtil.parseInt(sizeNode.attributeValue("nameY"), 0);
 
 				actionID_rect.put(id, new AttireHitRect(x, y, width, height, nameX, nameY));
 			}
@@ -291,7 +291,7 @@ public class AttireTable
 			int attireRectW = XmlUtil.parseInt(node.attributeValue("width"), 0);
 			int attireRectH = XmlUtil.parseInt(node.attributeValue("height"), 0);
 			int attireNameX = XmlUtil.parseInt(node.attributeValue("nameX"), 0);
-			int attireNameY = XmlUtil.parseInt(node.attributeValue("nameY"), attireRectH);
+			int attireNameY = XmlUtil.parseInt(node.attributeValue("nameY"), 0);
 
 			AttireHitRect attireHitRect = new AttireHitRect(attireRectX, attireRectY, attireRectW, attireRectH, attireNameX, attireNameY);
 
@@ -423,6 +423,11 @@ public class AttireTable
 			for (int id : idArray)
 			{
 				AttireHitRect actionRect = actionID_rect.containsKey(id) ? actionID_rect.get(id) : attireHitRect;
+				if (actionRect != attireHitRect && actionRect.nameX == 0 && actionRect.nameY == 0)
+				{
+					actionRect = new AttireHitRect(actionRect.x, actionRect.y, actionRect.width, actionRect.height, attireHitRect.nameX, attireHitRect.nameY);
+				}
+
 				ArrayList<AttireAnim> actionAnims = actionID_anims.containsKey(id) ? actionID_anims.get(id) : new ArrayList<AttireAnim>();
 				ArrayList<AttireAudio> actionAudios = actionID_audios.containsKey(id) ? actionID_audios.get(id) : new ArrayList<AttireAudio>();
 				AttireAnim[] actionAnimArray = actionAnims.toArray(new AttireAnim[actionAnims.size()]);

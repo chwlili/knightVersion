@@ -82,6 +82,11 @@ public class AtlasWriter
 
 		writeAllAtf();
 
+		if (root.isCancel())
+		{
+			return;
+		}
+
 		for (AtfParam key : atf_rectListSet.keySet())
 		{
 			ArrayList<AtlasRect[]> value = atf_rectListSet.get(key);
@@ -138,11 +143,11 @@ public class AtlasWriter
 			{
 				for (AttireAnim anim : action.anims)
 				{
-					if(anim.useSlice)
+					if (anim.useSlice)
 					{
 						continue;
 					}
-					
+
 					for (int i = 0; i < anim.times.length; i++)
 					{
 						if (anim.times[i] > 0)
@@ -328,13 +333,6 @@ public class AtlasWriter
 		outputW = TextureHelper.normalizeWH(outputW);
 		outputH = TextureHelper.normalizeWH(outputH);
 
-		// 确定文件输出位置
-		String saveURL = root.getGlobalOptionTable().getNextExportFile();
-		String pngURL = saveURL + ".png";
-		String atfURL = saveURL + ".atf";
-		File pngFile = new File(root.getOutputFolder().getPath() + pngURL);
-		File atfFile = new File(root.getOutputFolder().getPath() + atfURL);
-
 		// 合并图像
 		File subFile = null;
 		BufferedImage subImage = null;
@@ -368,6 +366,22 @@ public class AtlasWriter
 			}
 		}
 		graphics.dispose();
+
+		String saveURL = root.getGlobalOptionTable().getNextExportFile();
+
+		String url1 = writerAtfImage(rects, param, image, saveURL);
+		String url2 = writerAtfPreview(rects, param, image, saveURL);
+
+		return new Atlas(rects, param, url1, url2);
+	}
+
+	private String writerAtfImage(AtlasRect[] rects, AtfParam param, BufferedImage image, String saveURL)
+	{
+		// 确定文件输出位置
+		String pngURL = saveURL + ".png";
+		String atfURL = saveURL + ".atf";
+		File pngFile = new File(root.getOutputFolder().getPath() + pngURL);
+		File atfFile = new File(root.getOutputFolder().getPath() + atfURL);
 
 		// 确定XML配置
 		StringBuilder atlas = new StringBuilder();
@@ -411,8 +425,81 @@ public class AtlasWriter
 			e.printStackTrace();
 		}
 
-		// 记录
-		return new Atlas(param, atfURL, rects);
+		return atfURL;
+	}
+
+	/**
+	 * 输出ATF预览图
+	 * 
+	 * @param image
+	 */
+	private String writerAtfPreview(AtlasRect[] rects, AtfParam param, BufferedImage image, String saveURL)
+	{
+		int outputW = 0;
+		int outputH = 0;
+		for (AtlasRect rect : rects)
+		{
+			outputW = Math.max(outputW, rect.x + rect.frame.clipW);
+			outputH = Math.max(outputH, rect.y + rect.frame.clipH);
+		}
+
+		outputW /= 10;
+		outputH /= 10;
+
+		BufferedImage preview = new BufferedImage(TextureHelper.normalizeWH(outputW), TextureHelper.normalizeWH(outputH), BufferedImage.TYPE_INT_ARGB);
+		Graphics2D graphics = (Graphics2D) preview.getGraphics();
+		graphics.drawImage(image, 0, 0, outputW, outputH, 0, 0, outputW * 10, outputH * 10, null);
+		graphics.dispose();
+
+		// 确定文件输出位置
+		String pngURL = saveURL + "_0.png";
+		String atfURL = saveURL + "_0.atf";
+		File pngFile = new File(root.getOutputFolder().getPath() + pngURL);
+		File atfFile = new File(root.getOutputFolder().getPath() + atfURL);
+
+		// 确定XML配置
+		StringBuilder atlas = new StringBuilder();
+		atlas.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+		atlas.append("<TextureAtlas imagePath=\"" + ("/" + root.getOutputFolder().getName() + atfURL) + "\">\n");
+		for (AtlasRect rect : rects)
+		{
+			ImageFrame frame = rect.frame;
+			atlas.append("\t<SubTexture name=\"" + frame.file.gid + "_" + frame.row + "_" + frame.col + "_" + frame.index + "\" x=\"" + rect.x / 10 + "\" y=\"" + rect.y / 10 + "\" width=\"" + frame.clipW / 10 + "\" height=\"" + frame.clipH / 10 + "\" frameX=\"" + (frame.clipX > 0 ? -frame.clipX : 0) / 10 + "\" frameY=\"" + (frame.clipY > 0 ? -frame.clipY : 0) / 10 + "\" frameWidth=\"" + frame.frameW / 10 + "\" frameHeight=\"" + frame.frameH / 10 + "\"/>\n");
+		}
+		atlas.append("</TextureAtlas>");
+
+		// 输出ATF,组合XML配置
+		try
+		{
+			pngFile.getParentFile().mkdirs();
+
+			ImageIO.write(preview, "png", pngFile);
+			TextureHelper.png2atf(pngFile, atfFile, param.other);
+
+			byte[] xmlBytes = atlas.toString().getBytes("utf8");
+
+			RandomAccessFile a = new RandomAccessFile(atfFile, "rw");
+			a.seek(atfFile.length());
+			a.write(xmlBytes);
+			a.write((xmlBytes.length >>> 24) & 0xFF);
+			a.write((xmlBytes.length >>> 16) & 0xFF);
+			a.write((xmlBytes.length >>> 8) & 0xFF);
+			a.write(xmlBytes.length & 0xFF);
+			a.close();
+
+			root.addFileSuffix(atfFile);
+
+			if (pngFile.exists())
+			{
+				pngFile.delete();
+			}
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+
+		return atfURL;
 	}
 
 	// -------------------------------------------------------------------------------------------------------------------
@@ -515,15 +602,22 @@ public class AtlasWriter
 			{
 				String[] atlasValues = atlasItem.trim().split(",");
 
-				String url = atlasValues[0].trim();
-				if (url.isEmpty())
+				String atfURL = atlasValues[0].trim();
+				if (atfURL.isEmpty())
+				{
+					atlas = null;
+					break;
+				}
+
+				String previewURL = atlasValues[1].trim();
+				if (previewURL.isEmpty())
 				{
 					atlas = null;
 					break;
 				}
 
 				ArrayList<AtlasRect> rects = new ArrayList<AtlasRect>();
-				for (int i = 1; i < atlasValues.length; i++)
+				for (int i = 2; i < atlasValues.length; i++)
 				{
 					String[] rectValues = atlasValues[i].trim().split("_");
 					if (rectValues.length != 6)
@@ -559,7 +653,7 @@ public class AtlasWriter
 					break;
 				}
 
-				atlas.add(new Atlas(param, url, rects.toArray(new AtlasRect[rects.size()])));
+				atlas.add(new Atlas(rects.toArray(new AtlasRect[rects.size()]), param, atfURL, previewURL));
 			}
 
 			if (atlas == null)
@@ -637,6 +731,7 @@ public class AtlasWriter
 			for (Atlas atlas : set.atlasList)
 			{
 				root.addOutputFile(atlas.atfURL);
+				root.addOutputFile(atlas.previewURL);
 			}
 		}
 	}
