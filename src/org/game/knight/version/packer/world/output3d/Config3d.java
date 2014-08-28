@@ -137,26 +137,14 @@ public class Config3d
 								action_urls.put(action, new HashSet<String>());
 							}
 
-							SliceImage slice = root.getSliceImageWriter().getSliceImage(frame);
-							if (slice != null)
+							Atlas atlas = root.getAtlasTable().findAtlasByImageFrame(frame);
+							if (atlas != null)
 							{
-								String url = slice.previewURL;
+								String url = atlas.atfURL;
 								File file = new File(root.getOutputFolder().getPath() + url);
 
 								url_size.put(url, (int) file.length());
 								action_urls.get(action).add(url);
-							}
-							else
-							{
-								Atlas atlas = root.getAtlasTable().findAtlasByImageFrame(frame);
-								if (atlas != null)
-								{
-									String url = atlas.atfURL;
-									File file = new File(root.getOutputFolder().getPath() + url);
-
-									url_size.put(url, (int) file.length());
-									action_urls.get(action).add(url);
-								}
 							}
 						}
 					}

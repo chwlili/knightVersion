@@ -238,7 +238,7 @@ public class AttireTable
 			AtfParam param = root.getAtfParamTable().getAtfParam(paramID);
 			if (img != null)
 			{
-				AttireAnim anim = new AttireAnim(1, 3, 1, 0, 0, 1, 1, false, img, row, col, delays, param, true);
+				AttireAnim anim = new AttireAnim(1, 3, 1, 0, 0, 1, 1, false, img, row, col, delays, param);
 				AttireAction action = new AttireAction(1, new AttireHitRect(0, 0, 0, 0, 0, 0), new AttireAnim[] { anim }, new AttireAudio[] {});
 				Attire attire = new Attire(file.gid, attireID, 1, new AttireHitRect(0, 0, 0, 0, 0, 0), new AttireAction[] { action });
 
@@ -265,60 +265,18 @@ public class AttireTable
 		{
 			Element node = (Element) list.get(i);
 
-			// 所有动作的打击矩形
-			HashMap<Integer, AttireHitRect> actionID_rect = new HashMap<Integer, AttireHitRect>();
+			// 所有打击矩形
+			ActionRectMap actionRectMap=new ActionRectMap();
+			actionRectMap.putAttireNode(node);
 			@SuppressWarnings({ "rawtypes" })
 			List sizeNodes = node.selectNodes("sizes/size");
 			for (int j = 0; j < sizeNodes.size(); j++)
 			{
-				Element sizeNode = (Element) sizeNodes.get(j);
-
-				int id = XmlUtil.parseInt(sizeNode.attributeValue("id"), 0);
-				int x = XmlUtil.parseInt(sizeNode.attributeValue("x"), 0);
-				int y = XmlUtil.parseInt(sizeNode.attributeValue("y"), 0);
-				int width = XmlUtil.parseInt(sizeNode.attributeValue("width"), 0);
-				int height = XmlUtil.parseInt(sizeNode.attributeValue("height"), 0);
-				int nameX = XmlUtil.parseInt(sizeNode.attributeValue("nameX"), 0);
-				int nameY = XmlUtil.parseInt(sizeNode.attributeValue("nameY"), 0);
-
-				actionID_rect.put(id, new AttireHitRect(x, y, width, height, nameX, nameY));
+				actionRectMap.putActionNode((Element) sizeNodes.get(j));
 			}
 
-			// 装扮的打击矩形
+			// 装扮的ID
 			String attireID = node.attributeValue("name");
-			int attireRectX = XmlUtil.parseInt(node.attributeValue("x"), 0);
-			int attireRectY = XmlUtil.parseInt(node.attributeValue("y"), 0);
-			int attireRectW = XmlUtil.parseInt(node.attributeValue("width"), 0);
-			int attireRectH = XmlUtil.parseInt(node.attributeValue("height"), 0);
-			int attireNameX = XmlUtil.parseInt(node.attributeValue("nameX"), 0);
-			int attireNameY = XmlUtil.parseInt(node.attributeValue("nameY"), 0);
-
-			AttireHitRect attireHitRect = new AttireHitRect(attireRectX, attireRectY, attireRectW, attireRectH, attireNameX, attireNameY);
-
-			if (attireRectX == 0 && attireRectY == 0 && attireRectW == 0 && attireRectH == 0 && attireNameX == 0 && attireNameY == 0)
-			{
-				int defRectActionID = actionID_rect.containsKey(1) ? 1 : 0;
-				if (!actionID_rect.containsKey(defRectActionID))
-				{
-					int min = Integer.MAX_VALUE;
-					for (Integer aid : actionID_rect.keySet())
-					{
-						if (aid < min)
-						{
-							min = aid;
-						}
-					}
-					if (min != Integer.MAX_VALUE)
-					{
-						defRectActionID = min;
-					}
-				}
-
-				if (actionID_rect.containsKey(defRectActionID))
-				{
-					attireHitRect = actionID_rect.get(defRectActionID);
-				}
-			}
 
 			// 读取动画和音效
 			HashMap<Integer, ArrayList<AttireAnim>> actionID_anims = new HashMap<Integer, ArrayList<AttireAnim>>();
@@ -397,7 +355,7 @@ public class AttireTable
 							{
 								actionID_anims.put(actionID, new ArrayList<AttireAnim>());
 							}
-							actionID_anims.get(actionID).add(new AttireAnim(actionID, gID, lID, x, y, scaleX, scaleY, flip, img, row, col, delays, param, false));
+							actionID_anims.get(actionID).add(new AttireAnim(actionID, gID, lID, x, y, scaleX, scaleY, flip, img, row, col, delays, param));
 						}
 						else
 						{
@@ -422,21 +380,15 @@ public class AttireTable
 			ArrayList<AttireAction> actionList = new ArrayList<AttireAction>();
 			for (int id : idArray)
 			{
-				AttireHitRect actionRect = actionID_rect.containsKey(id) ? actionID_rect.get(id) : attireHitRect;
-				if (actionRect != attireHitRect && actionRect.nameX == 0 && actionRect.nameY == 0)
-				{
-					actionRect = new AttireHitRect(actionRect.x, actionRect.y, actionRect.width, actionRect.height, attireHitRect.nameX, attireHitRect.nameY);
-				}
-
 				ArrayList<AttireAnim> actionAnims = actionID_anims.containsKey(id) ? actionID_anims.get(id) : new ArrayList<AttireAnim>();
 				ArrayList<AttireAudio> actionAudios = actionID_audios.containsKey(id) ? actionID_audios.get(id) : new ArrayList<AttireAudio>();
 				AttireAnim[] actionAnimArray = actionAnims.toArray(new AttireAnim[actionAnims.size()]);
 				AttireAudio[] actionAudioArray = actionAudios.toArray(new AttireAudio[actionAudios.size()]);
 
-				actionList.add(new AttireAction(id, actionRect, actionAnimArray, actionAudioArray));
+				actionList.add(new AttireAction(id, actionRectMap.createActionRect(id), actionAnimArray, actionAudioArray));
 			}
 
-			addAttire(file, new Attire(file.gid, attireID, 0, attireHitRect, actionList.toArray(new AttireAction[actionList.size()])));
+			addAttire(file, new Attire(file.gid, attireID, 0, actionRectMap.createActionRect(1), actionList.toArray(new AttireAction[actionList.size()])));
 		}
 	}
 
@@ -495,5 +447,123 @@ public class AttireTable
 		}
 
 		return defaultValue;
+	}
+
+	private static class ActionRectMap
+	{
+		private int attireRectX;
+		private int attireRectY;
+		private int attireRectW;
+		private int attireRectH;
+		private int attireNameX;
+		private int attireNameY;
+		
+		private HashMap<Integer, Integer> id_x=new HashMap<Integer, Integer>();
+		private HashMap<Integer, Integer> id_y=new HashMap<Integer, Integer>();
+		private HashMap<Integer, Integer> id_w=new HashMap<Integer, Integer>();
+		private HashMap<Integer, Integer> id_h=new HashMap<Integer, Integer>();
+		private HashMap<Integer, Integer> id_nameX=new HashMap<Integer, Integer>();
+		private HashMap<Integer, Integer> id_nameY=new HashMap<Integer, Integer>();
+		
+		public void putActionNode(Element sizeNode)
+		{
+			if(sizeNode.attribute("id")==null)
+			{
+				return;
+			}
+			
+			int id = XmlUtil.parseInt(sizeNode.attributeValue("id"), 0);
+			if(id==0)
+			{
+				return;
+			}
+			
+			int x = XmlUtil.parseInt(sizeNode.attributeValue("x"), 0);
+			if(x!=0)
+			{
+				id_x.put(id, x);
+			}
+			
+			int y = XmlUtil.parseInt(sizeNode.attributeValue("y"), 0);
+			if(y!=0)
+			{
+				id_y.put(id, y);
+			}
+			int w = XmlUtil.parseInt(sizeNode.attributeValue("width"), 0);
+			if(w!=0)
+			{
+				id_w.put(id, w);
+			}
+			int h = XmlUtil.parseInt(sizeNode.attributeValue("height"), 0);
+			if(h!=0)
+			{
+				id_h.put(id, h);
+			}
+			int nameX = XmlUtil.parseInt(sizeNode.attributeValue("nameX"), 0);
+			if(nameX!=0)
+			{
+				id_nameX.put(id, nameX);
+			}
+			int nameY = XmlUtil.parseInt(sizeNode.attributeValue("nameY"), 0);
+			if(nameY!=0)
+			{
+				id_nameY.put(id, nameY);
+			}
+		}
+		
+		public void putAttireNode(Element node)
+		{
+			attireRectX = XmlUtil.parseInt(node.attributeValue("x"), 0);
+			attireRectY = XmlUtil.parseInt(node.attributeValue("y"), 0);
+			attireRectW = XmlUtil.parseInt(node.attributeValue("width"), 0);
+			attireRectH = XmlUtil.parseInt(node.attributeValue("height"), 0);
+			attireNameX = XmlUtil.parseInt(node.attributeValue("nameX"), 0);
+			attireNameY = XmlUtil.parseInt(node.attributeValue("nameY"), 0);
+		}
+		
+		public AttireHitRect createActionRect(int id)
+		{
+			int x=getInt(id_x,id,attireRectX);
+			int y=getInt(id_y,id,attireRectY);
+			int w=getInt(id_w,id,attireRectW);
+			int h=getInt(id_h,id,attireRectH);
+			int nameX=getInt(id_nameX,id,attireNameX);
+			int nameY=getInt(id_nameY,id,attireNameY);
+			
+			return new AttireHitRect(x,y,w,h,nameX,nameY);
+		}
+		
+		private int getInt(HashMap<Integer, Integer> map,int id,int def)
+		{
+			if(map.containsKey(id))
+			{
+				return map.get(id);
+			}
+			else if(map.containsKey(1))
+			{
+				return map.get(1);
+			}
+			else if(map.containsKey(0))
+			{
+				return map.get(0);
+			}
+			else
+			{
+				int min=Integer.MAX_VALUE;
+				for(Integer aid:map.keySet())
+				{
+					if(aid<min)
+					{
+						min=aid;
+					}
+				}
+				
+				if(map.containsKey(min))
+				{
+					return map.get(min);
+				}
+			}
+			return def;
+		}
 	}
 }

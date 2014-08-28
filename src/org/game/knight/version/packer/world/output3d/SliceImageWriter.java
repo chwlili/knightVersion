@@ -18,11 +18,9 @@ import javax.imageio.ImageIO;
 
 import org.chw.util.FileUtil;
 import org.game.knight.version.packer.GamePacker;
-import org.game.knight.version.packer.world.model.Attire;
-import org.game.knight.version.packer.world.model.AttireAction;
-import org.game.knight.version.packer.world.model.AttireAnim;
-import org.game.knight.version.packer.world.model.AttireBitmap;
 import org.game.knight.version.packer.world.model.ImageFrame;
+import org.game.knight.version.packer.world.model.Scene;
+import org.game.knight.version.packer.world.model.SceneBackLayer;
 import org.game.knight.version.packer.world.task.RootTask;
 
 public class SliceImageWriter
@@ -301,41 +299,16 @@ public class SliceImageWriter
 	{
 		HashSet<ImageFrame> imgFiles = new HashSet<ImageFrame>();
 
-		for (AttireBitmap bitmap : root.getAttireTable().getAllBitmaps())
+		for (Scene scene : root.getWorldTable().getAllScene())
 		{
-			ImageFrame frame = root.getImageFrameTable().get(bitmap.imgFile.gid, 1, 1, 0);
-			if (frame != null)
+			for (SceneBackLayer layer : scene.backLayers)
 			{
-				if (!activate(frame))
+				ImageFrame frame = root.getImageFrameTable().get(layer.img.imgFile.gid, 1, 1, 0);
+				if (frame != null)
 				{
-					imgFiles.add(frame);
-				}
-			}
-		}
-		for (Attire attire : root.getAttireTable().getAllAttire())
-		{
-			for (AttireAction action : attire.actions)
-			{
-				for (AttireAnim anim : action.anims)
-				{
-					if(!anim.useSlice)
+					if (!activate(frame))
 					{
-						continue;
-					}
-					
-					for (int i = 0; i < anim.times.length; i++)
-					{
-						if (anim.times.length > 0)
-						{
-							ImageFrame frame = root.getImageFrameTable().get(anim.img.gid, anim.row, anim.col, i);
-							if (frame != null)
-							{
-								if (!activate(frame))
-								{
-									imgFiles.add(frame);
-								}
-							}
-						}
+						imgFiles.add(frame);
 					}
 				}
 			}

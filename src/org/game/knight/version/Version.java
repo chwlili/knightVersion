@@ -12,7 +12,6 @@ import org.eclipse.swt.custom.CTabFolderEvent;
 import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -99,14 +98,12 @@ public class Version
 	public Composite initControls(Composite root)
 	{
 		Composite container = new Composite(root, SWT.NONE);
-		container.setBackground(SWTResourceManager.getColor(SWT.COLOR_TITLE_BACKGROUND_GRADIENT));
 		FillLayout fl_shell = new FillLayout(SWT.HORIZONTAL);
 		fl_shell.marginWidth = 10;
 		fl_shell.marginHeight = 10;
 		container.setLayout(fl_shell);
 
 		tabFolder_1 = new CTabFolder(container, SWT.BORDER);
-		tabFolder_1.setBackground(SWTResourceManager.getColor(SWT.COLOR_TITLE_BACKGROUND_GRADIENT));
 		tabFolder_1.setSelectionBackground(Display.getCurrent().getSystemColor(SWT.COLOR_TITLE_INACTIVE_BACKGROUND_GRADIENT));
 
 		CTabItem tbtmNewItem_3 = new CTabItem(tabFolder_1, SWT.NONE);

@@ -269,9 +269,9 @@ public class Config3dSceneWriter
 		try
 		{
 			bytes = sb.toString().getBytes("UTF-8");
-			if(root.hasZIP())
+			if (root.hasZIP())
 			{
-				bytes=ZlibUtil.compress(bytes);
+				bytes = ZlibUtil.compress(bytes);
 			}
 		}
 		catch (UnsupportedEncodingException e)
@@ -325,9 +325,9 @@ public class Config3dSceneWriter
 		try
 		{
 			bytes = sb.toString().getBytes("UTF-8");
-			if(root.hasZIP())
+			if (root.hasZIP())
 			{
-				bytes=ZlibUtil.compress(bytes);
+				bytes = ZlibUtil.compress(bytes);
 			}
 		}
 		catch (UnsupportedEncodingException e)
@@ -353,7 +353,6 @@ public class Config3dSceneWriter
 
 		worldCfgURL = url;
 	}
-
 
 	/**
 	 * 计算场景加载信息
@@ -408,20 +407,20 @@ public class Config3dSceneWriter
 						attires.add(anim.attire);
 					}
 				}
-//				for (SceneNpc npc : scene.npcs)
-//				{
-//					if (npc.attire != null)
-//					{
-//						attires.add(npc.attire);
-//					}
-//				}
-//				for (SceneDoor door : scene.doors)
-//				{
-//					if (door.attire != null)
-//					{
-//						attires.add(door.attire);
-//					}
-//				}
+				for (SceneNpc npc : scene.npcs)
+				{
+					if (npc.attire != null)
+					{
+						attires.add(npc.attire);
+					}
+				}
+				// for (SceneDoor door : scene.doors)
+				// {
+				// if (door.attire != null)
+				// {
+				// attires.add(door.attire);
+				// }
+				// }
 				for (ScenePart part : scene.parts)
 				{
 					for (SceneMonsterTimer timer : part.timers)
@@ -438,7 +437,7 @@ public class Config3dSceneWriter
 						}
 					}
 				}
-				
+
 				for (Attire attire : attires)
 				{
 					for (AttireAction action : attire.actions)
@@ -451,21 +450,21 @@ public class Config3dSceneWriter
 								{
 									continue;
 								}
-								
+
 								ImageFrame frame = root.getImageFrameTable().get(anim.img.gid, anim.row, anim.col, i);
-								SliceImage slice = root.getSliceImageWriter().getSliceImage(frame);
-								if (slice != null)
-								{
-									urls.add(slice.previewURL);
-								}
-								else
-								{
+//								SliceImage slice = root.getSliceImageWriter().getSliceImage(frame);
+//								if (slice != null)
+//								{
+//									urls.add(slice.previewURL);
+//								}
+//								else
+//								{
 									Atlas atlas = root.getAtlasTable().findAtlasByImageFrame(frame);
 									if (atlas != null)
 									{
-										urls.add(atlas.atfURL);
+										urls.add(atlas.previewURL);
 									}
-								}
+//								}
 							}
 						}
 					}

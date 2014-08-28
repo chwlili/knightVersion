@@ -143,13 +143,8 @@ public class Config3dAttireWriter
 							ImageFrame frame = root.getImageFrameTable().get(anim.img.gid, anim.row, anim.col, i);
 							if (frame != null)
 							{
-								SliceImage slice = root.getSliceImageWriter().getSliceImage(frame);
 								Atlas atlas = root.getAtlasTable().findAtlasByImageFrame(frame);
-								if (slice != null)
-								{
-									attireText.append(String.format("\t\t\t\t<frame frameW=\"%s\" frameH=\"%s\" clipX=\"%s\" clipY=\"%s\" clipW=\"%s\" clipH=\"%s\" sliceRow=\"%s\" sliceCol=\"%s\" previewURL=\"%s\" delay=\"%s\"/>\n", slice.frame.frameW, slice.frame.frameH, slice.frame.clipX, slice.frame.clipY, slice.frame.clipW, slice.frame.clipH, slice.sliceRow, slice.sliceCol, root.localToCdnURL(slice.previewURL), delay));
-								}
-								else if (atlas != null)
+								if (atlas != null)
 								{
 									attireText.append("\t\t\t\t<frame texture=\"" + root.localToCdnURL(atlas.atfURL) + "\" frameID=\"" + frame.file.gid + "_" + frame.row + "_" + frame.col + "_" + i + "\" frameW=\"" + frame.frameW + "\" frameH=\"" + frame.frameH + "\" delay=\"" + delay + "\"/>\n");
 								}

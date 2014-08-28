@@ -74,11 +74,6 @@ public class AttireAnim
 	public final AtfParam param;
 	
 	/**
-	 * 使用切片
-	 */
-	public final boolean useSlice;
-	
-	/**
 	 * 构造函数
 	 * @param id
 	 * @param gID
@@ -94,7 +89,7 @@ public class AttireAnim
 	 * @param delays
 	 * @param bagID
 	 */
-	public AttireAnim(int id,int gID,int lID,int x,int y,float scaleX,float scaleY,boolean flip,ProjectImgFile img,int row,int col,String delays,AtfParam param,boolean useSlice)
+	public AttireAnim(int id,int gID,int lID,int x,int y,float scaleX,float scaleY,boolean flip,ProjectImgFile img,int row,int col,String delays,AtfParam param)
 	{
 		this.id=id;
 		this.groupID=gID;
@@ -109,7 +104,6 @@ public class AttireAnim
 		this.col=col;
 		this.delays=delays;
 		this.param=param;
-		this.useSlice=useSlice;
 		
 		String[] parts=delays.split(",");
 		times=new int[parts.length];

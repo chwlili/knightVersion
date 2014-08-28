@@ -143,27 +143,17 @@ public class AtlasWriter
 			{
 				for (AttireAnim anim : action.anims)
 				{
-					if (anim.useSlice)
-					{
-						continue;
-					}
-
 					for (int i = 0; i < anim.times.length; i++)
 					{
 						if (anim.times[i] > 0)
 						{
-							ImageFrame frame = root.getImageFrameTable().get(anim.img.gid, anim.row, anim.col, i);
-							SliceImage slice = root.getSliceImageWriter().getSliceImage(frame);
-							if (slice == null)
+							AtfParam atf = anim.param;
+							if (!atf_frameset.containsKey(atf))
 							{
-								AtfParam atf = anim.param;
-								if (!atf_frameset.containsKey(atf))
-								{
-									atf_frameset.put(atf, new HashSet<ImageFrame>());
-								}
-
-								atf_frameset.get(atf).add(root.getImageFrameTable().get(anim.img.gid, anim.row, anim.col, i));
+								atf_frameset.put(atf, new HashSet<ImageFrame>());
 							}
+
+							atf_frameset.get(atf).add(root.getImageFrameTable().get(anim.img.gid, anim.row, anim.col, i));
 						}
 					}
 				}
@@ -236,7 +226,7 @@ public class AtlasWriter
 		if (nextIndex < allRectList.size())
 		{
 			result = allRectList.get(nextIndex);
-			lastLog = "贴图输出(" + nextIndex + "/" + allRectList.size() + "):" + rectList_atf.get(result).id + "(图像X" + result.length + ")";
+			lastLog = "贴图输出(" + nextIndex + "/" + allRectList.size() + "):" + rectList_atf.get(result).id + "(图像*" + result.length + ")";
 			nextIndex++;
 		}
 
@@ -323,27 +313,24 @@ public class AtlasWriter
 		});
 
 		// 确定横向和纵向上满足2的次方并且长度最小的尺寸
-		int outputW = 0;
-		int outputH = 0;
+		int maxX = 0;
+		int maxY = 0;
 		for (AtlasRect rect : rects)
 		{
-			outputW = Math.max(outputW, rect.x + rect.frame.clipW);
-			outputH = Math.max(outputH, rect.y + rect.frame.clipH);
+			maxX = Math.max(maxX, rect.x + rect.frame.clipW);
+			maxY = Math.max(maxY, rect.y + rect.frame.clipH);
 		}
-		outputW = TextureHelper.normalizeWH(outputW);
-		outputH = TextureHelper.normalizeWH(outputH);
+		int SCALE_SIZE = 10;
 
 		// 合并图像
 		File subFile = null;
 		BufferedImage subImage = null;
-		BufferedImage image = new BufferedImage(outputW, outputH, BufferedImage.TYPE_INT_ARGB);
-		Graphics2D graphics = (Graphics2D) image.getGraphics();
+		BufferedImage imageA = new BufferedImage(TextureHelper.normalizeWH(maxX), TextureHelper.normalizeWH(maxY), BufferedImage.TYPE_INT_ARGB);
+		BufferedImage imageB = new BufferedImage(TextureHelper.normalizeWH(maxX / SCALE_SIZE), TextureHelper.normalizeWH(maxY / SCALE_SIZE), BufferedImage.TYPE_INT_ARGB);
+		Graphics2D graphicsA = (Graphics2D) imageA.getGraphics();
+		Graphics2D graphicsB = (Graphics2D) imageB.getGraphics();
 		for (AtlasRect rect : rects)
 		{
-			int drawX = rect.x;
-			int drawY = rect.y;
-			ImageFrame frame = rect.frame;
-
 			if (rect.frame.file != subFile)
 			{
 				try
@@ -358,19 +345,39 @@ public class AtlasWriter
 				}
 			}
 
-			graphics.drawImage(subImage, drawX, drawY, drawX + frame.clipW, drawY + frame.clipH, frame.frameX + frame.clipX, frame.frameY + frame.clipY, frame.frameX + frame.clipX + frame.clipW, frame.frameY + frame.clipY + frame.clipH, null);
+			ImageFrame frame = rect.frame;
+
+			int drawL = rect.x;
+			int drawT = rect.y;
+			int drawR = drawL + frame.clipW;
+			int drawB = drawT + frame.clipH;
+
+			int fromX = frame.frameX + frame.clipX;
+			int fromY = frame.frameY + frame.clipY;
+			int fromR = frame.frameX + frame.clipX + frame.clipW;
+			int fromB = frame.frameY + frame.clipY + frame.clipH;
+
+			graphicsA.drawImage(subImage, drawL, drawT, drawR, drawB, fromX, fromY, fromR, fromB, null);
+
+			drawL = (int) Math.floor(drawL / 10);
+			drawT = (int) Math.floor(drawT / 10);
+			drawR = (int) Math.floor(drawR / 10);
+			drawB = (int) Math.floor(drawB / 10);
+
+			graphicsB.drawImage(subImage, drawL, drawT, drawR, drawB, fromX, fromY, fromR, fromB, null);
 
 			if (root.isCancel())
 			{
 				return null;
 			}
 		}
-		graphics.dispose();
+		graphicsA.dispose();
+		graphicsB.dispose();
 
 		String saveURL = root.getGlobalOptionTable().getNextExportFile();
 
-		String url1 = writerAtfImage(rects, param, image, saveURL);
-		String url2 = writerAtfPreview(rects, param, image, saveURL);
+		String url1 = writerAtfImage(rects, param, imageA, saveURL);
+		String url2 = writerAtfPreview(rects, param, imageB, saveURL);
 
 		return new Atlas(rects, param, url1, url2);
 	}
@@ -435,22 +442,6 @@ public class AtlasWriter
 	 */
 	private String writerAtfPreview(AtlasRect[] rects, AtfParam param, BufferedImage image, String saveURL)
 	{
-		int outputW = 0;
-		int outputH = 0;
-		for (AtlasRect rect : rects)
-		{
-			outputW = Math.max(outputW, rect.x + rect.frame.clipW);
-			outputH = Math.max(outputH, rect.y + rect.frame.clipH);
-		}
-
-		outputW /= 10;
-		outputH /= 10;
-
-		BufferedImage preview = new BufferedImage(TextureHelper.normalizeWH(outputW), TextureHelper.normalizeWH(outputH), BufferedImage.TYPE_INT_ARGB);
-		Graphics2D graphics = (Graphics2D) preview.getGraphics();
-		graphics.drawImage(image, 0, 0, outputW, outputH, 0, 0, outputW * 10, outputH * 10, null);
-		graphics.dispose();
-
 		// 确定文件输出位置
 		String pngURL = saveURL + "_0.png";
 		String atfURL = saveURL + "_0.atf";
@@ -464,7 +455,21 @@ public class AtlasWriter
 		for (AtlasRect rect : rects)
 		{
 			ImageFrame frame = rect.frame;
-			atlas.append("\t<SubTexture name=\"" + frame.file.gid + "_" + frame.row + "_" + frame.col + "_" + frame.index + "\" x=\"" + rect.x / 10 + "\" y=\"" + rect.y / 10 + "\" width=\"" + frame.clipW / 10 + "\" height=\"" + frame.clipH / 10 + "\" frameX=\"" + (frame.clipX > 0 ? -frame.clipX : 0) / 10 + "\" frameY=\"" + (frame.clipY > 0 ? -frame.clipY : 0) / 10 + "\" frameWidth=\"" + frame.frameW / 10 + "\" frameHeight=\"" + frame.frameH / 10 + "\"/>\n");
+
+			int drawL = rect.x;
+			int drawT = rect.y;
+			int drawR = drawL + frame.clipW;
+			int drawB = drawT + frame.clipH;
+			
+			drawL = (int) Math.floor(drawL / 10);
+			drawT = (int) Math.floor(drawT / 10);
+			drawR = (int) Math.floor(drawR / 10);
+			drawB = (int) Math.floor(drawB / 10);
+			
+			int drawW=drawR-drawL;
+			int drawH=drawB-drawT;
+			
+			atlas.append("\t<SubTexture name=\"" + frame.file.gid + "_" + frame.row + "_" + frame.col + "_" + frame.index + "\" x=\"" + drawL + "\" y=\"" + drawT + "\" width=\"" + drawW + "\" height=\"" + drawH + "\" frameX=\"" + (frame.clipX > 0 ? -frame.clipX : 0) / 10 + "\" frameY=\"" + (frame.clipY > 0 ? -frame.clipY : 0) / 10 + "\" frameWidth=\"" + frame.frameW / 10 + "\" frameHeight=\"" + frame.frameH / 10 + "\"/>\n");
 		}
 		atlas.append("</TextureAtlas>");
 
@@ -473,7 +478,7 @@ public class AtlasWriter
 		{
 			pngFile.getParentFile().mkdirs();
 
-			ImageIO.write(preview, "png", pngFile);
+			ImageIO.write(image, "png", pngFile);
 			TextureHelper.png2atf(pngFile, atfFile, param.other);
 
 			byte[] xmlBytes = atlas.toString().getBytes("utf8");
@@ -701,6 +706,8 @@ public class AtlasWriter
 
 					Atlas atlas = set.atlasList[j];
 					output.append(atlas.atfURL);
+					output.append(",");
+					output.append(atlas.previewURL);
 					for (AtlasRect rect : atlas.rects)
 					{
 						output.append(",");

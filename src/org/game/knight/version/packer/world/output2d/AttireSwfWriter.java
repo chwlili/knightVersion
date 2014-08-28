@@ -176,7 +176,7 @@ public class AttireSwfWriter
 
 		while (!root.isCancel() && !hasFinished())
 		{
-			GamePacker.log(lastLog);
+			GamePacker.progress(lastLog);
 
 			try
 			{

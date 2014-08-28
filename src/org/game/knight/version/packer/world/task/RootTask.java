@@ -26,7 +26,7 @@ import org.game.knight.version.packer.world.output3d.SliceImageWriter;
 
 public class RootTask
 {
-	public final int maxThreadCount = 3;
+	public final int maxThreadCount = 5;
 
 	private boolean cancel;
 
@@ -287,11 +287,11 @@ public class RootTask
 		GamePacker.progress("计算图像的裁切信息");
 		imageFrameTable = new ImageFrameTable(this);
 		imageFrameTable.start();
-		imageFrameTable.saveVer();
 		if (isCancel())
 		{
 			return;
 		}
+		imageFrameTable.saveVer();
 
 		GamePacker.progress("输出UI装扮数据");
 		gameUIAttireWriter = new GameUIAttireWriter(this);
@@ -301,29 +301,29 @@ public class RootTask
 		GamePacker.progress("输出MP3文件");
 		mp3Writer = new Mp3Writer(this);
 		mp3Writer.start();
-		mp3Writer.saveVer();
 		if (isCancel())
 		{
 			return;
 		}
+		mp3Writer.saveVer();
 
 		GamePacker.progress("输出图像切片");
 		sliceImageWriter = new SliceImageWriter(this);
 		sliceImageWriter.start();
-		sliceImageWriter.saveVer();
 		if (isCancel())
 		{
 			return;
 		}
+		sliceImageWriter.saveVer();
 
 		GamePacker.progress("输出贴图集");
 		atlasWriter = new AtlasWriter(this);
 		atlasWriter.start();
-		atlasWriter.saveVer();
 		if (isCancel())
 		{
 			return;
 		}
+		atlasWriter.saveVer();
 
 		GamePacker.progress("输出3D配置");
 		config3dWriter = new Config3d(this);
