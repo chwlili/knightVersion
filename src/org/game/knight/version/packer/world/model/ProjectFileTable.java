@@ -11,11 +11,11 @@ import java.util.concurrent.Executors;
 import org.chw.util.FileUtil;
 import org.chw.util.MD5Util;
 import org.game.knight.version.packer.GamePacker;
-import org.game.knight.version.packer.world.task.RootTask;
+import org.game.knight.version.packer.world.WorldWriter;
 
 public class ProjectFileTable
 {
-	private final RootTask root;
+	private final WorldWriter root;
 
 	private HashMap<String, ProjectFile> url_file;
 	private HashMap<String, ProjectFile> gid_file;
@@ -32,7 +32,7 @@ public class ProjectFileTable
 	 * 
 	 * @param root
 	 */
-	public ProjectFileTable(RootTask root)
+	public ProjectFileTable(WorldWriter root)
 	{
 		this.root = root;
 	}

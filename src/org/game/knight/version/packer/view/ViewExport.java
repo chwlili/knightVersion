@@ -26,19 +26,15 @@ import org.game.knight.version.packer.base.AbsExporter;
 
 public class ViewExport extends AbsExporter
 {
-	private boolean swfZip;
-
 	/**
 	 * 构造函数
 	 * 
 	 * @param src
 	 * @param dst
 	 */
-	public ViewExport(File src, File dst, boolean swfZip)
+	public ViewExport(File src, File dst)
 	{
 		super("导出视图", src, dst);
-
-		this.swfZip = swfZip;
 	}
 
 	// -------------------------------------------------------------------------------
@@ -165,7 +161,7 @@ public class ViewExport extends AbsExporter
 		if (!hasExportedFile(bag.getKey()))
 		{
 			// exportFile(bag.getKey(), bag.build(swfZip), "swf");
-			exportFile(bag.getKey(), MD5Util.addSuffix(bag.build(swfZip)), "swf");
+			exportFile(bag.getKey(), MD5Util.addSuffix(bag.build()), "swf");
 		}
 		GamePacker.progress("生成文件", getExportedFileUrl(bag.getKey()));
 	}

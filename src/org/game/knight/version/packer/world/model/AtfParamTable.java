@@ -8,11 +8,11 @@ import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.io.SAXReader;
 import org.game.knight.version.packer.GamePacker;
-import org.game.knight.version.packer.world.task.RootTask;
+import org.game.knight.version.packer.world.WorldWriter;
 
 public class AtfParamTable
 {
-	private RootTask root;
+	private WorldWriter root;
 	private HashMap<String, AtfParam> id_atfParam;
 	private HashMap<String, AtfParam> value_atfParam;
 
@@ -21,7 +21,7 @@ public class AtfParamTable
 	 * 
 	 * @param params
 	 */
-	public AtfParamTable(RootTask root)
+	public AtfParamTable(WorldWriter root)
 	{
 		this.root = root;
 	}

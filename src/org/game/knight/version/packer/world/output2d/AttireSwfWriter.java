@@ -21,19 +21,19 @@ import org.chw.swf.writer.SwfBitmap;
 import org.chw.swf.writer.SwfWriter;
 import org.chw.util.FileUtil;
 import org.game.knight.version.packer.GamePacker;
+import org.game.knight.version.packer.world.WorldWriter;
 import org.game.knight.version.packer.world.model.Attire;
 import org.game.knight.version.packer.world.model.AttireAction;
 import org.game.knight.version.packer.world.model.AttireAnim;
 import org.game.knight.version.packer.world.model.AttireBitmap;
 import org.game.knight.version.packer.world.model.ImageFrame;
 import org.game.knight.version.packer.world.model.ProjectImgFile;
-import org.game.knight.version.packer.world.task.RootTask;
 
 public class AttireSwfWriter
 {
 	private static final String AVATAR2_FRAME_PACK = "knight.avatar2.frames";
 
-	private RootTask root;
+	private WorldWriter root;
 
 	private int nextIndex;
 	private int finishedCount;
@@ -51,7 +51,7 @@ public class AttireSwfWriter
 	 * 
 	 * @param root
 	 */
-	public AttireSwfWriter(RootTask root)
+	public AttireSwfWriter(WorldWriter root)
 	{
 		this.root = root;
 	}

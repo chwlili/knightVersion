@@ -1,52 +1,55 @@
-package org.chw.util;
+package org.game.knight.version.packer.world.output3d;
 
 import java.util.ArrayList;
 
 import org.game.knight.version.packer.GamePacker;
-import org.game.knight.version.packer.world.Region;
+import org.game.knight.version.packer.world.model.ImageFrame;
 
-public class MaxRects
+public class TextureRectPacker
 {
 	/**
 	 * 依次尝试其它参数，使用最好的方式。
 	 */
 	public static final int Best = 0;
-	
+
 	/**
-	 * BSSF: Positions the rectangle against the short side of a free rectangle into which it fits the best.
+	 * BSSF: Positions the rectangle against the short side of a free rectangle
+	 * into which it fits the best.
 	 */
 	public static final int ShortSideFit = 1;
-	
+
 	/**
-	 * BLSF: Positions the rectangle against the long side of a free rectangle into which it fits the best.
+	 * BLSF: Positions the rectangle against the long side of a free rectangle
+	 * into which it fits the best.
 	 */
 	public static final int LongSideFit = 2;
-	
+
 	/**
-	 * BAF: Positions the rectangle into the smallest free rect into which it fits.
+	 * BAF: Positions the rectangle into the smallest free rect into which it
+	 * fits.
 	 */
 	public static final int AreaFit = 3;
-	
+
 	/**
 	 * BL: Does the Tetris placement.
 	 */
 	public static final int BottomLeft = 4;
-	
+
 	/**
-	 * CP: Choosest the placement where the rectangle touches other rects as much as possible.
+	 * CP: Choosest the placement where the rectangle touches other rects as
+	 * much as possible.
 	 */
 	public static final int ContactPoint = 5;
-
 
 	private int binWidth;
 	private int binHeight;
 	private boolean allowRotations;
 
-	private ArrayList<Rect> usedRectangles = new ArrayList<MaxRects.Rect>();
-	private ArrayList<Rect> freeRectangles = new ArrayList<MaxRects.Rect>();
+	private ArrayList<Rect> usedRectangles = new ArrayList<TextureRectPacker.Rect>();
+	private ArrayList<Rect> freeRectangles = new ArrayList<TextureRectPacker.Rect>();
 
 	private ArrayList<Rect> inputs = new ArrayList<Rect>();
-	private ArrayList<Rect> outputs = new ArrayList<MaxRects.Rect>();
+	private ArrayList<Rect> outputs = new ArrayList<TextureRectPacker.Rect>();
 	private ArrayList<RectSet> rectSets = new ArrayList<RectSet>();
 
 	/**
@@ -56,7 +59,7 @@ public class MaxRects
 	 * @param height
 	 * @param allowRotations
 	 */
-	public MaxRects(int width, int height, boolean allowRotations)
+	public TextureRectPacker(int width, int height, boolean allowRotations)
 	{
 		this.reset(width, height, allowRotations);
 	}
@@ -129,9 +132,9 @@ public class MaxRects
 	 */
 	public void pack() throws Exception
 	{
-		pack(MaxRects.Best);
+		pack(TextureRectPacker.Best);
 	}
-	
+
 	/**
 	 * 打包
 	 * 
@@ -149,7 +152,7 @@ public class MaxRects
 		{
 			if (rect.width > binWidth || rect.height > binHeight)
 			{
-				GamePacker.error("图像的大小超出了最大("+binWidth+","+binHeight+","+((Region)rect.data).getFile().getPath()+")!");
+				GamePacker.error("图像的大小超出了最大(" + binWidth + "," + binHeight + "," + ((ImageFrame) rect.data).file.url + ")!");
 			}
 		}
 
@@ -160,7 +163,7 @@ public class MaxRects
 		}
 		else
 		{
-			methods = new int[]{method};
+			methods = new int[] { method };
 		}
 
 		pack(methods);
@@ -173,8 +176,8 @@ public class MaxRects
 		float bestSuccessArea = 0;
 		for (int i = 0; i < methods.length; i++)
 		{
-			ArrayList<Rect> tempInput = new ArrayList<MaxRects.Rect>();
-			ArrayList<Rect> tempOutput = new ArrayList<MaxRects.Rect>();
+			ArrayList<Rect> tempInput = new ArrayList<TextureRectPacker.Rect>();
+			ArrayList<Rect> tempOutput = new ArrayList<TextureRectPacker.Rect>();
 			for (Rect rect : inputs)
 			{
 				tempInput.add(rect);
@@ -214,7 +217,7 @@ public class MaxRects
 		{
 			if (outputs.size() > 0)
 			{
-				ArrayList<Rect> textureRects = new ArrayList<MaxRects.Rect>();
+				ArrayList<Rect> textureRects = new ArrayList<TextureRectPacker.Rect>();
 				RectSet texture = new RectSet(binWidth, binHeight, textureRects);
 
 				for (Rect rect : outputs)
@@ -329,24 +332,24 @@ public class MaxRects
 
 		switch (method)
 		{
-		case ShortSideFit:
-			newNode = findPositionByShortSideFit(width, height, xy);
-			break;
-		case BottomLeft:
-			newNode = findPositionByBottomLeft(width, height, xy);
-			break;
-		case ContactPoint:
-			newNode = findPositionByContactPoint(width, height, xy);
-			xy.x = -xy.x;// ..
-			// score1 = -score1; // Reverse since we are minimizing, but for
-			// contact point score bigger is better.
-			break;
-		case LongSideFit:
-			newNode = findPositionByLongSideFit(width, height, xy);
-			break;
-		case AreaFit:
-			newNode = findPositionByAreaFit(width, height, xy);
-			break;
+			case ShortSideFit:
+				newNode = findPositionByShortSideFit(width, height, xy);
+				break;
+			case BottomLeft:
+				newNode = findPositionByBottomLeft(width, height, xy);
+				break;
+			case ContactPoint:
+				newNode = findPositionByContactPoint(width, height, xy);
+				xy.x = -xy.x;// ..
+				// score1 = -score1; // Reverse since we are minimizing, but for
+				// contact point score bigger is better.
+				break;
+			case LongSideFit:
+				newNode = findPositionByLongSideFit(width, height, xy);
+				break;
+			case AreaFit:
+				newNode = findPositionByAreaFit(width, height, xy);
+				break;
 		}
 
 		// Cannot fit the current rectangle.
@@ -776,17 +779,18 @@ public class MaxRects
 	{
 		return a.x >= b.x && a.y >= b.y && a.x + a.width <= b.x + b.width && a.y + a.height <= b.y + b.height;
 	}
-	
-	//------------------------------------------------------------------
+
+	// ------------------------------------------------------------------
 	//
-	//  内部类型
+	// 内部类型
 	//
-	//------------------------------------------------------------------
-	
+	// ------------------------------------------------------------------
+
 	/**
 	 * 点
+	 * 
 	 * @author chw
-	 *
+	 * 
 	 */
 	private static class Point
 	{
@@ -802,8 +806,9 @@ public class MaxRects
 
 	/**
 	 * 矩形
+	 * 
 	 * @author chw
-	 *
+	 * 
 	 */
 	public static class Rect
 	{
@@ -824,8 +829,9 @@ public class MaxRects
 
 	/**
 	 * 矩形集合
+	 * 
 	 * @author chw
-	 *
+	 * 
 	 */
 	public static class RectSet
 	{

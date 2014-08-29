@@ -9,16 +9,16 @@ import org.chw.util.FileUtil;
 import org.chw.util.MD5Util;
 import org.chw.util.ZlibUtil;
 import org.game.knight.version.packer.GamePacker;
+import org.game.knight.version.packer.world.WorldWriter;
 import org.game.knight.version.packer.world.model.Attire;
 import org.game.knight.version.packer.world.model.AttireAction;
 import org.game.knight.version.packer.world.model.AttireAnim;
 import org.game.knight.version.packer.world.model.AttireAudio;
 import org.game.knight.version.packer.world.model.ImageFrame;
-import org.game.knight.version.packer.world.task.RootTask;
 
 public class Config2dAttireWriter
 {
-	private RootTask root;
+	private WorldWriter root;
 	private AttireSwfWriter attireSWFWriter;
 	private String outputURL;
 
@@ -30,7 +30,7 @@ public class Config2dAttireWriter
 	 * 
 	 * @param root
 	 */
-	public Config2dAttireWriter(RootTask root, AttireSwfWriter attireSWFWriter)
+	public Config2dAttireWriter(WorldWriter root, AttireSwfWriter attireSWFWriter)
 	{
 		this.root = root;
 		this.attireSWFWriter = attireSWFWriter;

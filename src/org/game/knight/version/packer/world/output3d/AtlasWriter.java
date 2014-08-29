@@ -17,20 +17,19 @@ import java.util.concurrent.Executors;
 import javax.imageio.ImageIO;
 
 import org.chw.util.FileUtil;
-import org.chw.util.MaxRects;
-import org.chw.util.MaxRects.Rect;
-import org.chw.util.MaxRects.RectSet;
 import org.game.knight.version.packer.GamePacker;
+import org.game.knight.version.packer.world.WorldWriter;
 import org.game.knight.version.packer.world.model.AtfParam;
 import org.game.knight.version.packer.world.model.Attire;
 import org.game.knight.version.packer.world.model.AttireAction;
 import org.game.knight.version.packer.world.model.AttireAnim;
 import org.game.knight.version.packer.world.model.ImageFrame;
-import org.game.knight.version.packer.world.task.RootTask;
+import org.game.knight.version.packer.world.output3d.TextureRectPacker.Rect;
+import org.game.knight.version.packer.world.output3d.TextureRectPacker.RectSet;
 
 public class AtlasWriter
 {
-	private RootTask root;
+	private WorldWriter root;
 
 	private HashMap<AtfParam, ArrayList<AtlasRect[]>> atf_rectListSet;
 	private ArrayList<AtlasRect[]> allRectList;
@@ -51,7 +50,7 @@ public class AtlasWriter
 	 * 
 	 * @param root
 	 */
-	public AtlasWriter(RootTask root)
+	public AtlasWriter(WorldWriter root)
 	{
 		this.root = root;
 	}
@@ -175,7 +174,7 @@ public class AtlasWriter
 		{
 			try
 			{
-				MaxRects packer = new MaxRects(param.width, param.height, false);
+				TextureRectPacker packer = new TextureRectPacker(param.width, param.height, false);
 				for (ImageFrame frame : atf_frameArray.get(param))
 				{
 					packer.push(frame, frame.clipW, frame.clipH);
@@ -273,7 +272,16 @@ public class AtlasWriter
 							break;
 						}
 
-						finish(next, writeATF(rectList_atf.get(next), next));
+						AtfParam param = rectList_atf.get(next);
+						Atlas atlas = writeATF(param, next);
+						if (atlas != null)
+						{
+							finish(next, atlas);
+						}
+						else
+						{
+							// root.error();
+						}
 					}
 				}
 			});
@@ -460,15 +468,15 @@ public class AtlasWriter
 			int drawT = rect.y;
 			int drawR = drawL + frame.clipW;
 			int drawB = drawT + frame.clipH;
-			
+
 			drawL = (int) Math.floor(drawL / 10);
 			drawT = (int) Math.floor(drawT / 10);
 			drawR = (int) Math.floor(drawR / 10);
 			drawB = (int) Math.floor(drawB / 10);
-			
-			int drawW=drawR-drawL;
-			int drawH=drawB-drawT;
-			
+
+			int drawW = drawR - drawL;
+			int drawH = drawB - drawT;
+
 			atlas.append("\t<SubTexture name=\"" + frame.file.gid + "_" + frame.row + "_" + frame.col + "_" + frame.index + "\" x=\"" + drawL + "\" y=\"" + drawT + "\" width=\"" + drawW + "\" height=\"" + drawH + "\" frameX=\"" + (frame.clipX > 0 ? -frame.clipX : 0) / 10 + "\" frameY=\"" + (frame.clipY > 0 ? -frame.clipY : 0) / 10 + "\" frameWidth=\"" + frame.frameW / 10 + "\" frameHeight=\"" + frame.frameH / 10 + "\"/>\n");
 		}
 		atlas.append("</TextureAtlas>");

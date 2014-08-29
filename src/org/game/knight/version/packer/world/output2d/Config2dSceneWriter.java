@@ -11,6 +11,7 @@ import org.chw.util.MD5Util;
 import org.chw.util.TextUtil;
 import org.chw.util.ZlibUtil;
 import org.game.knight.version.packer.GamePacker;
+import org.game.knight.version.packer.world.WorldWriter;
 import org.game.knight.version.packer.world.model.Attire;
 import org.game.knight.version.packer.world.model.AttireAction;
 import org.game.knight.version.packer.world.model.AttireAnim;
@@ -30,11 +31,10 @@ import org.game.knight.version.packer.world.model.ScenePart;
 import org.game.knight.version.packer.world.model.SceneSection;
 import org.game.knight.version.packer.world.model.SceneTrap;
 import org.game.knight.version.packer.world.model.WorldCity;
-import org.game.knight.version.packer.world.task.RootTask;
 
 public class Config2dSceneWriter
 {
-	private RootTask root;
+	private WorldWriter root;
 	private AttireSwfWriter attireSWFWriter;
 
 	private String worldCfgURL;
@@ -50,7 +50,7 @@ public class Config2dSceneWriter
 	 * 
 	 * @param root
 	 */
-	public Config2dSceneWriter(RootTask root, AttireSwfWriter attireSWFWriter)
+	public Config2dSceneWriter(WorldWriter root, AttireSwfWriter attireSWFWriter)
 	{
 		this.root = root;
 		this.attireSWFWriter = attireSWFWriter;

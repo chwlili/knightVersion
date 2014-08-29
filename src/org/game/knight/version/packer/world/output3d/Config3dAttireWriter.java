@@ -11,16 +11,16 @@ import org.chw.util.FileUtil;
 import org.chw.util.MD5Util;
 import org.chw.util.ZlibUtil;
 import org.game.knight.version.packer.GamePacker;
+import org.game.knight.version.packer.world.WorldWriter;
 import org.game.knight.version.packer.world.model.Attire;
 import org.game.knight.version.packer.world.model.AttireAction;
 import org.game.knight.version.packer.world.model.AttireAnim;
 import org.game.knight.version.packer.world.model.AttireAudio;
 import org.game.knight.version.packer.world.model.ImageFrame;
-import org.game.knight.version.packer.world.task.RootTask;
 
 public class Config3dAttireWriter
 {
-	private RootTask root;
+	private WorldWriter root;
 	private String outputURL;
 
 	private HashMap<String, String> newTable = new HashMap<String, String>();
@@ -31,7 +31,7 @@ public class Config3dAttireWriter
 	 * 
 	 * @param root
 	 */
-	public Config3dAttireWriter(RootTask root)
+	public Config3dAttireWriter(WorldWriter root)
 	{
 		this.root = root;
 	}

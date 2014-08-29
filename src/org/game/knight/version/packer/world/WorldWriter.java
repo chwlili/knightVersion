@@ -1,4 +1,4 @@
-package org.game.knight.version.packer.world.task;
+package org.game.knight.version.packer.world;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -24,15 +24,14 @@ import org.game.knight.version.packer.world.output3d.AtlasWriter;
 import org.game.knight.version.packer.world.output3d.Config3d;
 import org.game.knight.version.packer.world.output3d.SliceImageWriter;
 
-public class RootTask
+public class WorldWriter
 {
-	public final int maxThreadCount = 5;
-
 	private boolean cancel;
 
 	private final File inputFolder;
 	private final File outputFolder;
 	private final boolean zip;
+	public final int maxThreadCount;
 	private final ArrayList<String> outputFiles;
 
 	private GlobalOptionTable globalOptionTable;
@@ -55,12 +54,13 @@ public class RootTask
 	 * @param inputFolder
 	 * @param outputFolder
 	 */
-	public RootTask(File inputFolder, File outputFolder, boolean zip)
+	public WorldWriter(File inputFolder, File outputFolder, boolean zip, int runCount)
 	{
 		this.inputFolder = inputFolder;
 		this.outputFolder = outputFolder;
-		this.zip=zip;
-		
+		this.zip = zip;
+		this.maxThreadCount = runCount;
+
 		this.outputFiles = new ArrayList<String>();
 	}
 
@@ -83,9 +83,10 @@ public class RootTask
 	{
 		return outputFolder;
 	}
-	
+
 	/**
 	 * ZIPÑ¹Ëõ
+	 * 
 	 * @return
 	 */
 	public boolean hasZIP()

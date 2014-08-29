@@ -10,11 +10,11 @@ import java.util.HashMap;
 
 import org.chw.util.FileUtil;
 import org.game.knight.version.packer.GamePacker;
-import org.game.knight.version.packer.world.task.RootTask;
+import org.game.knight.version.packer.world.WorldWriter;
 
 public class Mp3Writer
 {
-	private RootTask root;
+	private WorldWriter root;
 	private HashMap<String, String> newTable;
 	private HashMap<String, String> oldTable;
 
@@ -23,7 +23,7 @@ public class Mp3Writer
 	 * 
 	 * @param root
 	 */
-	public Mp3Writer(RootTask root)
+	public Mp3Writer(WorldWriter root)
 	{
 		this.root = root;
 	}

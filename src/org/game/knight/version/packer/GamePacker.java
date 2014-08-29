@@ -34,6 +34,7 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Group;
@@ -48,7 +49,7 @@ import org.game.knight.version.packer.files.FilesExporter;
 import org.game.knight.version.packer.game.GameExporter;
 import org.game.knight.version.packer.icon.IconExporter;
 import org.game.knight.version.packer.view.ViewExport;
-import org.game.knight.version.packer.world.task.RootTask;
+import org.game.knight.version.packer.world.WorldWriter;
 
 public class GamePacker extends Composite
 {
@@ -87,7 +88,6 @@ public class GamePacker extends Composite
 	private Button submitButton;
 	private Button zlibSelection;
 	private Button clearupSelection;
-	private Button mobileSelection;
 	private Button writeRegionImgSelection;
 	private Composite settingPage;
 	private Composite outputPage;
@@ -256,20 +256,26 @@ public class GamePacker extends Composite
 		params.setLayout(gl_params);
 		params.setText("参数");
 
-		zlibSelection = new Button(params, SWT.CHECK);
-		zlibSelection.setText("\u538B\u7F29XML");
+		label = new Label(params, SWT.NONE);
+		label.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, false, false, 1, 1));
+		label.setText(" \u5E76\u884C\uFF1A");
 
-		swfSelection = new Button(params, SWT.CHECK);
-		swfSelection.setText("\u538B\u7F29\u89C6\u56FEImg");
+		runCount = new Combo(params, SWT.READ_ONLY);
+		runCount.setItems(new String[] { "  \u5355\u7EBF\u7A0B", "  \u53CC\u7EBF\u7A0B", "  \u4E09\u7EBF\u7A0B", "  \u56DB\u7EBF\u7A0B", "  \u4E94\u7EBF\u7A0B" });
+		runCount.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false, 1, 1));
+		runCount.select(0);
+
+		zlibSelection = new Button(params, SWT.CHECK);
+		GridData gd_zlibSelection = new GridData(SWT.LEFT, SWT.CENTER, false, false, 1, 1);
+		gd_zlibSelection.horizontalIndent = 30;
+		zlibSelection.setLayoutData(gd_zlibSelection);
+		zlibSelection.setText("\u538B\u7F29");
 
 		clearupSelection = new Button(params, SWT.CHECK);
 		clearupSelection.setText("\u6E05\u7406");
 
-		mobileSelection = new Button(params, SWT.CHECK);
-		mobileSelection.setText("\u624B\u673A\u914D\u7F6E\u683C\u5F0F");
-
 		writeRegionImgSelection = new Button(params, SWT.CHECK);
-		writeRegionImgSelection.setText("输出小图");
+		writeRegionImgSelection.setText("\u4FDD\u7559\u5C0F\u56FE");
 
 		scrolledComposite.setContent(composite);
 		scrolledComposite.setMinSize(composite.computeSize(SWT.DEFAULT, SWT.DEFAULT));
@@ -526,9 +532,12 @@ public class GamePacker extends Composite
 		startupInput.setText(section.get("startupInput") != null ? section.get("startupInput") : "");
 		paramInput.setText(section.get("paramInput") != null ? section.get("paramInput") : "");
 
+		runCount.select(0);
+		if (section.get("runCount") != null)
+		{
+			runCount.select(section.getInt("runCount"));
+		}
 		zlibSelection.setSelection(section.getBoolean("zlibSelection"));
-		swfSelection.setSelection(section.getBoolean("imgZipSelection"));
-		mobileSelection.setSelection(section.getBoolean("mobileSelection"));
 		clearupSelection.setSelection(section.getBoolean("clearupSelection"));
 		writeRegionImgSelection.setSelection(section.getBoolean("writeRegionImgSelection"));
 	}
@@ -562,9 +571,8 @@ public class GamePacker extends Composite
 		section.put("startupInput", startupInput.getText());
 		section.put("paramInput", paramInput.getText());
 
+		section.put("runCount", runCount.getSelectionIndex());
 		section.put("zlibSelection", zlibSelection.getSelection());
-		section.put("imgZipSelection", swfSelection.getSelection());
-		section.put("mobileSelection", mobileSelection.getSelection());
 		section.put("clearupSelection", clearupSelection.getSelection());
 		section.put("writeRegionImgSelection", writeRegionImgSelection.getSelection());
 
@@ -890,7 +898,6 @@ public class GamePacker extends Composite
 	private Button paramButton;
 	private ScrolledComposite scrolledComposite;
 	private Composite composite;
-	private Button swfSelection;
 
 	/**
 	 * 取消导出
@@ -901,15 +908,18 @@ public class GamePacker extends Composite
 		{
 			getTask(execThread).cancel();
 		}
-		
-		if(worldWriter!=null)
+
+		if (worldWriter != null)
 		{
 			worldWriter.cancel();
+			worldWriter=null;
 		}
 	}
 
-	private RootTask worldWriter;
-	
+	private WorldWriter worldWriter;
+	private Combo runCount;
+	private Label label;
+
 	/**
 	 * 执行导出
 	 */
@@ -938,10 +948,9 @@ public class GamePacker extends Composite
 		final String startupPath = startupInput.getText();
 		final String startupParam = paramInput.getText();
 
+		final int count = runCount.getSelectionIndex() + 1;
 		final boolean zip = zlibSelection.getSelection();
-		final boolean img = swfSelection.getSelection();
 		final boolean clearup = clearupSelection.getSelection();
-		final boolean isMobile = mobileSelection.getSelection();
 		final boolean writeRegionImg = writeRegionImgSelection.getSelection();
 
 		execing = false;
@@ -975,15 +984,17 @@ public class GamePacker extends Composite
 
 				if (viewSelected)
 				{
-					ViewExport views = new ViewExport(new File(viewPath), new File(cdnPath + File.separatorChar + "views"), img);
+					ViewExport views = new ViewExport(new File(viewPath), new File(cdnPath + File.separatorChar + "views"));
 					views.publish();
 				}
 
 				if (worldSelected)
 				{
-					//WorldExporter world = new WorldExporter(new File(worldPath), new File(cdnPath + File.separatorChar + "world"), zip, isMobile, writeRegionImg);
-					//world.publish();
-					worldWriter=new RootTask(new File(worldPath), new File(cdnPath + File.separatorChar + "world"),zip);
+					// WorldExporter world = new WorldExporter(new
+					// File(worldPath), new File(cdnPath + File.separatorChar +
+					// "world"), zip, isMobile, writeRegionImg);
+					// world.publish();
+					worldWriter = new WorldWriter(new File(worldPath), new File(cdnPath + File.separatorChar + "world"), zip, count);
 					worldWriter.start();
 				}
 
@@ -1180,7 +1191,7 @@ public class GamePacker extends Composite
 		{
 			content = ZlibUtil.compress(content);
 		}
-		content=MD5Util.addSuffix(content);
+		content = MD5Util.addSuffix(content);
 
 		// 输出到CDN
 		FileUtil.writeFile(new File(cdnDir.getPath() + File.separatorChar + ver + ".xml"), content);
@@ -1238,7 +1249,7 @@ public class GamePacker extends Composite
 		{
 			content = ZlibUtil.compress(content);
 		}
-		content=MD5Util.addSuffix(content);
+		content = MD5Util.addSuffix(content);
 
 		// 输出到CDN
 		FileUtil.writeFile(new File(cdnDir.getPath() + File.separatorChar + ver + ".2d.xml"), content);
@@ -1383,7 +1394,7 @@ public class GamePacker extends Composite
 
 		GamePacker.log("同步到备用库");
 
-		//复制CDN中的资源文件到IDC
+		// 复制CDN中的资源文件到IDC
 		ArrayList<File> cdnFiles = new ArrayList<File>();
 		cdnFiles.add(cdn);
 		while (cdnFiles.size() > 0)
@@ -1400,9 +1411,9 @@ public class GamePacker extends Composite
 				}
 				else
 				{
-					File cdnFile=file;
-					File idcFile=new File(idc.getPath()+cdnFile.getPath().substring(cdn.getPath().length()));
-					if(!idcFile.exists() || cdnFile.length()!=idcFile.length())
+					File cdnFile = file;
+					File idcFile = new File(idc.getPath() + cdnFile.getPath().substring(cdn.getPath().length()));
+					if (!idcFile.exists() || cdnFile.length() != idcFile.length())
 					{
 						GamePacker.progress("复制文件：" + cdnFile.getPath().substring(cdn.getPath().length()));
 
@@ -1412,30 +1423,30 @@ public class GamePacker extends Composite
 			}
 		}
 
-		//复制CDN中的版本信息到IDC
+		// 复制CDN中的版本信息到IDC
 		for (File file : cdn.listFiles())
 		{
-			if(!file.isHidden())
+			if (!file.isHidden())
 			{
-				if(!file.isDirectory() && file.isFile())
+				if (!file.isDirectory() && file.isFile())
 				{
-					FileUtil.copyTo(new File(idc.getPath()+file.getPath().substring(cdn.getPath().length())), file);
+					FileUtil.copyTo(new File(idc.getPath() + file.getPath().substring(cdn.getPath().length())), file);
 				}
-				else if(file.isDirectory())
+				else if (file.isDirectory())
 				{
-					for(File dbFile:file.listFiles())
+					for (File dbFile : file.listFiles())
 					{
-						if(!dbFile.isDirectory() && dbFile.isFile())
+						if (!dbFile.isDirectory() && dbFile.isFile())
 						{
-							FileUtil.copyTo(new File(idc.getPath()+dbFile.getPath().substring(cdn.getPath().length())), dbFile);
+							FileUtil.copyTo(new File(idc.getPath() + dbFile.getPath().substring(cdn.getPath().length())), dbFile);
 						}
-						else if(dbFile.isDirectory() && ".ver".equals(dbFile.getName()))
+						else if (dbFile.isDirectory() && ".ver".equals(dbFile.getName()))
 						{
-							for(File verFile:dbFile.listFiles())
+							for (File verFile : dbFile.listFiles())
 							{
-								if(!verFile.isDirectory() && verFile.isFile())
+								if (!verFile.isDirectory() && verFile.isFile())
 								{
-									FileUtil.copyTo(new File(idc.getPath()+verFile.getPath().substring(cdn.getPath().length())), verFile);
+									FileUtil.copyTo(new File(idc.getPath() + verFile.getPath().substring(cdn.getPath().length())), verFile);
 								}
 							}
 						}
@@ -1444,7 +1455,7 @@ public class GamePacker extends Composite
 			}
 		}
 
-		//删除IDC中多余的文件
+		// 删除IDC中多余的文件
 		ArrayList<File> idcFiles = new ArrayList<File>();
 		idcFiles.add(idc);
 		while (idcFiles.size() > 0)
@@ -1461,15 +1472,15 @@ public class GamePacker extends Composite
 				}
 				else
 				{
-					File idcFile=file;
-					File cdnFile=new File(cdn.getPath()+idcFile.getPath().substring(idc.getPath().length()));
-					if(!cdnFile.exists())
+					File idcFile = file;
+					File cdnFile = new File(cdn.getPath() + idcFile.getPath().substring(idc.getPath().length()));
+					if (!cdnFile.exists())
 					{
 						GamePacker.progress("删除文件：" + idcFile.getPath().substring(idc.getPath().length()));
-						
+
 						idcFile.delete();
 					}
-					else if(cdnFile.exists() && cdnFile.length()!=idcFile.length())
+					else if (cdnFile.exists() && cdnFile.length() != idcFile.length())
 					{
 						GamePacker.progress("复制文件：" + idcFile.getPath().substring(idc.getPath().length()));
 

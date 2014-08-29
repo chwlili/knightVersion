@@ -27,7 +27,7 @@ public class ViewLangBag extends ViewFileBag
 	 * Éú³É
 	 */
 	@Override
-	public byte[] build(boolean swfZip)
+	public byte[] build()
 	{
 		SwfWriter writer=new SwfWriter();
 		writer.addXml(new SwfXML(content, "app.files", "FILE_"+typeID));

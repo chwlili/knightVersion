@@ -9,16 +9,16 @@ import java.util.HashSet;
 
 import org.chw.util.FileUtil;
 import org.game.knight.version.packer.GamePacker;
+import org.game.knight.version.packer.world.WorldWriter;
 import org.game.knight.version.packer.world.model.Attire;
 import org.game.knight.version.packer.world.model.AttireAction;
 import org.game.knight.version.packer.world.model.AttireAnim;
 import org.game.knight.version.packer.world.model.ImageFrame;
 import org.game.knight.version.packer.world.model.Scene;
-import org.game.knight.version.packer.world.task.RootTask;
 
 public class Config3d
 {
-	private RootTask root;
+	private WorldWriter root;
 	private Config3dAttireWriter attireWriter;
 	private Config3dSceneWriter sceneWriter;
 
@@ -27,7 +27,7 @@ public class Config3d
 	 * 
 	 * @param root
 	 */
-	public Config3d(RootTask root)
+	public Config3d(WorldWriter root)
 	{
 		this.root = root;
 		this.attireWriter = new Config3dAttireWriter(root);

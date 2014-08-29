@@ -36,7 +36,7 @@ public class ViewFileBag extends ViewFileSwf
 	/**
 	 * Éú³É
 	 */
-	public byte[] build(boolean swfZip)
+	public byte[] build()
 	{
 		SwfWriter writer=new SwfWriter();
 		
@@ -48,7 +48,7 @@ public class ViewFileBag extends ViewFileSwf
 			{
 				try
 				{
-					writer.addBitmap(new SwfBitmap(file.getFile(), "app.files", "FILE_"+file.getClassID(),swfZip));
+					writer.addBitmap(new SwfBitmap(file.getFile(), "app.files", "FILE_"+file.getClassID()));
 				}
 				catch (IOException e)
 				{

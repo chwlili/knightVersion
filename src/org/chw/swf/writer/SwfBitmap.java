@@ -114,7 +114,7 @@ public class SwfBitmap
 	 * @param file
 	 * @throws IOException 
 	 */
-	public SwfBitmap(File file,String packName,String className,Boolean encode) throws IOException
+	public SwfBitmap(File file,String packName,String className) throws IOException
 	{
 		BufferedImage img = ImageIO.read(new FileInputStream(file));
 		
@@ -123,9 +123,7 @@ public class SwfBitmap
 		
 		boolean is32=img.getType()==BufferedImage.TYPE_4BYTE_ABGR; //png
 		
-		encode=is32;
-		
-		if(encode)
+		if(is32)
 		{
 			int[] rgbs=new int[imageW*imageH];
 			rgbs=img.getRGB(0, 0, imageW, imageH, rgbs, 0,imageW);

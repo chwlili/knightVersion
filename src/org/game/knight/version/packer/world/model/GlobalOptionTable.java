@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 
 import org.chw.util.FileUtil;
-import org.game.knight.version.packer.world.task.RootTask;
+import org.game.knight.version.packer.world.WorldWriter;
 
 public class GlobalOptionTable
 {
@@ -14,7 +14,7 @@ public class GlobalOptionTable
 
 	private static final String NEXT_ID = "nextID";
 
-	private RootTask root;
+	private WorldWriter root;
 
 	private int nextID = 1;
 	private HashMap<String, String> oldTable = new HashMap<String, String>();
@@ -25,7 +25,7 @@ public class GlobalOptionTable
 	 * 
 	 * @param root
 	 */
-	public GlobalOptionTable(RootTask root)
+	public GlobalOptionTable(WorldWriter root)
 	{
 		this.root = root;
 	}

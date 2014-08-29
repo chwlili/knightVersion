@@ -11,6 +11,7 @@ import org.chw.util.MD5Util;
 import org.chw.util.TextUtil;
 import org.chw.util.ZlibUtil;
 import org.game.knight.version.packer.GamePacker;
+import org.game.knight.version.packer.world.WorldWriter;
 import org.game.knight.version.packer.world.model.Attire;
 import org.game.knight.version.packer.world.model.AttireAction;
 import org.game.knight.version.packer.world.model.AttireAnim;
@@ -30,11 +31,10 @@ import org.game.knight.version.packer.world.model.ScenePart;
 import org.game.knight.version.packer.world.model.SceneSection;
 import org.game.knight.version.packer.world.model.SceneTrap;
 import org.game.knight.version.packer.world.model.WorldCity;
-import org.game.knight.version.packer.world.task.RootTask;
 
 public class Config3dSceneWriter
 {
-	private RootTask root;
+	private WorldWriter root;
 
 	private String worldCfgURL;
 	private HashMap<Scene, String> scene_url;
@@ -49,7 +49,7 @@ public class Config3dSceneWriter
 	 * 
 	 * @param root
 	 */
-	public Config3dSceneWriter(RootTask root)
+	public Config3dSceneWriter(WorldWriter root)
 	{
 		this.root = root;
 	}
@@ -367,7 +367,8 @@ public class Config3dSceneWriter
 			for (Scene scene : city.scenes)
 			{
 				HashSet<String> urls = new HashSet<String>();
-				HashSet<Attire> attires = new HashSet<Attire>();
+				HashSet<Attire> lowAttires = new HashSet<Attire>();
+				HashSet<Attire> highAttires = new HashSet<Attire>();
 
 				for (SceneBackLayer layer : scene.backLayers)
 				{
@@ -397,21 +398,21 @@ public class Config3dSceneWriter
 				{
 					if (anim.attire != null)
 					{
-						attires.add(anim.attire);
+						lowAttires.add(anim.attire);
 					}
 				}
 				for (SceneAnim anim : scene.anims)
 				{
 					if (anim.attire != null)
 					{
-						attires.add(anim.attire);
+						lowAttires.add(anim.attire);
 					}
 				}
 				for (SceneNpc npc : scene.npcs)
 				{
 					if (npc.attire != null)
 					{
-						attires.add(npc.attire);
+						highAttires.add(npc.attire);
 					}
 				}
 				// for (SceneDoor door : scene.doors)
@@ -431,14 +432,14 @@ public class Config3dSceneWriter
 							{
 								if (monster.attire != null)
 								{
-									attires.add(monster.attire);
+									highAttires.add(monster.attire);
 								}
 							}
 						}
 					}
 				}
 
-				for (Attire attire : attires)
+				for (Attire attire : lowAttires)
 				{
 					for (AttireAction action : attire.actions)
 					{
@@ -452,19 +453,36 @@ public class Config3dSceneWriter
 								}
 
 								ImageFrame frame = root.getImageFrameTable().get(anim.img.gid, anim.row, anim.col, i);
-//								SliceImage slice = root.getSliceImageWriter().getSliceImage(frame);
-//								if (slice != null)
-//								{
-//									urls.add(slice.previewURL);
-//								}
-//								else
-//								{
-									Atlas atlas = root.getAtlasTable().findAtlasByImageFrame(frame);
-									if (atlas != null)
-									{
-										urls.add(atlas.previewURL);
-									}
-//								}
+								Atlas atlas = root.getAtlasTable().findAtlasByImageFrame(frame);
+								if (atlas != null)
+								{
+									urls.add(atlas.previewURL);
+								}
+							}
+						}
+					}
+				}
+
+
+				for (Attire attire : highAttires)
+				{
+					for (AttireAction action : attire.actions)
+					{
+						for (AttireAnim anim : action.anims)
+						{
+							for (int i = 0; i < anim.times.length; i++)
+							{
+								if (anim.times[i] <= 0)
+								{
+									continue;
+								}
+
+								ImageFrame frame = root.getImageFrameTable().get(anim.img.gid, anim.row, anim.col, i);
+								Atlas atlas = root.getAtlasTable().findAtlasByImageFrame(frame);
+								if (atlas != null)
+								{
+									urls.add(atlas.atfURL);
+								}
 							}
 						}
 					}

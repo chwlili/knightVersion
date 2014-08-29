@@ -18,10 +18,10 @@ import javax.imageio.ImageIO;
 
 import org.chw.util.FileUtil;
 import org.game.knight.version.packer.GamePacker;
+import org.game.knight.version.packer.world.WorldWriter;
 import org.game.knight.version.packer.world.model.ImageFrame;
 import org.game.knight.version.packer.world.model.Scene;
 import org.game.knight.version.packer.world.model.SceneBackLayer;
-import org.game.knight.version.packer.world.task.RootTask;
 
 public class SliceImageWriter
 {
@@ -35,7 +35,7 @@ public class SliceImageWriter
 	 */
 	private static final int SLICE_SIZE = 256;
 
-	private RootTask root;
+	private WorldWriter root;
 	private ImageFrame[] inputList;
 	private int nextIndex;
 	private int finishedCount;
@@ -50,7 +50,7 @@ public class SliceImageWriter
 	 * 
 	 * @param root
 	 */
-	public SliceImageWriter(RootTask root)
+	public SliceImageWriter(WorldWriter root)
 	{
 		this.root = root;
 	}

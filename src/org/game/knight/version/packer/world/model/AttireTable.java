@@ -13,11 +13,11 @@ import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 import org.game.knight.version.packer.GamePacker;
-import org.game.knight.version.packer.world.task.RootTask;
+import org.game.knight.version.packer.world.WorldWriter;
 
 public class AttireTable
 {
-	private RootTask root;
+	private WorldWriter root;
 
 	private HashMap<String, HashMap<String, AttireBitmap>> bitmapTable = new HashMap<String, HashMap<String, AttireBitmap>>();
 	private HashMap<String, HashMap<String, Attire>> attireTable = new HashMap<String, HashMap<String, Attire>>();
@@ -29,7 +29,7 @@ public class AttireTable
 	 * 
 	 * @param files
 	 */
-	public AttireTable(RootTask root)
+	public AttireTable(WorldWriter root)
 	{
 		this.root = root;
 	}
@@ -266,7 +266,7 @@ public class AttireTable
 			Element node = (Element) list.get(i);
 
 			// 所有打击矩形
-			ActionRectMap actionRectMap=new ActionRectMap();
+			ActionRectMap actionRectMap = new ActionRectMap();
 			actionRectMap.putAttireNode(node);
 			@SuppressWarnings({ "rawtypes" })
 			List sizeNodes = node.selectNodes("sizes/size");
@@ -457,60 +457,60 @@ public class AttireTable
 		private int attireRectH;
 		private int attireNameX;
 		private int attireNameY;
-		
-		private HashMap<Integer, Integer> id_x=new HashMap<Integer, Integer>();
-		private HashMap<Integer, Integer> id_y=new HashMap<Integer, Integer>();
-		private HashMap<Integer, Integer> id_w=new HashMap<Integer, Integer>();
-		private HashMap<Integer, Integer> id_h=new HashMap<Integer, Integer>();
-		private HashMap<Integer, Integer> id_nameX=new HashMap<Integer, Integer>();
-		private HashMap<Integer, Integer> id_nameY=new HashMap<Integer, Integer>();
-		
+
+		private HashMap<Integer, Integer> id_x = new HashMap<Integer, Integer>();
+		private HashMap<Integer, Integer> id_y = new HashMap<Integer, Integer>();
+		private HashMap<Integer, Integer> id_w = new HashMap<Integer, Integer>();
+		private HashMap<Integer, Integer> id_h = new HashMap<Integer, Integer>();
+		private HashMap<Integer, Integer> id_nameX = new HashMap<Integer, Integer>();
+		private HashMap<Integer, Integer> id_nameY = new HashMap<Integer, Integer>();
+
 		public void putActionNode(Element sizeNode)
 		{
-			if(sizeNode.attribute("id")==null)
+			if (sizeNode.attribute("id") == null)
 			{
 				return;
 			}
-			
+
 			int id = XmlUtil.parseInt(sizeNode.attributeValue("id"), 0);
-			if(id==0)
+			if (id == 0)
 			{
 				return;
 			}
-			
+
 			int x = XmlUtil.parseInt(sizeNode.attributeValue("x"), 0);
-			if(x!=0)
+			if (x != 0)
 			{
 				id_x.put(id, x);
 			}
-			
 			int y = XmlUtil.parseInt(sizeNode.attributeValue("y"), 0);
-			if(y!=0)
+			if (y != 0)
 			{
 				id_y.put(id, y);
 			}
 			int w = XmlUtil.parseInt(sizeNode.attributeValue("width"), 0);
-			if(w!=0)
+			if (w != 0)
 			{
 				id_w.put(id, w);
 			}
 			int h = XmlUtil.parseInt(sizeNode.attributeValue("height"), 0);
-			if(h!=0)
+			if (h != 0)
 			{
 				id_h.put(id, h);
 			}
+
 			int nameX = XmlUtil.parseInt(sizeNode.attributeValue("nameX"), 0);
-			if(nameX!=0)
+			if (nameX != 0)
 			{
 				id_nameX.put(id, nameX);
 			}
 			int nameY = XmlUtil.parseInt(sizeNode.attributeValue("nameY"), 0);
-			if(nameY!=0)
+			if (nameY != 0)
 			{
 				id_nameY.put(id, nameY);
 			}
 		}
-		
+
 		public void putAttireNode(Element node)
 		{
 			attireRectX = XmlUtil.parseInt(node.attributeValue("x"), 0);
@@ -520,49 +520,49 @@ public class AttireTable
 			attireNameX = XmlUtil.parseInt(node.attributeValue("nameX"), 0);
 			attireNameY = XmlUtil.parseInt(node.attributeValue("nameY"), 0);
 		}
-		
+
 		public AttireHitRect createActionRect(int id)
 		{
-			int x=getInt(id_x,id,attireRectX);
-			int y=getInt(id_y,id,attireRectY);
-			int w=getInt(id_w,id,attireRectW);
-			int h=getInt(id_h,id,attireRectH);
-			int nameX=getInt(id_nameX,id,attireNameX);
-			int nameY=getInt(id_nameY,id,attireNameY);
-			
-			return new AttireHitRect(x,y,w,h,nameX,nameY);
+			int x = getInt(id_x, id, attireRectX);
+			int y = getInt(id_y, id, attireRectY);
+			int w = getInt(id_w, id, attireRectW);
+			int h = getInt(id_h, id, attireRectH);
+			int nameX = getInt(id_nameX, id, 0);
+			int nameY = getInt(id_nameY, id, attireRectH);
+
+			return new AttireHitRect(x, y, w, h, nameX, nameY);
 		}
-		
-		private int getInt(HashMap<Integer, Integer> map,int id,int def)
+
+		private int getInt(HashMap<Integer, Integer> map, int id, int def)
 		{
-			if(map.containsKey(id))
+			if (map.containsKey(id))
 			{
 				return map.get(id);
 			}
-			else if(map.containsKey(1))
+			else if (map.containsKey(1))
 			{
 				return map.get(1);
 			}
-			else if(map.containsKey(0))
-			{
-				return map.get(0);
-			}
-			else
-			{
-				int min=Integer.MAX_VALUE;
-				for(Integer aid:map.keySet())
-				{
-					if(aid<min)
-					{
-						min=aid;
-					}
-				}
-				
-				if(map.containsKey(min))
-				{
-					return map.get(min);
-				}
-			}
+			// else if(map.containsKey(0))
+			// {
+			// return map.get(0);
+			// }
+			// else
+			// {
+			// int min=Integer.MAX_VALUE;
+			// for(Integer aid:map.keySet())
+			// {
+			// if(aid>1 && aid<min)
+			// {
+			// min=aid;
+			// }
+			// }
+			//
+			// if(map.containsKey(min))
+			// {
+			// return map.get(min);
+			// }
+			// }
 			return def;
 		}
 	}

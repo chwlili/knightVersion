@@ -22,13 +22,13 @@ import org.chw.swf.writer.SwfWriter;
 import org.chw.util.FileUtil;
 import org.chw.util.MD5Util;
 import org.game.knight.version.packer.GamePacker;
-import org.game.knight.version.packer.world.task.RootTask;
+import org.game.knight.version.packer.world.WorldWriter;
 
 public class GameUIAttireWriter
 {
 	private static final String UI_AVATAR_FRAME_PACK = "knight.ui.avatar";
 
-	private RootTask root;
+	private WorldWriter root;
 	private HashMap<String, String> newTable;
 	private HashMap<String, String> oldTable;
 
@@ -47,7 +47,7 @@ public class GameUIAttireWriter
 	 * 
 	 * @param world
 	 */
-	public GameUIAttireWriter(RootTask root)
+	public GameUIAttireWriter(WorldWriter root)
 	{
 		this.root = root;
 	}

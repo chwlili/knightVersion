@@ -16,11 +16,11 @@ import javax.imageio.ImageIO;
 import org.chw.util.FileUtil;
 import org.eclipse.swt.graphics.Rectangle;
 import org.game.knight.version.packer.GamePacker;
-import org.game.knight.version.packer.world.task.RootTask;
+import org.game.knight.version.packer.world.WorldWriter;
 
 public class ImageFrameTable
 {
-	private RootTask root;
+	private WorldWriter root;
 
 	private GridImg[] inputList;
 	private int nextIndex;
@@ -35,7 +35,7 @@ public class ImageFrameTable
 	 * 
 	 * @param root
 	 */
-	public ImageFrameTable(RootTask root)
+	public ImageFrameTable(WorldWriter root)
 	{
 		this.root = root;
 	}
@@ -381,7 +381,7 @@ public class ImageFrameTable
 	/**
 	 * ≤È’“À˘”–ÕºœÒ÷°
 	 */
-	private GridImg[] findAllFrame(RootTask root)
+	private GridImg[] findAllFrame(WorldWriter root)
 	{
 		HashMap<String, GridImg> frameMap = new HashMap<String, GridImg>();
 

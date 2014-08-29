@@ -16,11 +16,11 @@ import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 import org.eclipse.swt.graphics.Rectangle;
 import org.game.knight.version.packer.GamePacker;
-import org.game.knight.version.packer.world.task.RootTask;
+import org.game.knight.version.packer.world.WorldWriter;
 
 public class WorldTable
 {
-	private RootTask root;
+	private WorldWriter root;
 
 	private SceneLink[] links;
 	private WorldCity[] citys;
@@ -31,7 +31,7 @@ public class WorldTable
 	 * 构造函数
 	 * @param root
 	 */
-	public WorldTable(RootTask root)
+	public WorldTable(WorldWriter root)
 	{
 		this.root = root;
 	}
@@ -854,6 +854,12 @@ public class WorldTable
 			}
 		}
 
+		// 删除已经转移的NPC
+		for (SceneNpc npc : deledNPC)
+		{
+			npcs.remove(npc);
+		}
+
 		// 转换ID为0的NPC到动画列表
 		for (SceneNpc npc : npcs)
 		{
@@ -862,12 +868,6 @@ public class WorldTable
 				deledNPC.add(npc);
 				anims.add(new SceneAnim(npc.name, npc.x, npc.y, 0, 0, npc.direction, npc.attire));
 			}
-		}
-
-		// 删除已经转移的NPC
-		for (SceneNpc npc : deledNPC)
-		{
-			npcs.remove(npc);
 		}
 
 		// 保存场景结构
