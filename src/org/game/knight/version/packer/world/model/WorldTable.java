@@ -16,9 +16,10 @@ import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 import org.eclipse.swt.graphics.Rectangle;
 import org.game.knight.version.packer.GamePacker;
+import org.game.knight.version.packer.world.BaseWriter;
 import org.game.knight.version.packer.world.WorldWriter;
 
-public class WorldTable
+public class WorldTable extends BaseWriter
 {
 	private WorldWriter root;
 
@@ -29,42 +30,47 @@ public class WorldTable
 
 	/**
 	 * 构造函数
+	 * 
 	 * @param root
 	 */
 	public WorldTable(WorldWriter root)
 	{
 		this.root = root;
 	}
-	
+
 	/**
 	 * 获取所有链接
+	 * 
 	 * @return
 	 */
 	public SceneLink[] getLinks()
 	{
 		return links;
 	}
-	
+
 	/**
 	 * 获取所有城市
+	 * 
 	 * @return
 	 */
 	public WorldCity[] getCitys()
 	{
 		return citys;
 	}
-	
+
 	/**
 	 * 获取所有场景
+	 * 
 	 * @return
 	 */
 	public Scene[] getAllScene()
 	{
 		return scenes;
 	}
-	
+
 	/**
 	 * 按ID获取场景
+	 * 
 	 * @param id
 	 * @return
 	 */
@@ -76,6 +82,7 @@ public class WorldTable
 	/**
 	 * 构建
 	 */
+	@Override
 	public void start()
 	{
 		ProjectFile[] links = root.getFileTable().getAllLinkFiles();
@@ -94,7 +101,7 @@ public class WorldTable
 		}
 		catch (DocumentException e)
 		{
-			GamePacker.error("链接文件解析失败!\t"+e.getMessage());
+			GamePacker.error("链接文件解析失败!\t" + e.getMessage());
 		}
 
 		if (document != null)
@@ -103,7 +110,6 @@ public class WorldTable
 			buildScenes(document);
 		}
 	}
-
 
 	// --------------------------------------------------------------------------------------------------------
 	//
@@ -134,11 +140,11 @@ public class WorldTable
 			List sceneNodes = cityNode.selectNodes("scene");
 			for (int j = 0; j < sceneNodes.size(); j++)
 			{
-				if(root.isCancel())
+				if (root.isCancel())
 				{
 					return;
 				}
-				
+
 				Element sceneNode = (Element) sceneNodes.get(j);
 
 				int sceneID = Integer.parseInt(sceneNode.attributeValue("id"));
@@ -262,11 +268,11 @@ public class WorldTable
 			List sceneNodes = cityNode.selectNodes("scene");
 			for (int j = 0; j < sceneNodes.size(); j++)
 			{
-				if(root.isCancel())
+				if (root.isCancel())
 				{
 					return;
 				}
-				
+
 				Element sceneNode = (Element) sceneNodes.get(j);
 
 				// 场景基本信息
@@ -882,5 +888,11 @@ public class WorldTable
 		SceneTrap[] trapArr = traps.toArray(new SceneTrap[traps.size()]);
 
 		return new Scene(file, sceneID, sceneName, sceneGroup, sceneType, timeLimit, sceneW, sceneH, beginX, defaultX, defaultY, viewX, viewY, grid, sceneSound, sectionArr, backLayerArr, foreLayerArr, backAnimArr, foreAnimArr, npcArr, doorArr, partArr, trapArr);
+	}
+
+	@Override
+	public void saveVer()
+	{
+
 	}
 }

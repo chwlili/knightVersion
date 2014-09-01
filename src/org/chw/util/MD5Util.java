@@ -15,10 +15,33 @@ import java.security.NoSuchAlgorithmException;
 
 public class MD5Util
 {
-	private static char	hexChar[]	= { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
-	
+	private static char hexChar[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
+
 	/**
 	 * 计算文件的MD5
+	 * 
+	 * @param file
+	 * @return
+	 * @throws Exception
+	 */
+	public static String md5(File file) throws Exception
+	{
+		InputStream fis = new FileInputStream(file);
+		byte buffer[] = new byte[1024];
+		
+		MessageDigest md5 = MessageDigest.getInstance("MD5");
+		for (int numRead = 0; (numRead = fis.read(buffer)) > 0;)
+		{
+			md5.update(buffer, 0, numRead);
+		}
+
+		fis.close();
+		return toHexString(md5.digest());
+	}
+
+	/**
+	 * 计算文件的MD5
+	 * 
 	 * @param file
 	 * @return
 	 */
@@ -55,9 +78,10 @@ public class MD5Util
 		}
 		return "";
 	}
-	
+
 	/**
 	 * 计算字节数组的MD5
+	 * 
 	 * @param bytes
 	 * @return
 	 */
@@ -65,7 +89,8 @@ public class MD5Util
 	{
 		try
 		{
-			InputStream fis =new ByteArrayInputStream(bytes);// new FileInputStream(file);
+			InputStream fis = new ByteArrayInputStream(bytes);// new
+																// FileInputStream(file);
 			byte buffer[] = new byte[1024];
 			MessageDigest md5 = MessageDigest.getInstance("MD5");
 			for (int numRead = 0; (numRead = fis.read(buffer)) > 0;)
@@ -94,9 +119,10 @@ public class MD5Util
 		}
 		return "";
 	}
-	
+
 	/**
 	 * 添加MD5后缀
+	 * 
 	 * @param bytes
 	 * @return
 	 */
@@ -104,31 +130,31 @@ public class MD5Util
 	{
 		try
 		{
-			
-			ByteArrayOutputStream output=new ByteArrayOutputStream();
+
+			ByteArrayOutputStream output = new ByteArrayOutputStream();
 			output.write(bytes);
-			//x4
-			//output.write(("MD5:"+md5Bytes(bytes)).getBytes());
-			//x5
-			//output.write((md5Bytes(bytes)).getBytes());
-			
-			//x6
-			boolean added=false;
-			byte[] suffix=new byte[]{0,0,0,0,0x4D,0x44,0x35,0};
-			if(bytes.length>suffix.length)
+			// x4
+			// output.write(("MD5:"+md5Bytes(bytes)).getBytes());
+			// x5
+			// output.write((md5Bytes(bytes)).getBytes());
+
+			// x6
+			boolean added = false;
+			byte[] suffix = new byte[] { 0, 0, 0, 0, 0x4D, 0x44, 0x35, 0 };
+			if (bytes.length > suffix.length)
 			{
-				added=true;
-				for(int i=0;i<suffix.length;i++)
+				added = true;
+				for (int i = 0; i < suffix.length; i++)
 				{
-					if(bytes[bytes.length-suffix.length+i]!=suffix[i])
+					if (bytes[bytes.length - suffix.length + i] != suffix[i])
 					{
-						added=false;
+						added = false;
 						break;
 					}
 				}
 			}
-			
-			if(!added)
+
+			if (!added)
 			{
 				output.write(0);
 				output.write(0);
@@ -139,20 +165,20 @@ public class MD5Util
 				output.write(0x35);
 				output.write(0);
 			}
-			
+
 			return output.toByteArray();
 		}
 		catch (IOException e)
 		{
 			e.printStackTrace();
 		}
-		
+
 		return null;
 	}
 
-	
 	/**
 	 * 转换为16进制显示
+	 * 
 	 * @param b
 	 * @return
 	 */
@@ -167,24 +193,25 @@ public class MD5Util
 
 		return sb.toString();
 	}
-	
+
 	/**
 	 * 写入文件
+	 * 
 	 * @param dest
 	 * @param bytes
 	 */
-	public static void writeFile(File dest,byte[] bytes)
+	public static void writeFile(File dest, byte[] bytes)
 	{
 		try
 		{
 			// 新建文件输出流并对它进行缓冲
 			FileOutputStream output = new FileOutputStream(dest);
 			BufferedOutputStream outBuff = new BufferedOutputStream(output);
-			
+
 			// 缓冲数组
 			outBuff.write(bytes, 0, bytes.length);
 			outBuff.flush();
-			
+
 			// 关闭流
 			outBuff.close();
 			output.close();
@@ -198,24 +225,24 @@ public class MD5Util
 			e.printStackTrace();
 		}
 	}
-	
+
 	/**
 	 * 复制文件
 	 */
-	public static void copyFile(File from,File dest)
+	public static void copyFile(File from, File dest)
 	{
-		if(from.isFile() && from.exists())
+		if (from.isFile() && from.exists())
 		{
 			try
 			{
 				// 新建文件输入流并对它进行缓冲
 				FileInputStream input = new FileInputStream(from);
 				BufferedInputStream inBuff = new BufferedInputStream(input);
-				
+
 				// 新建文件输出流并对它进行缓冲
 				FileOutputStream output = new FileOutputStream(dest);
 				BufferedOutputStream outBuff = new BufferedOutputStream(output);
-				
+
 				// 缓冲数组
 				byte[] b = new byte[1024 * 5];
 				int len;
@@ -224,7 +251,7 @@ public class MD5Util
 					outBuff.write(b, 0, len);
 				}
 				outBuff.flush();
-				
+
 				// 关闭流
 				inBuff.close();
 				outBuff.close();

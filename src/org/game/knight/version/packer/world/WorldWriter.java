@@ -13,20 +13,19 @@ import org.chw.util.FileUtil;
 import org.game.knight.version.packer.GamePacker;
 import org.game.knight.version.packer.world.model.AtfParamTable;
 import org.game.knight.version.packer.world.model.AttireTable;
-import org.game.knight.version.packer.world.model.GlobalOptionTable;
+import org.game.knight.version.packer.world.model.GameUIAttireWriter;
+import org.game.knight.version.packer.world.model.OptionTable;
 import org.game.knight.version.packer.world.model.ImageFrameTable;
 import org.game.knight.version.packer.world.model.Mp3Writer;
 import org.game.knight.version.packer.world.model.ProjectFileTable;
-import org.game.knight.version.packer.world.model.GameUIAttireWriter;
 import org.game.knight.version.packer.world.model.WorldTable;
 import org.game.knight.version.packer.world.output2d.Config2d;
-import org.game.knight.version.packer.world.output3d.AtlasWriter;
 import org.game.knight.version.packer.world.output3d.Config3d;
-import org.game.knight.version.packer.world.output3d.SliceImageWriter;
 
 public class WorldWriter
 {
 	private boolean cancel;
+	private ArrayList<Exception> exceptions;
 
 	private final File inputFolder;
 	private final File outputFolder;
@@ -34,17 +33,15 @@ public class WorldWriter
 	public final int maxThreadCount;
 	private final ArrayList<String> outputFiles;
 
-	private GlobalOptionTable globalOptionTable;
+	private OptionTable optionTable;
 	private ProjectFileTable fileTable;
-	private AtfParamTable paramTable;
+	private AtfParamTable atfParamTable;
 	private AttireTable attireTable;
 	private WorldTable worldTable;
-	private ImageFrameTable imageFrameTable;
+	private ImageFrameTable frameTable;
+	private Mp3Writer mp3Writer;
 	private GameUIAttireWriter gameUIAttireWriter;
 
-	private Mp3Writer mp3Writer;
-	private SliceImageWriter sliceImageWriter;
-	private AtlasWriter atlasWriter;
 	private Config3d config3dWriter;
 	private Config2d config2dWriter;
 
@@ -63,6 +60,12 @@ public class WorldWriter
 
 		this.outputFiles = new ArrayList<String>();
 	}
+
+	// ----------------------------------------------------------------------------------
+	//
+	// 输入参数
+	//
+	// ----------------------------------------------------------------------------------
 
 	/**
 	 * 输入目录
@@ -94,29 +97,20 @@ public class WorldWriter
 		return zip;
 	}
 
-	/**
-	 * 添加输出文件
-	 * 
-	 * @param url
-	 */
-	public synchronized void addOutputFile(String url)
-	{
-		outputFiles.add("/" + getOutputFolder().getName() + url);
-	}
+	// ----------------------------------------------------------------------------------
+	//
+	// 各种数据表
+	//
+	// ----------------------------------------------------------------------------------
 
 	/**
-	 * 本地路径到CDN路径
+	 * 全局选项表
 	 * 
-	 * @param url
 	 * @return
 	 */
-	public String localToCdnURL(String url)
+	public OptionTable getGlobalOptionTable()
 	{
-		if (url != null && !url.isEmpty())
-		{
-			return "/" + getOutputFolder().getName() + url;
-		}
-		return "";
+		return optionTable;
 	}
 
 	/**
@@ -136,7 +130,7 @@ public class WorldWriter
 	 */
 	public AtfParamTable getAtfParamTable()
 	{
-		return paramTable;
+		return atfParamTable;
 	}
 
 	/**
@@ -166,7 +160,7 @@ public class WorldWriter
 	 */
 	public ImageFrameTable getImageFrameTable()
 	{
-		return imageFrameTable;
+		return frameTable;
 	}
 
 	/**
@@ -180,16 +174,6 @@ public class WorldWriter
 	}
 
 	/**
-	 * 全局选项表
-	 * 
-	 * @return
-	 */
-	public GlobalOptionTable getGlobalOptionTable()
-	{
-		return globalOptionTable;
-	}
-
-	/**
 	 * MP3输出器
 	 * 
 	 * @return
@@ -199,25 +183,11 @@ public class WorldWriter
 		return mp3Writer;
 	}
 
-	/**
-	 * 获取切片输出器
-	 * 
-	 * @return
-	 */
-	public SliceImageWriter getSliceImageWriter()
-	{
-		return sliceImageWriter;
-	}
-
-	/**
-	 * 贴图集输出器
-	 * 
-	 * @return
-	 */
-	public AtlasWriter getAtlasTable()
-	{
-		return atlasWriter;
-	}
+	// ----------------------------------------------------------------------------------
+	//
+	// 工具函数
+	//
+	// ----------------------------------------------------------------------------------
 
 	/**
 	 * 取消
@@ -225,6 +195,19 @@ public class WorldWriter
 	public synchronized void cancel()
 	{
 		cancel = true;
+	}
+
+	/**
+	 * 出错取消
+	 * 
+	 * @param exception
+	 */
+	public synchronized void cancel(Exception exception)
+	{
+		exceptions.add(exception);
+		cancel = true;
+		System.err.println("--------------------exception--------------------");
+		System.err.println(exception);
 	}
 
 	/**
@@ -245,109 +228,83 @@ public class WorldWriter
 		GamePacker.beginTask("世界");
 
 		GamePacker.progress("读取全局信息");
-		globalOptionTable = new GlobalOptionTable(this);
-		globalOptionTable.start();
-		if (isCancel())
-		{
-			return;
-		}
 
-		GamePacker.progress("读取输入信息");
+		exceptions = new ArrayList<Exception>();
+
+		optionTable = new OptionTable(this);
 		fileTable = new ProjectFileTable(this);
-		fileTable.start();
-		fileTable.saveVer();
-		if (isCancel())
-		{
-			return;
-		}
-
-		GamePacker.progress("读取ATF分组信息");
-		paramTable = new AtfParamTable(this);
-		paramTable.start();
-		if (isCancel())
-		{
-			return;
-		}
-
-		GamePacker.progress("读取装扮信息");
+		atfParamTable = new AtfParamTable(this);
 		attireTable = new AttireTable(this);
-		attireTable.start();
-		if (isCancel())
-		{
-			return;
-		}
-
-		GamePacker.progress("读取世界信息");
 		worldTable = new WorldTable(this);
-		worldTable.start();
-		if (isCancel())
-		{
-			return;
-		}
-
-		GamePacker.progress("计算图像的裁切信息");
-		imageFrameTable = new ImageFrameTable(this);
-		imageFrameTable.start();
-		if (isCancel())
-		{
-			return;
-		}
-		imageFrameTable.saveVer();
-
-		GamePacker.progress("输出UI装扮数据");
-		gameUIAttireWriter = new GameUIAttireWriter(this);
-		gameUIAttireWriter.start();
-		gameUIAttireWriter.saveVer();
-
-		GamePacker.progress("输出MP3文件");
+		frameTable = new ImageFrameTable(this);
 		mp3Writer = new Mp3Writer(this);
-		mp3Writer.start();
-		if (isCancel())
-		{
-			return;
-		}
-		mp3Writer.saveVer();
-
-		GamePacker.progress("输出图像切片");
-		sliceImageWriter = new SliceImageWriter(this);
-		sliceImageWriter.start();
-		if (isCancel())
-		{
-			return;
-		}
-		sliceImageWriter.saveVer();
-
-		GamePacker.progress("输出贴图集");
-		atlasWriter = new AtlasWriter(this);
-		atlasWriter.start();
-		if (isCancel())
-		{
-			return;
-		}
-		atlasWriter.saveVer();
-
-		GamePacker.progress("输出3D配置");
+		gameUIAttireWriter = new GameUIAttireWriter(this);
 		config3dWriter = new Config3d(this);
-		config3dWriter.start();
-		if (isCancel())
-		{
-			return;
-		}
-
-		GamePacker.progress("输出2D配置");
 		config2dWriter = new Config2d(this);
-		config2dWriter.start();
-		if (isCancel())
+
+		ArrayList<BaseWriter> writers = new ArrayList<BaseWriter>();
+		writers.add(optionTable);
+		writers.add(fileTable);
+		writers.add(atfParamTable);
+		writers.add(attireTable);
+		writers.add(worldTable);
+		writers.add(frameTable);
+		writers.add(mp3Writer);
+		writers.add(gameUIAttireWriter);
+		writers.add(config3dWriter);
+		writers.add(config2dWriter);
+
+		try
 		{
-			return;
+			for (BaseWriter writer : writers)
+			{
+				if (!isCancel())
+				{
+					writer.run();
+				}
+			}
+
+			for (BaseWriter writer : writers)
+			{
+				if (!isCancel())
+				{
+					writer.saveVer();
+				}
+			}
+
+			if (!isCancel())
+			{
+				writerVer();
+			}
+		}
+		catch (Exception exception)
+		{
+			cancel(exception);
 		}
 
-		globalOptionTable.saveVer();
+		if (isCancel())
+		{
+			if (exceptions.size() > 0)
+			{
+				for (Exception exception : exceptions)
+				{
+					GamePacker.error(exception);
+				}
+			}
+			else
+			{
+				GamePacker.error("已取消");
+			}
+		}
 
-		writerVer();
+		GamePacker.endTask();
 	}
 
-	private static final byte[] suffix = new byte[] { 0, 0, 0, 0, 0x4D, 0x44, 0x35, 0 };
+	// ----------------------------------------------------------------------------------
+	//
+	// 文件结束标记
+	//
+	// ----------------------------------------------------------------------------------
 
 	/**
 	 * 添加文件后缀
@@ -360,6 +317,8 @@ public class WorldWriter
 		{
 			return;
 		}
+
+		byte[] suffix = new byte[] { 0, 0, 0, 0, 0x4D, 0x44, 0x35, 0 };
 
 		RandomAccessFile writer = null;
 		try
@@ -408,6 +367,37 @@ public class WorldWriter
 				}
 			}
 		}
+	}
+
+	// ----------------------------------------------------------------------------------
+	//
+	// db.ver
+	//
+	// ----------------------------------------------------------------------------------
+
+	/**
+	 * 本地路径到CDN路径
+	 * 
+	 * @param url
+	 * @return
+	 */
+	public String localToCdnURL(String url)
+	{
+		if (url != null && !url.isEmpty())
+		{
+			return "/" + getOutputFolder().getName() + url;
+		}
+		return "";
+	}
+
+	/**
+	 * 添加输出文件
+	 * 
+	 * @param url
+	 */
+	public synchronized void addOutputFile(String url)
+	{
+		outputFiles.add("/" + getOutputFolder().getName() + url);
 	}
 
 	/**

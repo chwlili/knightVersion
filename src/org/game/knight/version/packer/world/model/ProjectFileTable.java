@@ -1,7 +1,12 @@
 package org.game.knight.version.packer.world.model;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
-import java.io.UnsupportedEncodingException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -11,11 +16,14 @@ import java.util.concurrent.Executors;
 import org.chw.util.FileUtil;
 import org.chw.util.MD5Util;
 import org.game.knight.version.packer.GamePacker;
+import org.game.knight.version.packer.world.BaseWriter;
 import org.game.knight.version.packer.world.WorldWriter;
 
-public class ProjectFileTable
+public class ProjectFileTable extends BaseWriter
 {
-	private final WorldWriter root;
+	private int nextGID = 1;
+	private HashMap<String, MD5> oldTable = new HashMap<String, MD5>();
+	private HashMap<String, MD5> newTable = new HashMap<String, MD5>();
 
 	private HashMap<String, ProjectFile> url_file;
 	private HashMap<String, ProjectFile> gid_file;
@@ -34,7 +42,7 @@ public class ProjectFileTable
 	 */
 	public ProjectFileTable(WorldWriter root)
 	{
-		this.root = root;
+		super(root, "md5");
 	}
 
 	/**
@@ -72,6 +80,7 @@ public class ProjectFileTable
 
 	/**
 	 * 获取所有MP3文件
+	 * 
 	 * @return
 	 */
 	public ProjectFile[] getAllMp3Files()
@@ -132,75 +141,6 @@ public class ProjectFileTable
 	private String lastLog;
 
 	/**
-	 * 执行
-	 */
-	public void start()
-	{
-		openVer();
-
-		inputList = FileUtil.listFiles(root.getInputFolder());
-
-		url_file = new HashMap<String, ProjectFile>();
-		gid_file = new HashMap<String, ProjectFile>();
-
-		url_img = new HashMap<String, ProjectImgFile>();
-		url_mp3 = new HashMap<String, ProjectMp3File>();
-		url_texture = new HashMap<String, ProjectFile>();
-		url_attire = new HashMap<String, ProjectFile>();
-		url_scene = new HashMap<String, ProjectFile>();
-		url_link = new HashMap<String, ProjectFile>();
-
-		ExecutorService exec = Executors.newCachedThreadPool();
-		for (int i = 0; i < root.maxThreadCount; i++)
-		{
-			exec.execute(new Runnable()
-			{
-				@Override
-				public void run()
-				{
-					while (true)
-					{
-						File file = getNextFile();
-						if (root.isCancel() || file == null)
-						{
-							break;
-						}
-
-						finishFile(file, MD5Util.md5File(file));
-						Thread.yield();
-					}
-				}
-			});
-		}
-
-		while (!root.isCancel() && !isFinished())
-		{
-			try
-			{
-				GamePacker.progress(lastLog);
-				Thread.sleep(50);
-			}
-			catch (InterruptedException e)
-			{
-				e.printStackTrace();
-				break;
-			}
-		}
-
-		exec.shutdown();
-	}
-
-	/**
-	 * 是否已经完成
-	 * 
-	 * @return
-	 */
-	private synchronized boolean isFinished()
-	{
-		return finishedCount >= inputList.length;
-	}
-
-	/**
 	 * 获取下一个文件
 	 * 
 	 * @return
@@ -236,8 +176,8 @@ public class ProjectFileTable
 		}
 		else
 		{
-			gid = nextID + "";
-			nextID++;
+			gid = nextGID + "";
+			nextGID++;
 		}
 
 		if (!newTable.containsKey(url))
@@ -290,129 +230,76 @@ public class ProjectFileTable
 		finishedCount++;
 	}
 
-	// -----------------------------------------------------------------------------------------------------------------------
-	//
-	// 版本信息
-	//
-	// -----------------------------------------------------------------------------------------------------------------------
-
-	private int nextID = 1;
-	private HashMap<String, MD5> oldTable;
-	private HashMap<String, MD5> newTable;
-
 	/**
-	 * 获取版本文件
+	 * 是否已经完成
 	 * 
 	 * @return
 	 */
-	private File getVerFile()
+	private synchronized boolean isFinished()
 	{
-		return new File(root.getOutputFolder().getPath() + File.separatorChar + ".ver" + File.separatorChar + "md5");
+		return finishedCount >= inputList.length;
+	}
+
+	@Override
+	protected void startup() throws Exception
+	{
+		GamePacker.log("开始检测文件变化");
 	}
 
 	/**
-	 * 打开
+	 * 执行
 	 */
-	private void openVer()
+	@Override
+	public void exec() throws Exception
 	{
-		this.nextID = 1;
-		this.oldTable = new HashMap<String, MD5>();
-		this.newTable = new HashMap<String, MD5>();
+		inputList = FileUtil.listFiles(root.getInputFolder());
 
-		if (!getVerFile().exists())
-		{
-			return;
-		}
+		url_file = new HashMap<String, ProjectFile>();
+		gid_file = new HashMap<String, ProjectFile>();
 
-		try
+		url_img = new HashMap<String, ProjectImgFile>();
+		url_mp3 = new HashMap<String, ProjectMp3File>();
+		url_texture = new HashMap<String, ProjectFile>();
+		url_attire = new HashMap<String, ProjectFile>();
+		url_scene = new HashMap<String, ProjectFile>();
+		url_link = new HashMap<String, ProjectFile>();
+
+		ExecutorService exec = Executors.newCachedThreadPool();
+		for (int i = 0; i < root.maxThreadCount; i++)
 		{
-			String text = new String(FileUtil.getFileBytes(getVerFile()), "utf8");
-			String[] lines = text.split("\\n");
-			for (String line : lines)
+			exec.execute(new Runnable()
 			{
-				line = line.trim();
-				if (line.isEmpty())
+				@Override
+				public void run()
 				{
-					continue;
-				}
-
-				if (line.charAt(0) == '$')
-				{
-					String[] values = line.substring(1).split("=");
-					if (values.length == 2)
+					while (true)
 					{
-						String name = values[0].trim();
-						String value = values[1].trim();
-
-						if ("nextID".equals(name))
+						File file = getNextFile();
+						if (root.isCancel() || file == null)
 						{
-							nextID = Integer.parseInt(value);
+							break;
+						}
+
+						try
+						{
+							finishFile(file, MD5Util.md5(file));
+						}
+						catch (Exception e)
+						{
+							root.cancel(e);
 						}
 					}
 				}
-				else
-				{
-					String[] values = line.split("=");
-					if (values.length == 3)
-					{
-						String url = values[0].trim();
-						String md5 = values[1].trim();
-						String gid = values[2].trim();
-
-						oldTable.put(url, new MD5(url, md5, gid));
-					}
-				}
-			}
-		}
-		catch (UnsupportedEncodingException e)
-		{
-			e.printStackTrace();
-		}
-	}
-
-	/**
-	 * 保存
-	 */
-	public void saveVer()
-	{
-		StringBuilder output = new StringBuilder();
-
-		output.append("$nextID = " + nextID + "\n");
-
-		if (newTable != null)
-		{
-			MD5[] values = newTable.values().toArray(new MD5[newTable.size()]);
-			Arrays.sort(values, new Comparator<MD5>()
-			{
-
-				@Override
-				public int compare(MD5 arg0, MD5 arg1)
-				{
-					int val1 = Integer.parseInt(arg0.gid);
-					int val2 = Integer.parseInt(arg1.gid);
-					return val1 - val2;
-				}
 			});
-
-			for (int i = 0; i < values.length; i++)
-			{
-				MD5 item = values[i];
-				output.append(item.url + " = " + item.md5 + " = " + item.gid);
-				if (i < values.length - 1)
-				{
-					output.append("\n");
-				}
-			}
 		}
 
-		try
+		while (!root.isCancel() && !isFinished())
 		{
-			FileUtil.writeFile(getVerFile(), output.toString().getBytes("utf8"));
+			GamePacker.progress(lastLog);
+			Thread.sleep(100);
 		}
-		catch (UnsupportedEncodingException e)
-		{
-			e.printStackTrace();
-		}
+
+		exec.shutdown();
 	}
 
 	/**
@@ -453,4 +340,96 @@ public class ProjectFileTable
 		}
 	}
 
+	// -----------------------------------------------------------------------------------------------------------------------
+	//
+	// 版本信息
+	//
+	// -----------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * 打开
+	 */
+	@Override
+	protected void readHistory(InputStream input) throws Exception
+	{
+		GamePacker.progress("读取历史信息");
+
+		BufferedReader reader = new BufferedReader(new InputStreamReader(input, "utf8"));
+		while (true)
+		{
+			String line = reader.readLine();
+
+			if (line == null)
+			{
+				break;
+			}
+
+			line = line.trim();
+			if (line.isEmpty())
+			{
+				continue;
+			}
+
+			if (line.charAt(0) == '$')
+			{
+				String[] values = line.substring(1).split("=");
+				if (values.length == 2)
+				{
+					String name = values[0].trim();
+					String value = values[1].trim();
+
+					if ("nextID".equals(name))
+					{
+						nextGID = Integer.parseInt(value);
+					}
+				}
+			}
+			else
+			{
+				String[] values = line.split("=");
+				if (values.length == 3)
+				{
+					String url = values[0].trim();
+					String md5 = values[1].trim();
+					String gid = values[2].trim();
+
+					oldTable.put(url, new MD5(url, md5, gid));
+				}
+			}
+		}
+	}
+
+	@Override
+	protected void saveHistory(OutputStream stream) throws Exception
+	{
+		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(stream, "utf8"));
+
+		// 写入NextID字段
+		writer.write("$nextID = " + nextGID + "\n");
+
+		// 排序MD5列表
+		MD5[] values = newTable.values().toArray(new MD5[newTable.size()]);
+		Arrays.sort(values, new Comparator<MD5>()
+		{
+
+			@Override
+			public int compare(MD5 arg0, MD5 arg1)
+			{
+				int val1 = Integer.parseInt(arg0.gid);
+				int val2 = Integer.parseInt(arg1.gid);
+				return val1 - val2;
+			}
+		});
+
+		// 写入MD5列表
+		for (int i = 0; i < values.length; i++)
+		{
+			MD5 item = values[i];
+			writer.write(item.url + " = " + item.md5 + " = " + item.gid);
+			if (i < values.length - 1)
+			{
+				writer.write("\n");
+			}
+		}
+	}
 }

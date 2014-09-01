@@ -10,9 +10,10 @@ import java.util.HashMap;
 
 import org.chw.util.FileUtil;
 import org.game.knight.version.packer.GamePacker;
+import org.game.knight.version.packer.world.BaseWriter;
 import org.game.knight.version.packer.world.WorldWriter;
 
-public class Mp3Writer
+public class Mp3Writer extends BaseWriter
 {
 	private WorldWriter root;
 	private HashMap<String, String> newTable;
@@ -31,6 +32,7 @@ public class Mp3Writer
 	/**
 	 * 开始
 	 */
+	@Override
 	public void start()
 	{
 		openVer();
@@ -176,6 +178,7 @@ public class Mp3Writer
 	/**
 	 * 保存版本信息
 	 */
+	@Override
 	public void saveVer()
 	{
 		StringBuilder output = new StringBuilder();

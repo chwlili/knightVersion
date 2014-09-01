@@ -13,12 +13,11 @@ import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 import org.game.knight.version.packer.GamePacker;
+import org.game.knight.version.packer.world.BaseWriter;
 import org.game.knight.version.packer.world.WorldWriter;
 
-public class AttireTable
+public class AttireTable extends BaseWriter
 {
-	private WorldWriter root;
-
 	private HashMap<String, HashMap<String, AttireBitmap>> bitmapTable = new HashMap<String, HashMap<String, AttireBitmap>>();
 	private HashMap<String, HashMap<String, Attire>> attireTable = new HashMap<String, HashMap<String, Attire>>();
 	private ArrayList<Attire> allAttres = new ArrayList<Attire>();
@@ -31,7 +30,7 @@ public class AttireTable
 	 */
 	public AttireTable(WorldWriter root)
 	{
-		this.root = root;
+		super(root, null);
 	}
 
 	/**
@@ -129,6 +128,7 @@ public class AttireTable
 	/**
 	 * ¹¹½¨
 	 */
+	@Override
 	public void start()
 	{
 		ProjectFile[] files = root.getFileTable().getAllAttireFiles();
@@ -565,5 +565,11 @@ public class AttireTable
 			// }
 			return def;
 		}
+	}
+
+	@Override
+	public void saveVer()
+	{
+
 	}
 }

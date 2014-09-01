@@ -5,16 +5,16 @@ import java.util.HashMap;
 
 import org.chw.util.XmlUtil;
 import org.dom4j.Document;
-import org.dom4j.DocumentException;
 import org.dom4j.io.SAXReader;
 import org.game.knight.version.packer.GamePacker;
+import org.game.knight.version.packer.world.BaseWriter;
 import org.game.knight.version.packer.world.WorldWriter;
 
-public class AtfParamTable
+public class AtfParamTable extends BaseWriter
 {
 	private WorldWriter root;
-	private HashMap<String, AtfParam> id_atfParam;
-	private HashMap<String, AtfParam> value_atfParam;
+	private HashMap<String, AtfParam> id_atfParam = new HashMap<String, AtfParam>();
+	private HashMap<String, AtfParam> value_atfParam = new HashMap<String, AtfParam>();
 
 	/**
 	 * 构造函数
@@ -23,7 +23,7 @@ public class AtfParamTable
 	 */
 	public AtfParamTable(WorldWriter root)
 	{
-		this.root = root;
+		super(root, null);
 	}
 
 	/**
@@ -44,6 +44,7 @@ public class AtfParamTable
 
 	/**
 	 * 按值查找ATF参数
+	 * 
 	 * @param w
 	 * @param h
 	 * @param param
@@ -54,14 +55,25 @@ public class AtfParamTable
 		return value_atfParam.get(w + "_" + h + "_" + param);
 	}
 
+	
+	//----------------------------------------------------------------------------------
+	//
+	//  功能实现
+	//
+	//----------------------------------------------------------------------------------
+	
+	@Override
+	protected void startup() throws Exception
+	{
+		GamePacker.log("开始读取Atf输出参数！");
+	}
+	
 	/**
 	 * 构建
 	 */
-	public void start()
+	@Override
+	protected void exec() throws Exception
 	{
-		id_atfParam = new HashMap<String, AtfParam>();
-		value_atfParam = new HashMap<String, AtfParam>();
-
 		ProjectFile[] files = root.getFileTable().getAllParamFiles();
 		for (int i = 0; i < files.length; i++)
 		{
@@ -74,17 +86,8 @@ public class AtfParamTable
 
 			GamePacker.progress(String.format("解析输出参数(%s/%s) : %s", i + 1, files.length, file.getPath()));
 
-			Document document = null;
-			try
-			{
-				SAXReader reader = new SAXReader();
-				document = reader.read(file);
-			}
-			catch (DocumentException e)
-			{
-				GamePacker.error("输出参数文件解析失败！(" + file.getPath() + ")   " + e);
-				continue;
-			}
+			SAXReader reader = new SAXReader();
+			Document document = reader.read(file);
 
 			String[] lines = document.getRootElement().getText().split("\n");
 			for (String line : lines)
@@ -128,5 +131,7 @@ public class AtfParamTable
 			id_atfParam.put("default", param);
 			value_atfParam.put(param.width + "_" + param.height + "_" + param.other, param);
 		}
+
+		GamePacker.log("完成!");
 	}
 }

@@ -21,6 +21,7 @@ import org.game.knight.version.packer.world.model.ImageFrame;
 public class Config3dAttireWriter
 {
 	private WorldWriter root;
+	private Config3d config;
 	private String outputURL;
 
 	private HashMap<String, String> newTable = new HashMap<String, String>();
@@ -31,9 +32,10 @@ public class Config3dAttireWriter
 	 * 
 	 * @param root
 	 */
-	public Config3dAttireWriter(WorldWriter root)
+	public Config3dAttireWriter(WorldWriter root, Config3d config)
 	{
 		this.root = root;
+		this.config = config;
 	}
 
 	/**
@@ -88,7 +90,7 @@ public class Config3dAttireWriter
 							ImageFrame frame = root.getImageFrameTable().get(anim.img.gid, anim.row, anim.col, i);
 							if (frame != null)
 							{
-								Atlas atlas = root.getAtlasTable().findAtlasByImageFrame(frame);
+								Atlas atlas = config.getAtlasTable().findAtlasByImageFrame(frame);
 								if (atlas != null)
 								{
 									atfURLs.add(atlas.atfURL);
@@ -143,7 +145,7 @@ public class Config3dAttireWriter
 							ImageFrame frame = root.getImageFrameTable().get(anim.img.gid, anim.row, anim.col, i);
 							if (frame != null)
 							{
-								Atlas atlas = root.getAtlasTable().findAtlasByImageFrame(frame);
+								Atlas atlas = config.getAtlasTable().findAtlasByImageFrame(frame);
 								if (atlas != null)
 								{
 									attireText.append("\t\t\t\t<frame texture=\"" + root.localToCdnURL(atlas.atfURL) + "\" frameID=\"" + frame.file.gid + "_" + frame.row + "_" + frame.col + "_" + i + "\" frameW=\"" + frame.frameW + "\" frameH=\"" + frame.frameH + "\" delay=\"" + delay + "\"/>\n");

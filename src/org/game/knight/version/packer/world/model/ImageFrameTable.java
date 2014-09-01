@@ -16,9 +16,10 @@ import javax.imageio.ImageIO;
 import org.chw.util.FileUtil;
 import org.eclipse.swt.graphics.Rectangle;
 import org.game.knight.version.packer.GamePacker;
+import org.game.knight.version.packer.world.BaseWriter;
 import org.game.knight.version.packer.world.WorldWriter;
 
-public class ImageFrameTable
+public class ImageFrameTable extends BaseWriter
 {
 	private WorldWriter root;
 
@@ -100,7 +101,8 @@ public class ImageFrameTable
 
 	/**
 	 * 开始
-	 */
+	 */ 
+	@Override
 	public void start()
 	{
 		openVer();
@@ -308,7 +310,8 @@ public class ImageFrameTable
 
 	/**
 	 * 保存版本信息
-	 */
+	 */ 
+	@Override
 	public void saveVer()
 	{
 		String[] keys = newTable.keySet().toArray(new String[newTable.size()]);

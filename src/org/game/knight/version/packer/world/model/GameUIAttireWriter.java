@@ -22,9 +22,10 @@ import org.chw.swf.writer.SwfWriter;
 import org.chw.util.FileUtil;
 import org.chw.util.MD5Util;
 import org.game.knight.version.packer.GamePacker;
+import org.game.knight.version.packer.world.BaseWriter;
 import org.game.knight.version.packer.world.WorldWriter;
 
-public class GameUIAttireWriter
+public class GameUIAttireWriter extends BaseWriter
 {
 	private static final String UI_AVATAR_FRAME_PACK = "knight.ui.avatar";
 
@@ -63,7 +64,8 @@ public class GameUIAttireWriter
 
 	/**
 	 * 开始
-	 */
+	 */ 
+	@Override
 	public void start()
 	{
 		openVer();
@@ -648,7 +650,8 @@ public class GameUIAttireWriter
 
 	/**
 	 * 保存版本信息
-	 */
+	 */ 
+	@Override
 	public void saveVer()
 	{
 		StringBuilder output = new StringBuilder();

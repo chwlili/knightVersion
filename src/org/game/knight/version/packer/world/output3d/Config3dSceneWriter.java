@@ -35,6 +35,7 @@ import org.game.knight.version.packer.world.model.WorldCity;
 public class Config3dSceneWriter
 {
 	private WorldWriter root;
+	private Config3d config;
 
 	private String worldCfgURL;
 	private HashMap<Scene, String> scene_url;
@@ -49,9 +50,10 @@ public class Config3dSceneWriter
 	 * 
 	 * @param root
 	 */
-	public Config3dSceneWriter(WorldWriter root)
+	public Config3dSceneWriter(WorldWriter root,Config3d config)
 	{
 		this.root = root;
+		this.config=config;
 	}
 
 	/**
@@ -161,7 +163,7 @@ public class Config3dSceneWriter
 			{
 				continue;
 			}
-			SliceImage img = root.getSliceImageWriter().getSliceImage(frame);
+			SliceImage img = config.getSliceImageWriter().getSliceImage(frame);
 			if (img == null)
 			{
 				continue;
@@ -183,7 +185,7 @@ public class Config3dSceneWriter
 			{
 				continue;
 			}
-			SliceImage img = root.getSliceImageWriter().getSliceImage(frame);
+			SliceImage img = config.getSliceImageWriter().getSliceImage(frame);
 			if (img == null)
 			{
 				continue;
@@ -375,7 +377,7 @@ public class Config3dSceneWriter
 					if (layer.img != null)
 					{
 						ImageFrame frame = root.getImageFrameTable().get(layer.img.imgFile.gid, 1, 1, 0);
-						SliceImage slice = root.getSliceImageWriter().getSliceImage(frame);
+						SliceImage slice = config.getSliceImageWriter().getSliceImage(frame);
 						if (slice != null)
 						{
 							urls.add(slice.previewURL);
@@ -387,7 +389,7 @@ public class Config3dSceneWriter
 					if (layer.img != null)
 					{
 						ImageFrame frame = root.getImageFrameTable().get(layer.img.imgFile.gid, 1, 1, 0);
-						SliceImage slice = root.getSliceImageWriter().getSliceImage(frame);
+						SliceImage slice = config.getSliceImageWriter().getSliceImage(frame);
 						if (slice != null)
 						{
 							urls.add(slice.previewURL);
@@ -453,7 +455,7 @@ public class Config3dSceneWriter
 								}
 
 								ImageFrame frame = root.getImageFrameTable().get(anim.img.gid, anim.row, anim.col, i);
-								Atlas atlas = root.getAtlasTable().findAtlasByImageFrame(frame);
+								Atlas atlas = config.getAtlasTable().findAtlasByImageFrame(frame);
 								if (atlas != null)
 								{
 									urls.add(atlas.previewURL);
@@ -478,7 +480,7 @@ public class Config3dSceneWriter
 								}
 
 								ImageFrame frame = root.getImageFrameTable().get(anim.img.gid, anim.row, anim.col, i);
-								Atlas atlas = root.getAtlasTable().findAtlasByImageFrame(frame);
+								Atlas atlas = config.getAtlasTable().findAtlasByImageFrame(frame);
 								if (atlas != null)
 								{
 									urls.add(atlas.atfURL);

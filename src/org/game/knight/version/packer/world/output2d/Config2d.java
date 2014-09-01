@@ -9,6 +9,7 @@ import java.util.HashSet;
 
 import org.chw.util.FileUtil;
 import org.game.knight.version.packer.GamePacker;
+import org.game.knight.version.packer.world.BaseWriter;
 import org.game.knight.version.packer.world.WorldWriter;
 import org.game.knight.version.packer.world.model.Attire;
 import org.game.knight.version.packer.world.model.AttireAction;
@@ -16,7 +17,7 @@ import org.game.knight.version.packer.world.model.AttireAnim;
 import org.game.knight.version.packer.world.model.ImageFrame;
 import org.game.knight.version.packer.world.model.Scene;
 
-public class Config2d
+public class Config2d extends BaseWriter
 {
 	private WorldWriter root;
 	private AttireSwfWriter attireSwfWriter;
@@ -36,6 +37,7 @@ public class Config2d
 		this.sceneWriter = new Config2dSceneWriter(root, attireSwfWriter);
 	}
 
+	@Override
 	public void start()
 	{
 		attireSwfWriter.start();
@@ -57,6 +59,12 @@ public class Config2d
 		}
 
 		writeDB();
+	}
+
+	@Override
+	public void saveVer()
+	{
+
 	}
 
 	/**

@@ -9,6 +9,7 @@ import java.util.HashSet;
 
 import org.chw.util.FileUtil;
 import org.game.knight.version.packer.GamePacker;
+import org.game.knight.version.packer.world.BaseWriter;
 import org.game.knight.version.packer.world.WorldWriter;
 import org.game.knight.version.packer.world.model.Attire;
 import org.game.knight.version.packer.world.model.AttireAction;
@@ -16,9 +17,11 @@ import org.game.knight.version.packer.world.model.AttireAnim;
 import org.game.knight.version.packer.world.model.ImageFrame;
 import org.game.knight.version.packer.world.model.Scene;
 
-public class Config3d
+public class Config3d extends BaseWriter
 {
 	private WorldWriter root;
+	private SliceImageWriter sliceWriter;
+	private AtlasWriter atlasWriter;
 	private Config3dAttireWriter attireWriter;
 	private Config3dSceneWriter sceneWriter;
 
@@ -30,13 +33,48 @@ public class Config3d
 	public Config3d(WorldWriter root)
 	{
 		this.root = root;
-		this.attireWriter = new Config3dAttireWriter(root);
-		this.sceneWriter = new Config3dSceneWriter(root);
+		this.sliceWriter = new SliceImageWriter(root);
+		this.atlasWriter = new AtlasWriter(root);
+		this.attireWriter = new Config3dAttireWriter(root, this);
+		this.sceneWriter = new Config3dSceneWriter(root, this);
 	}
+
+	// ----------------------------------------------------------------------------------------
+	//
+	// 数据表
+	//
+	// ----------------------------------------------------------------------------------------
+
+	/**
+	 * 获取切片输出器
+	 * 
+	 * @return
+	 */
+	public SliceImageWriter getSliceImageWriter()
+	{
+		return sliceWriter;
+	}
+
+	/**
+	 * 获取纹理集输出器
+	 * 
+	 * @return
+	 */
+	public AtlasWriter getAtlasTable()
+	{
+		return atlasWriter;
+	}
+
+	// ----------------------------------------------------------------------------------------
+	//
+	// db.xml
+	//
+	// ----------------------------------------------------------------------------------------
 
 	/**
 	 * 开始
 	 */
+	@Override
 	public void start()
 	{
 		attireWriter.start();
@@ -55,6 +93,18 @@ public class Config3d
 
 		writeDB();
 	}
+
+	@Override
+	public void saveVer()
+	{
+
+	}
+
+	// ----------------------------------------------------------------------------------------
+	//
+	// db.xml
+	//
+	// ----------------------------------------------------------------------------------------
 
 	/**
 	 * 输出汇总信息
@@ -137,7 +187,7 @@ public class Config3d
 								action_urls.put(action, new HashSet<String>());
 							}
 
-							Atlas atlas = root.getAtlasTable().findAtlasByImageFrame(frame);
+							Atlas atlas = getAtlasTable().findAtlasByImageFrame(frame);
 							if (atlas != null)
 							{
 								String url = atlas.atfURL;
