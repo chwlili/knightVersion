@@ -388,7 +388,7 @@ public class AttireTable extends BaseWriter
 				actionList.add(new AttireAction(id, actionRectMap.createActionRect(id), actionAnimArray, actionAudioArray));
 			}
 
-			addAttire(file, new Attire(file.gid, attireID, 0, actionRectMap.createActionRect(1), actionList.toArray(new AttireAction[actionList.size()])));
+			addAttire(file, new Attire(file.gid, attireID, 0, actionRectMap.createAttireRect(), actionList.toArray(new AttireAction[actionList.size()])));
 		}
 	}
 
@@ -478,36 +478,30 @@ public class AttireTable extends BaseWriter
 				return;
 			}
 
-			int x = XmlUtil.parseInt(sizeNode.attributeValue("x"), 0);
-			if (x != 0)
+			if (sizeNode.attribute("x") != null)
 			{
-				id_x.put(id, x);
+				id_x.put(id, XmlUtil.parseInt(sizeNode.attributeValue("x"), 0));
 			}
-			int y = XmlUtil.parseInt(sizeNode.attributeValue("y"), 0);
-			if (y != 0)
+			if (sizeNode.attribute("y") != null)
 			{
-				id_y.put(id, y);
+				id_y.put(id, XmlUtil.parseInt(sizeNode.attributeValue("y"), 0));
 			}
-			int w = XmlUtil.parseInt(sizeNode.attributeValue("width"), 0);
-			if (w != 0)
+			if (sizeNode.attribute("width") != null)
 			{
-				id_w.put(id, w);
+				id_w.put(id, XmlUtil.parseInt(sizeNode.attributeValue("width"), 0));
 			}
-			int h = XmlUtil.parseInt(sizeNode.attributeValue("height"), 0);
-			if (h != 0)
+			if (sizeNode.attribute("height") != null)
 			{
-				id_h.put(id, h);
+				id_h.put(id, XmlUtil.parseInt(sizeNode.attributeValue("height"), 0));
 			}
 
-			int nameX = XmlUtil.parseInt(sizeNode.attributeValue("nameX"), 0);
-			if (nameX != 0)
+			if (sizeNode.attribute("nameX") != null)
 			{
-				id_nameX.put(id, nameX);
+				id_nameX.put(id, XmlUtil.parseInt(sizeNode.attributeValue("nameX"), 0));
 			}
-			int nameY = XmlUtil.parseInt(sizeNode.attributeValue("nameY"), 0);
-			if (nameY != 0)
+			if (sizeNode.attribute("nameY") != null)
 			{
-				id_nameY.put(id, nameY);
+				id_nameY.put(id, XmlUtil.parseInt(sizeNode.attributeValue("nameY"), 0));
 			}
 		}
 
@@ -533,6 +527,23 @@ public class AttireTable extends BaseWriter
 			return new AttireHitRect(x, y, w, h, nameX, nameY);
 		}
 
+		public AttireHitRect createAttireRect()
+		{
+			int x = attireRectX;
+			int y = attireRectY;
+			int w = attireRectW;
+			int h = attireRectH;
+			int nameX = attireNameX;
+			int nameY = attireNameY;
+
+			if (x == 0 && y == 0 && w == 0 && h == 0)
+			{
+				return createActionRect(1);
+			}
+
+			return new AttireHitRect(x, y, w, h, nameX, nameY);
+		}
+
 		private int getInt(HashMap<Integer, Integer> map, int id, int def)
 		{
 			if (map.containsKey(id))
@@ -543,26 +554,26 @@ public class AttireTable extends BaseWriter
 			{
 				return map.get(1);
 			}
-			// else if(map.containsKey(0))
-			// {
-			// return map.get(0);
-			// }
-			// else
-			// {
-			// int min=Integer.MAX_VALUE;
-			// for(Integer aid:map.keySet())
-			// {
-			// if(aid>1 && aid<min)
-			// {
-			// min=aid;
-			// }
-			// }
-			//
-			// if(map.containsKey(min))
-			// {
-			// return map.get(min);
-			// }
-			// }
+			else if (map.containsKey(0))
+			{
+				return map.get(0);
+			}
+			else
+			{
+				int min = Integer.MAX_VALUE;
+				for (Integer aid : map.keySet())
+				{
+					if (aid > 1 && aid < min)
+					{
+						min = aid;
+					}
+				}
+
+				if (map.containsKey(min))
+				{
+					return map.get(min);
+				}
+			}
 			return def;
 		}
 	}
