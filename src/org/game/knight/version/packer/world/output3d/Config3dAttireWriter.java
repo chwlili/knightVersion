@@ -1,6 +1,12 @@
 package org.game.knight.version.packer.world.output3d;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -11,6 +17,7 @@ import org.chw.util.FileUtil;
 import org.chw.util.MD5Util;
 import org.chw.util.ZlibUtil;
 import org.game.knight.version.packer.GamePacker;
+import org.game.knight.version.packer.world.BaseWriter;
 import org.game.knight.version.packer.world.WorldWriter;
 import org.game.knight.version.packer.world.model.Attire;
 import org.game.knight.version.packer.world.model.AttireAction;
@@ -18,9 +25,8 @@ import org.game.knight.version.packer.world.model.AttireAnim;
 import org.game.knight.version.packer.world.model.AttireAudio;
 import org.game.knight.version.packer.world.model.ImageFrame;
 
-public class Config3dAttireWriter
+public class Config3dAttireWriter extends BaseWriter
 {
-	private WorldWriter root;
 	private Config3d config;
 	private String outputURL;
 
@@ -34,20 +40,9 @@ public class Config3dAttireWriter
 	 */
 	public Config3dAttireWriter(WorldWriter root, Config3d config)
 	{
-		this.root = root;
+		super(root, "3dAttire");
+
 		this.config = config;
-	}
-
-	/**
-	 * 开始
-	 */
-	public void start()
-	{
-		GamePacker.progress("输出装扮配置");
-
-		openVer();
-
-		writeAttireConfig();
 	}
 
 	/**
@@ -60,10 +55,14 @@ public class Config3dAttireWriter
 		return outputURL;
 	}
 
-	/**
-	 * 输出装扮配置
-	 */
-	private void writeAttireConfig()
+	@Override
+	protected void startup() throws Exception
+	{
+		GamePacker.progress("输出3D渲染装扮配置");
+	}
+
+	@Override
+	protected void exec() throws Exception
 	{
 		Attire[] attires = root.getAttireTable().getAllAttire();
 		Arrays.sort(attires, new Comparator<Attire>()
@@ -90,7 +89,7 @@ public class Config3dAttireWriter
 							ImageFrame frame = root.getImageFrameTable().get(anim.img.gid, anim.row, anim.col, i);
 							if (frame != null)
 							{
-								Atlas atlas = config.getAtlasTable().findAtlasByImageFrame(frame);
+								Atlas atlas = config.atlasWriter.findAtlasByImageFrame(frame);
 								if (atlas != null)
 								{
 									atfURLs.add(atlas.atfURL);
@@ -145,7 +144,7 @@ public class Config3dAttireWriter
 							ImageFrame frame = root.getImageFrameTable().get(anim.img.gid, anim.row, anim.col, i);
 							if (frame != null)
 							{
-								Atlas atlas = config.getAtlasTable().findAtlasByImageFrame(frame);
+								Atlas atlas = config.atlasWriter.findAtlasByImageFrame(frame);
 								if (atlas != null)
 								{
 									attireText.append("\t\t\t\t<frame texture=\"" + root.localToCdnURL(atlas.atfURL) + "\" frameID=\"" + frame.file.gid + "_" + frame.row + "_" + frame.col + "_" + i + "\" frameW=\"" + frame.frameW + "\" frameH=\"" + frame.frameH + "\" delay=\"" + delay + "\"/>\n");
@@ -204,43 +203,18 @@ public class Config3dAttireWriter
 	//
 	// -------------------------------------------------------------------------------------------------------------------
 
-	/**
-	 * 获取版本文件
-	 * 
-	 * @return
-	 */
-	private File getVerFile()
+	@Override
+	protected void readHistory(InputStream stream) throws Exception
 	{
-		return new File(root.getOutputFolder().getPath() + File.separatorChar + ".ver" + File.separatorChar + "3dAttire");
-	}
-
-	/**
-	 * 打开版本信息
-	 */
-	private void openVer()
-	{
-		newTable = new HashMap<String, String>();
-		oldTable = new HashMap<String, String>();
-
-		if (!getVerFile().exists())
+		BufferedReader reader = new BufferedReader(new InputStreamReader(stream, "utf8"));
+		while (true)
 		{
-			return;
-		}
+			String line = reader.readLine();
+			if (line == null)
+			{
+				break;
+			}
 
-		String text = null;
-		try
-		{
-			text = new String(FileUtil.getFileBytes(getVerFile()), "utf8");
-		}
-		catch (UnsupportedEncodingException e)
-		{
-			e.printStackTrace();
-			return;
-		}
-
-		String[] lines = text.split("\n");
-		for (String line : lines)
-		{
 			line = line.trim();
 			if (line.isEmpty())
 			{
@@ -258,34 +232,19 @@ public class Config3dAttireWriter
 		}
 	}
 
-	/**
-	 * 保存版本信息
-	 */
-	public void saveVer()
+	@Override
+	protected void saveHistory(OutputStream stream) throws Exception
 	{
-		if (newTable == null)
-		{
-			return;
-		}
+		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(stream, "utf8"));
 
+		// 排序
 		String[] keys = newTable.keySet().toArray(new String[newTable.size()]);
 		Arrays.sort(keys);
 
-		StringBuilder output = new StringBuilder();
+		// 写入
 		for (String key : keys)
 		{
-			output.append(key + " = " + newTable.get(key) + "\n");
-		}
-
-		try
-		{
-			FileUtil.writeFile(getVerFile(), output.toString().getBytes("utf8"));
-		}
-		catch (UnsupportedEncodingException e)
-		{
-			e.printStackTrace();
-			GamePacker.error(e);
-			return;
+			writer.write(key + " = " + newTable.get(key) + "\n");
 		}
 
 		// 记录输出文件

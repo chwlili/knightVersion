@@ -1,6 +1,12 @@
 package org.game.knight.version.packer.world.output2d;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -11,6 +17,7 @@ import org.chw.util.MD5Util;
 import org.chw.util.TextUtil;
 import org.chw.util.ZlibUtil;
 import org.game.knight.version.packer.GamePacker;
+import org.game.knight.version.packer.world.BaseWriter;
 import org.game.knight.version.packer.world.WorldWriter;
 import org.game.knight.version.packer.world.model.Attire;
 import org.game.knight.version.packer.world.model.AttireAction;
@@ -32,7 +39,7 @@ import org.game.knight.version.packer.world.model.SceneSection;
 import org.game.knight.version.packer.world.model.SceneTrap;
 import org.game.knight.version.packer.world.model.WorldCity;
 
-public class Config2dSceneWriter
+public class Config2dSceneWriter extends BaseWriter
 {
 	private WorldWriter root;
 	private AttireSwfWriter attireSWFWriter;
@@ -52,26 +59,8 @@ public class Config2dSceneWriter
 	 */
 	public Config2dSceneWriter(WorldWriter root, AttireSwfWriter attireSWFWriter)
 	{
-		this.root = root;
+		super(root, "2dScene");
 		this.attireSWFWriter = attireSWFWriter;
-	}
-
-	/**
-	 * 开始
-	 */
-	public void start()
-	{
-		GamePacker.progress("输出装扮配置");
-
-		openVer();
-
-		writerAllSceneCfg();
-
-		writerWorldCfg();
-
-		measureSceneLoadInfo();
-
-		saveVer();
 	}
 
 	/**
@@ -106,10 +95,14 @@ public class Config2dSceneWriter
 		return scene_size.get(scene);
 	}
 
-	/**
-	 * 输出所有场景配置
-	 */
-	private void writerAllSceneCfg()
+	@Override
+	protected void startup() throws Exception
+	{
+		GamePacker.log("输出2D渲染场景配置");
+	}
+
+	@Override
+	protected void exec() throws Exception
 	{
 		scene_url = new HashMap<Scene, String>();
 
@@ -122,14 +115,29 @@ public class Config2dSceneWriter
 				return;
 			}
 		}
+
+		if (root.isCancel())
+		{
+			return;
+		}
+
+		writerWorldCfg();
+
+		if (root.isCancel())
+		{
+			return;
+		}
+
+		measureSceneLoadInfo();
 	}
 
 	/**
 	 * 输出场景配置
 	 * 
 	 * @param scene
+	 * @throws Exception
 	 */
-	private void writeSceneCfg(Scene scene)
+	private void writeSceneCfg(Scene scene) throws Exception
 	{
 		GamePacker.progress("输出场景 : " + scene.sceneName + " (" + scene.file.getPath() + ")");
 
@@ -267,20 +275,10 @@ public class Config2dSceneWriter
 		sb.append("</scene>");
 
 		// 存储文件
-		byte[] bytes = null;
-		try
+		byte[] bytes = sb.toString().getBytes("UTF-8");
+		if (root.hasZIP())
 		{
-			bytes = sb.toString().getBytes("UTF-8");
-			if(root.hasZIP())
-			{
-				bytes=ZlibUtil.compress(bytes);
-			}
-		}
-		catch (UnsupportedEncodingException e)
-		{
-			e.printStackTrace();
-			GamePacker.error(e);
-			return;
+			bytes = ZlibUtil.compress(bytes);
 		}
 
 		String md5 = MD5Util.md5Bytes(bytes);
@@ -302,8 +300,10 @@ public class Config2dSceneWriter
 
 	/**
 	 * 输出世界配置
+	 * 
+	 * @throws Exception
 	 */
-	private void writerWorldCfg()
+	private void writerWorldCfg() throws Exception
 	{
 		// 生成配置内容
 		GamePacker.progress("生成世界配置");
@@ -323,20 +323,10 @@ public class Config2dSceneWriter
 		sb.append("</worldDB>");
 
 		// 存储文件
-		byte[] bytes = null;
-		try
+		byte[] bytes = sb.toString().getBytes("UTF-8");
+		if (root.hasZIP())
 		{
-			bytes = sb.toString().getBytes("UTF-8");
-			if(root.hasZIP())
-			{
-				bytes=ZlibUtil.compress(bytes);
-			}
-		}
-		catch (UnsupportedEncodingException e)
-		{
-			e.printStackTrace();
-			GamePacker.error(e);
-			return;
+			bytes = ZlibUtil.compress(bytes);
 		}
 
 		String md5 = MD5Util.md5Bytes(bytes);
@@ -507,33 +497,18 @@ public class Config2dSceneWriter
 		return new File(root.getOutputFolder().getPath() + File.separatorChar + ".ver" + File.separatorChar + "2dScene");
 	}
 
-	/**
-	 * 打开版本信息
-	 */
-	private void openVer()
+	@Override
+	protected void readHistory(InputStream stream) throws Exception
 	{
-		newTable = new HashMap<String, String>();
-		oldTable = new HashMap<String, String>();
+		BufferedReader reader = new BufferedReader(new InputStreamReader(stream, "utf8"));
+		while (true)
+		{
+			String line = reader.readLine();
+			if (line == null)
+			{
+				break;
+			}
 
-		if (!getVerFile().exists())
-		{
-			return;
-		}
-
-		String text = null;
-		try
-		{
-			text = new String(FileUtil.getFileBytes(getVerFile()), "utf8");
-		}
-		catch (UnsupportedEncodingException e)
-		{
-			e.printStackTrace();
-			return;
-		}
-
-		String[] lines = text.split("\n");
-		for (String line : lines)
-		{
 			line = line.trim();
 			if (line.isEmpty())
 			{
@@ -551,19 +526,16 @@ public class Config2dSceneWriter
 		}
 	}
 
-	/**
-	 * 保存版本信息
-	 */
-	public void saveVer()
+	@Override
+	protected void saveHistory(OutputStream stream) throws Exception
 	{
-		if (newTable == null)
-		{
-			return;
-		}
+		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(stream, "utf8"));
 
+		//排序
 		String[] keys = newTable.keySet().toArray(new String[newTable.size()]);
 		Arrays.sort(keys);
 
+		//
 		StringBuilder output = new StringBuilder();
 		for (String key : keys)
 		{

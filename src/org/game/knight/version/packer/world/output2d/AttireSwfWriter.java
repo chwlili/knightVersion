@@ -2,10 +2,15 @@ package org.game.knight.version.packer.world.output2d;
 
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -21,6 +26,7 @@ import org.chw.swf.writer.SwfBitmap;
 import org.chw.swf.writer.SwfWriter;
 import org.chw.util.FileUtil;
 import org.game.knight.version.packer.GamePacker;
+import org.game.knight.version.packer.world.BaseWriter;
 import org.game.knight.version.packer.world.WorldWriter;
 import org.game.knight.version.packer.world.model.Attire;
 import org.game.knight.version.packer.world.model.AttireAction;
@@ -29,11 +35,9 @@ import org.game.knight.version.packer.world.model.AttireBitmap;
 import org.game.knight.version.packer.world.model.ImageFrame;
 import org.game.knight.version.packer.world.model.ProjectImgFile;
 
-public class AttireSwfWriter
+public class AttireSwfWriter extends BaseWriter
 {
 	private static final String AVATAR2_FRAME_PACK = "knight.avatar2.frames";
-
-	private WorldWriter root;
 
 	private int nextIndex;
 	private int finishedCount;
@@ -53,7 +57,7 @@ public class AttireSwfWriter
 	 */
 	public AttireSwfWriter(WorldWriter root)
 	{
-		this.root = root;
+		super(root, "2dResource");
 	}
 
 	/**
@@ -93,7 +97,7 @@ public class AttireSwfWriter
 	 */
 	public String getFrameClassID(ImageFrame frame)
 	{
-		return "$2d_" + frame.file.gid + "_" + 1 + "_" + 1 + "_"+frame.index;
+		return "$2d_" + frame.file.gid + "_" + 1 + "_" + 1 + "_" + frame.index;
 	}
 
 	/**
@@ -133,16 +137,21 @@ public class AttireSwfWriter
 		return finishedCount >= newFrameList.size();
 	}
 
-	/**
-	 * 开始
-	 */
-	public void start()
+	@Override
+	protected void startup() throws Exception
 	{
-		GamePacker.progress("输出装扮配置");
+		GamePacker.log("输出2D渲染装扮资源");
+	}
 
-		openVer();
-
+	@Override
+	protected void exec() throws Exception
+	{
 		filterAttireResources();
+
+		if (root.isCancel())
+		{
+			return;
+		}
 
 		ExecutorService exec = Executors.newCachedThreadPool();
 		for (int i = 0; i < root.maxThreadCount; i++)
@@ -165,9 +174,9 @@ public class AttireSwfWriter
 							writeSwfFile(next);
 							finish(next);
 						}
-						catch (IOException e)
+						catch (Exception e)
 						{
-							e.printStackTrace();
+							root.cancel(e);
 						}
 					}
 				}
@@ -177,25 +186,10 @@ public class AttireSwfWriter
 		while (!root.isCancel() && !hasFinished())
 		{
 			GamePacker.progress(lastLog);
-
-			try
-			{
-				Thread.sleep(500);
-			}
-			catch (InterruptedException e)
-			{
-				e.printStackTrace();
-				GamePacker.error(e);
-				break;
-			}
+			Thread.sleep(500);
 		}
 
 		exec.shutdown();
-
-		if (hasFinished())
-		{
-			saveVer();
-		}
 	}
 
 	/**
@@ -324,7 +318,7 @@ public class AttireSwfWriter
 	 * @param entity
 	 * @throws IOException
 	 */
-	private void writeSwfFile(OutputEntity entity) throws IOException
+	private void writeSwfFile(OutputEntity entity) throws Exception
 	{
 		ArrayList<String> classIDs = new ArrayList<String>();
 		ArrayList<byte[]> pngBytes = new ArrayList<byte[]>();
@@ -407,44 +401,24 @@ public class AttireSwfWriter
 		newTable.put(fileID, url);
 	}
 
-	/**
-	 * 获取版本文件
-	 * 
-	 * @return
-	 */
-	private File getVerFile()
+	@Override
+	protected void readHistory(InputStream stream) throws Exception
 	{
-		return new File(root.getOutputFolder().getPath() + File.separatorChar + ".ver" + File.separatorChar + "2dResource");
-	}
-
-	/**
-	 * 打开版本信息
-	 */
-	private void openVer()
-	{
-		this.oldTable = new HashMap<String, String>();
-		this.newTable = new HashMap<String, String>();
-
-		if (!getVerFile().exists())
+		BufferedReader reader = new BufferedReader(new InputStreamReader(stream, "utf8"));
+		while (true)
 		{
-			return;
-		}
+			String line = reader.readLine();
+			if (line == null)
+			{
+				break;
+			}
 
-		String text = null;
+			line = line.trim();
+			if (line.isEmpty())
+			{
+				continue;
+			}
 
-		try
-		{
-			text = new String(FileUtil.getFileBytes(getVerFile()), "utf8");
-		}
-		catch (UnsupportedEncodingException e)
-		{
-			e.printStackTrace();
-			return;
-		}
-
-		String[] lines = text.split("\\n");
-		for (String line : lines)
-		{
 			String[] items = line.split("=");
 			if (items.length != 2)
 			{
@@ -467,43 +441,27 @@ public class AttireSwfWriter
 		}
 	}
 
-	/**
-	 * 保存版本信息
-	 */
-	private void saveVer()
+	@Override
+	protected void saveHistory(OutputStream stream) throws Exception
 	{
-		StringBuilder output = new StringBuilder();
+		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(stream, "utf8"));
 
-		if (newTable == null)
-		{
-			return;
-		}
-
+		// 排序
 		String[] keys = newTable.keySet().toArray(new String[newTable.size()]);
 		Arrays.sort(keys);
 
+		// 写入
 		for (int i = 0; i < keys.length; i++)
 		{
 			String key = keys[i];
 			String url = newTable.get(key);
 
-			output.append(key + " = " + url);
+			writer.write(key + " = " + url);
 
 			if (i < keys.length - 1)
 			{
-				output.append("\n");
+				writer.write("\n");
 			}
-		}
-
-		try
-		{
-			FileUtil.writeFile(getVerFile(), output.toString().getBytes("utf8"));
-		}
-		catch (UnsupportedEncodingException e)
-		{
-			e.printStackTrace();
-			GamePacker.error(e);
-			return;
 		}
 
 		// 记录输出文件

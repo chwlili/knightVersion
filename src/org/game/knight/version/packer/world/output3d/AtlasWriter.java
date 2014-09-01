@@ -2,10 +2,14 @@ package org.game.knight.version.packer.world.output3d;
 
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
-import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.RandomAccessFile;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -16,8 +20,8 @@ import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
 
-import org.chw.util.FileUtil;
 import org.game.knight.version.packer.GamePacker;
+import org.game.knight.version.packer.world.BaseWriter;
 import org.game.knight.version.packer.world.WorldWriter;
 import org.game.knight.version.packer.world.model.AtfParam;
 import org.game.knight.version.packer.world.model.Attire;
@@ -27,7 +31,7 @@ import org.game.knight.version.packer.world.model.ImageFrame;
 import org.game.knight.version.packer.world.output3d.TextureRectPacker.Rect;
 import org.game.knight.version.packer.world.output3d.TextureRectPacker.RectSet;
 
-public class AtlasWriter
+public class AtlasWriter extends BaseWriter
 {
 	private WorldWriter root;
 
@@ -36,8 +40,8 @@ public class AtlasWriter
 	private HashMap<AtlasRect[], AtfParam> rectList_atf;
 	private HashMap<AtlasRect[], Atlas> rectList_atlas;
 
-	private HashMap<String, AtlasSet> newTable;
-	private HashMap<String, AtlasSet> oldTable;
+	private HashMap<String, AtlasSet> newTable = new HashMap<String, AtlasSet>();
+	private HashMap<String, AtlasSet> oldTable = new HashMap<String, AtlasSet>();
 
 	private HashMap<ImageFrame, Atlas> frame_atlas;
 
@@ -52,63 +56,7 @@ public class AtlasWriter
 	 */
 	public AtlasWriter(WorldWriter root)
 	{
-		this.root = root;
-	}
-
-	/**
-	 * 开始
-	 */
-	public void start()
-	{
-		openVer();
-
-		if (root.isCancel())
-		{
-			return;
-		}
-
-		atf_rectListSet = new HashMap<AtfParam, ArrayList<AtlasRect[]>>();
-		allRectList = new ArrayList<AtlasRect[]>();
-		rectList_atf = new HashMap<AtlasRect[], AtfParam>();
-		rectList_atlas = new HashMap<AtlasRect[], Atlas>();
-
-		filterAtfGroup();
-
-		if (root.isCancel())
-		{
-			return;
-		}
-
-		writeAllAtf();
-
-		if (root.isCancel())
-		{
-			return;
-		}
-
-		for (AtfParam key : atf_rectListSet.keySet())
-		{
-			ArrayList<AtlasRect[]> value = atf_rectListSet.get(key);
-			Atlas[] atlasList = new Atlas[value.size()];
-			for (int i = 0; i < value.size(); i++)
-			{
-				atlasList[i] = rectList_atlas.get(value.get(i));
-			}
-
-			add(new AtlasSet(key, atlasList));
-		}
-
-		frame_atlas = new HashMap<ImageFrame, Atlas>();
-		for (AtlasSet set : newTable.values())
-		{
-			for (Atlas atlas : set.atlasList)
-			{
-				for (AtlasRect rect : atlas.rects)
-				{
-					frame_atlas.put(rect.frame, atlas);
-				}
-			}
-		}
+		super(root, "3dAtlas");
 	}
 
 	/**
@@ -120,92 +68,6 @@ public class AtlasWriter
 	public Atlas findAtlasByImageFrame(ImageFrame frame)
 	{
 		return frame_atlas.get(frame);
-	}
-
-	// -----------------------------------------------------------------------------------------------------
-	//
-	// 过滤ATF组
-	//
-	// -----------------------------------------------------------------------------------------------------
-
-	/**
-	 * 过滤ATF组
-	 * 
-	 * @return
-	 */
-	private void filterAtfGroup()
-	{
-		HashMap<AtfParam, HashSet<ImageFrame>> atf_frameset = new HashMap<AtfParam, HashSet<ImageFrame>>();
-		for (Attire attire : root.getAttireTable().getAllAttire())
-		{
-			for (AttireAction action : attire.actions)
-			{
-				for (AttireAnim anim : action.anims)
-				{
-					for (int i = 0; i < anim.times.length; i++)
-					{
-						if (anim.times[i] > 0)
-						{
-							AtfParam atf = anim.param;
-							if (!atf_frameset.containsKey(atf))
-							{
-								atf_frameset.put(atf, new HashSet<ImageFrame>());
-							}
-
-							atf_frameset.get(atf).add(root.getImageFrameTable().get(anim.img.gid, anim.row, anim.col, i));
-						}
-					}
-				}
-			}
-		}
-
-		HashMap<AtfParam, ImageFrame[]> atf_frameArray = new HashMap<AtfParam, ImageFrame[]>();
-		for (AtfParam key : atf_frameset.keySet())
-		{
-			HashSet<ImageFrame> value = atf_frameset.get(key);
-			ImageFrame[] valueArray = value.toArray(new ImageFrame[value.size()]);
-			if (!activate(key, valueArray))
-			{
-				atf_frameArray.put(key, valueArray);
-			}
-		}
-
-		for (AtfParam param : atf_frameArray.keySet())
-		{
-			try
-			{
-				TextureRectPacker packer = new TextureRectPacker(param.width, param.height, false);
-				for (ImageFrame frame : atf_frameArray.get(param))
-				{
-					packer.push(frame, frame.clipW, frame.clipH);
-				}
-				packer.pack();
-
-				ArrayList<AtlasRect[]> textures = new ArrayList<AtlasRect[]>();
-
-				ArrayList<RectSet> rectSets = packer.getRectSets();
-				for (int i = 0; i < rectSets.size(); i++)
-				{
-					RectSet rectSet = rectSets.get(i);
-
-					ArrayList<AtlasRect> list = new ArrayList<AtlasRect>();
-					for (Rect rect : rectSet.getRects())
-					{
-						list.add(new AtlasRect((ImageFrame) rect.data, rect.x, rect.y));
-					}
-
-					AtlasRect[] rectList = list.toArray(new AtlasRect[list.size()]);
-					textures.add(rectList);
-					allRectList.add(rectList);
-					rectList_atf.put(rectList, param);
-				}
-				atf_rectListSet.put(param, textures);
-			}
-			catch (Exception e)
-			{
-				e.printStackTrace();
-			}
-		}
 	}
 
 	// -----------------------------------------------------------------------------------------------------
@@ -251,10 +113,70 @@ public class AtlasWriter
 		return finishedCount >= allRectList.size();
 	}
 
+	@Override
+	protected void startup() throws Exception
+	{
+		GamePacker.log("输出3D渲染纹理集");
+	}
+
+	@Override
+	protected void exec() throws Exception
+	{
+		atf_rectListSet = new HashMap<AtfParam, ArrayList<AtlasRect[]>>();
+		allRectList = new ArrayList<AtlasRect[]>();
+		rectList_atf = new HashMap<AtlasRect[], AtfParam>();
+		rectList_atlas = new HashMap<AtlasRect[], Atlas>();
+
+		filterAtfGroup();
+
+		if (root.isCancel())
+		{
+			return;
+		}
+
+		writeAllAtf();
+
+		if (root.isCancel())
+		{
+			return;
+		}
+
+		for (AtfParam key : atf_rectListSet.keySet())
+		{
+			ArrayList<AtlasRect[]> value = atf_rectListSet.get(key);
+			Atlas[] atlasList = new Atlas[value.size()];
+			for (int i = 0; i < value.size(); i++)
+			{
+				atlasList[i] = rectList_atlas.get(value.get(i));
+			}
+
+			add(new AtlasSet(key, atlasList));
+		}
+
+		if (root.isCancel())
+		{
+			return;
+		}
+
+		frame_atlas = new HashMap<ImageFrame, Atlas>();
+		for (AtlasSet set : newTable.values())
+		{
+			for (Atlas atlas : set.atlasList)
+			{
+				for (AtlasRect rect : atlas.rects)
+				{
+					frame_atlas.put(rect.frame, atlas);
+				}
+			}
+		}
+	}
+
 	/**
 	 * 输出所有ATF
+	 * 
+	 * @throws Exception
 	 */
-	private void writeAllAtf()
+	private void writeAllAtf() throws Exception
 	{
 		ExecutorService exec = Executors.newCachedThreadPool();
 		for (int i = 0; i < root.maxThreadCount; i++)
@@ -272,15 +194,18 @@ public class AtlasWriter
 							break;
 						}
 
-						AtfParam param = rectList_atf.get(next);
-						Atlas atlas = writeATF(param, next);
-						if (atlas != null)
+						try
 						{
-							finish(next, atlas);
+							AtfParam param = rectList_atf.get(next);
+							Atlas atlas = writeATF(param, next);
+							if (atlas != null)
+							{
+								finish(next, atlas);
+							}
 						}
-						else
+						catch (Exception e)
 						{
-							// root.error();
+							root.cancel(e);
 						}
 					}
 				}
@@ -289,17 +214,10 @@ public class AtlasWriter
 
 		while (!root.isCancel() && !isFinished())
 		{
-			try
-			{
-				GamePacker.progress(lastLog);
-				Thread.sleep(50);
-			}
-			catch (InterruptedException e)
-			{
-				e.printStackTrace();
-				break;
-			}
+			GamePacker.progress(lastLog);
+			Thread.sleep(50);
 		}
+
 		exec.shutdown();
 	}
 
@@ -307,8 +225,9 @@ public class AtlasWriter
 	 * 输出ATF
 	 * 
 	 * @param rects
+	 * @throws Exception
 	 */
-	private Atlas writeATF(AtfParam param, AtlasRect[] rects)
+	private Atlas writeATF(AtfParam param, AtlasRect[] rects) throws Exception
 	{
 		// 把属于同一个图像文件的帧排到一起，减少绘制图像时切换图像的次数。
 		Arrays.sort(rects, new Comparator<AtlasRect>()
@@ -341,16 +260,8 @@ public class AtlasWriter
 		{
 			if (rect.frame.file != subFile)
 			{
-				try
-				{
-					subFile = rect.frame.file;
-					subImage = ImageIO.read(subFile);
-				}
-				catch (IOException e)
-				{
-					e.printStackTrace();
-					continue;
-				}
+				subFile = rect.frame.file;
+				subImage = ImageIO.read(subFile);
 			}
 
 			ImageFrame frame = rect.frame;
@@ -390,7 +301,17 @@ public class AtlasWriter
 		return new Atlas(rects, param, url1, url2);
 	}
 
-	private String writerAtfImage(AtlasRect[] rects, AtfParam param, BufferedImage image, String saveURL)
+	/**
+	 * 输出原版ATF
+	 * 
+	 * @param rects
+	 * @param param
+	 * @param image
+	 * @param saveURL
+	 * @return
+	 * @throws Exception
+	 */
+	private String writerAtfImage(AtlasRect[] rects, AtfParam param, BufferedImage image, String saveURL) throws Exception
 	{
 		// 确定文件输出位置
 		String pngURL = saveURL + ".png";
@@ -410,45 +331,38 @@ public class AtlasWriter
 		atlas.append("</TextureAtlas>");
 
 		// 输出ATF,组合XML配置
-		try
+		pngFile.getParentFile().mkdirs();
+
+		ImageIO.write(image, "png", pngFile);
+		TextureHelper.png2atf(pngFile, atfFile, param.other);
+
+		byte[] xmlBytes = atlas.toString().getBytes("utf8");
+
+		RandomAccessFile a = new RandomAccessFile(atfFile, "rw");
+		a.seek(atfFile.length());
+		a.write(xmlBytes);
+		a.write((xmlBytes.length >>> 24) & 0xFF);
+		a.write((xmlBytes.length >>> 16) & 0xFF);
+		a.write((xmlBytes.length >>> 8) & 0xFF);
+		a.write(xmlBytes.length & 0xFF);
+		a.close();
+
+		root.addFileSuffix(atfFile);
+
+		if (pngFile.exists())
 		{
-			pngFile.getParentFile().mkdirs();
-
-			ImageIO.write(image, "png", pngFile);
-			TextureHelper.png2atf(pngFile, atfFile, param.other);
-
-			byte[] xmlBytes = atlas.toString().getBytes("utf8");
-
-			RandomAccessFile a = new RandomAccessFile(atfFile, "rw");
-			a.seek(atfFile.length());
-			a.write(xmlBytes);
-			a.write((xmlBytes.length >>> 24) & 0xFF);
-			a.write((xmlBytes.length >>> 16) & 0xFF);
-			a.write((xmlBytes.length >>> 8) & 0xFF);
-			a.write(xmlBytes.length & 0xFF);
-			a.close();
-
-			root.addFileSuffix(atfFile);
-
-			if (pngFile.exists())
-			{
-				pngFile.delete();
-			}
-		}
-		catch (IOException e)
-		{
-			e.printStackTrace();
+			pngFile.delete();
 		}
 
 		return atfURL;
 	}
 
 	/**
-	 * 输出ATF预览图
+	 * 输出小版ATF
 	 * 
 	 * @param image
 	 */
-	private String writerAtfPreview(AtlasRect[] rects, AtfParam param, BufferedImage image, String saveURL)
+	private String writerAtfPreview(AtlasRect[] rects, AtfParam param, BufferedImage image, String saveURL) throws Exception
 	{
 		// 确定文件输出位置
 		String pngURL = saveURL + "_0.png";
@@ -482,37 +396,104 @@ public class AtlasWriter
 		atlas.append("</TextureAtlas>");
 
 		// 输出ATF,组合XML配置
-		try
+		pngFile.getParentFile().mkdirs();
+
+		ImageIO.write(image, "png", pngFile);
+		TextureHelper.png2atf(pngFile, atfFile, param.other);
+
+		byte[] xmlBytes = atlas.toString().getBytes("utf8");
+
+		RandomAccessFile a = new RandomAccessFile(atfFile, "rw");
+		a.seek(atfFile.length());
+		a.write(xmlBytes);
+		a.write((xmlBytes.length >>> 24) & 0xFF);
+		a.write((xmlBytes.length >>> 16) & 0xFF);
+		a.write((xmlBytes.length >>> 8) & 0xFF);
+		a.write(xmlBytes.length & 0xFF);
+		a.close();
+
+		root.addFileSuffix(atfFile);
+
+		if (pngFile.exists())
 		{
-			pngFile.getParentFile().mkdirs();
-
-			ImageIO.write(image, "png", pngFile);
-			TextureHelper.png2atf(pngFile, atfFile, param.other);
-
-			byte[] xmlBytes = atlas.toString().getBytes("utf8");
-
-			RandomAccessFile a = new RandomAccessFile(atfFile, "rw");
-			a.seek(atfFile.length());
-			a.write(xmlBytes);
-			a.write((xmlBytes.length >>> 24) & 0xFF);
-			a.write((xmlBytes.length >>> 16) & 0xFF);
-			a.write((xmlBytes.length >>> 8) & 0xFF);
-			a.write(xmlBytes.length & 0xFF);
-			a.close();
-
-			root.addFileSuffix(atfFile);
-
-			if (pngFile.exists())
-			{
-				pngFile.delete();
-			}
-		}
-		catch (IOException e)
-		{
-			e.printStackTrace();
+			pngFile.delete();
 		}
 
 		return atfURL;
+	}
+
+	/**
+	 * 过滤ATF组
+	 * 
+	 * @return
+	 * @throws Exception
+	 */
+	private void filterAtfGroup() throws Exception
+	{
+		HashMap<AtfParam, HashSet<ImageFrame>> atf_frameset = new HashMap<AtfParam, HashSet<ImageFrame>>();
+		for (Attire attire : root.getAttireTable().getAllAttire())
+		{
+			for (AttireAction action : attire.actions)
+			{
+				for (AttireAnim anim : action.anims)
+				{
+					for (int i = 0; i < anim.times.length; i++)
+					{
+						if (anim.times[i] > 0)
+						{
+							AtfParam atf = anim.param;
+							if (!atf_frameset.containsKey(atf))
+							{
+								atf_frameset.put(atf, new HashSet<ImageFrame>());
+							}
+
+							atf_frameset.get(atf).add(root.getImageFrameTable().get(anim.img.gid, anim.row, anim.col, i));
+						}
+					}
+				}
+			}
+		}
+
+		HashMap<AtfParam, ImageFrame[]> atf_frameArray = new HashMap<AtfParam, ImageFrame[]>();
+		for (AtfParam key : atf_frameset.keySet())
+		{
+			HashSet<ImageFrame> value = atf_frameset.get(key);
+			ImageFrame[] valueArray = value.toArray(new ImageFrame[value.size()]);
+			if (!activate(key, valueArray))
+			{
+				atf_frameArray.put(key, valueArray);
+			}
+		}
+
+		for (AtfParam param : atf_frameArray.keySet())
+		{
+			TextureRectPacker packer = new TextureRectPacker(param.width, param.height, false);
+			for (ImageFrame frame : atf_frameArray.get(param))
+			{
+				packer.push(frame, frame.clipW, frame.clipH);
+			}
+			packer.pack();
+
+			ArrayList<AtlasRect[]> textures = new ArrayList<AtlasRect[]>();
+
+			ArrayList<RectSet> rectSets = packer.getRectSets();
+			for (int i = 0; i < rectSets.size(); i++)
+			{
+				RectSet rectSet = rectSets.get(i);
+
+				ArrayList<AtlasRect> list = new ArrayList<AtlasRect>();
+				for (Rect rect : rectSet.getRects())
+				{
+					list.add(new AtlasRect((ImageFrame) rect.data, rect.x, rect.y));
+				}
+
+				AtlasRect[] rectList = list.toArray(new AtlasRect[list.size()]);
+				textures.add(rectList);
+				allRectList.add(rectList);
+				rectList_atf.put(rectList, param);
+			}
+			atf_rectListSet.put(param, textures);
+		}
 	}
 
 	// -------------------------------------------------------------------------------------------------------------------
@@ -550,45 +531,18 @@ public class AtlasWriter
 		newTable.put(set.key, set);
 	}
 
-	/**
-	 * 获取版本文件
-	 * 
-	 * @return
-	 */
-	private File getVerFile()
+	@Override
+	protected void readHistory(InputStream stream) throws Exception
 	{
-		return new File(root.getOutputFolder().getPath() + File.separatorChar + ".ver" + File.separatorChar + "3dAtlas");
-	}
-
-	/**
-	 * 打开版本信息
-	 */
-	private void openVer()
-	{
-		this.oldTable = new HashMap<String, AtlasSet>();
-		this.newTable = new HashMap<String, AtlasSet>();
-
-		if (!getVerFile().exists())
+		BufferedReader reader = new BufferedReader(new InputStreamReader(stream, "utf8"));
+		while (true)
 		{
-			return;
-		}
+			String line = reader.readLine();
+			if (line == null)
+			{
+				break;
+			}
 
-		String text = "";
-
-		try
-		{
-			text = new String(FileUtil.getFileBytes(getVerFile()), "utf8");
-		}
-		catch (UnsupportedEncodingException e)
-		{
-			e.printStackTrace();
-			return;
-		}
-
-		String[] lines = text.split("\\n");
-		for (String line : lines)
-		{
-			line = line.trim();
 			if (line.isEmpty())
 			{
 				continue;
@@ -646,18 +600,10 @@ public class AtlasWriter
 						break;
 					}
 
-					try
-					{
-						int placeX = Integer.parseInt(rectValues[4].trim());
-						int placeY = Integer.parseInt(rectValues[5].trim());
+					int placeX = Integer.parseInt(rectValues[4].trim());
+					int placeY = Integer.parseInt(rectValues[5].trim());
 
-						rects.add(new AtlasRect(frame, placeX, placeY));
-					}
-					catch (Error error)
-					{
-						rects = null;
-						break;
-					}
+					rects.add(new AtlasRect(frame, placeX, placeY));
 				}
 
 				if (rects == null)
@@ -679,65 +625,51 @@ public class AtlasWriter
 		}
 	}
 
-	/**
-	 * 保存版本信息
-	 */
-	public void saveVer()
+	@Override
+	protected void saveHistory(OutputStream stream) throws Exception
 	{
-		StringBuilder output = new StringBuilder();
+		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(stream, "utf8"));
 
-		if (newTable != null)
+		// 排序
+		AtlasSet[] atlasSet = newTable.values().toArray(new AtlasSet[newTable.size()]);
+		Arrays.sort(atlasSet, new Comparator<AtlasSet>()
 		{
-			AtlasSet[] atlasSet = newTable.values().toArray(new AtlasSet[newTable.size()]);
-			Arrays.sort(atlasSet, new Comparator<AtlasSet>()
+			@Override
+			public int compare(AtlasSet o1, AtlasSet o2)
 			{
-				@Override
-				public int compare(AtlasSet o1, AtlasSet o2)
-				{
-					return o1.key.compareTo(o2.key);
-				}
-			});
+				return o1.key.compareTo(o2.key);
+			}
+		});
 
-			for (int i = 0; i < atlasSet.length; i++)
+		// 写入
+		for (int i = 0; i < atlasSet.length; i++)
+		{
+			AtlasSet set = atlasSet[i];
+
+			writer.write(set.atfParam.width + "+" + set.atfParam.height + "+" + set.atfParam.other);
+			writer.write(" = ");
+
+			for (int j = 0; j < set.atlasList.length; j++)
 			{
-				AtlasSet set = atlasSet[i];
-
-				output.append(set.atfParam.width + "+" + set.atfParam.height + "+" + set.atfParam.other);
-				output.append(" = ");
-
-				for (int j = 0; j < set.atlasList.length; j++)
+				if (j > 0)
 				{
-					if (j > 0)
-					{
-						output.append("+");
-					}
-
-					Atlas atlas = set.atlasList[j];
-					output.append(atlas.atfURL);
-					output.append(",");
-					output.append(atlas.previewURL);
-					for (AtlasRect rect : atlas.rects)
-					{
-						output.append(",");
-						output.append(rect.frame.file.gid + "_" + rect.frame.row + "_" + rect.frame.col + "_" + rect.frame.index + "_" + rect.x + "_" + rect.y);
-					}
+					writer.write("+");
 				}
-				if (i < atlasSet.length - 1)
+
+				Atlas atlas = set.atlasList[j];
+				writer.write(atlas.atfURL);
+				writer.write(",");
+				writer.write(atlas.previewURL);
+				for (AtlasRect rect : atlas.rects)
 				{
-					output.append("\n");
+					writer.write(",");
+					writer.write(rect.frame.file.gid + "_" + rect.frame.row + "_" + rect.frame.col + "_" + rect.frame.index + "_" + rect.x + "_" + rect.y);
 				}
 			}
-		}
-
-		try
-		{
-			FileUtil.writeFile(getVerFile(), output.toString().getBytes("utf8"));
-		}
-		catch (UnsupportedEncodingException e)
-		{
-			e.printStackTrace();
-			GamePacker.error(e);
-			return;
+			if (i < atlasSet.length - 1)
+			{
+				writer.write("\n");
+			}
 		}
 
 		// 记录输出文件

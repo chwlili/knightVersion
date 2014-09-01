@@ -21,8 +21,6 @@ import org.game.knight.version.packer.world.WorldWriter;
 
 public class WorldTable extends BaseWriter
 {
-	private WorldWriter root;
-
 	private SceneLink[] links;
 	private WorldCity[] citys;
 	private Scene[] scenes;
@@ -35,7 +33,7 @@ public class WorldTable extends BaseWriter
 	 */
 	public WorldTable(WorldWriter root)
 	{
-		this.root = root;
+		super(root, null);
 	}
 
 	/**
@@ -79,11 +77,19 @@ public class WorldTable extends BaseWriter
 		return sceneMap.get(id);
 	}
 
+	@Override
+	protected void startup() throws Exception
+	{
+		GamePacker.log("读取所有场景信息");
+	}
+
 	/**
 	 * 构建
+	 * 
+	 * @throws Exception
 	 */
 	@Override
-	public void start()
+	protected void exec() throws Exception
 	{
 		ProjectFile[] links = root.getFileTable().getAllLinkFiles();
 		if (links.length <= 0)
@@ -93,16 +99,8 @@ public class WorldTable extends BaseWriter
 		File file = links[0];
 
 		// 读取XML
-		Document document = null;
-		try
-		{
-			SAXReader reader = new SAXReader();
-			document = reader.read(file);
-		}
-		catch (DocumentException e)
-		{
-			GamePacker.error("链接文件解析失败!\t" + e.getMessage());
-		}
+		SAXReader reader = new SAXReader();
+		Document document = reader.read(file);
 
 		if (document != null)
 		{

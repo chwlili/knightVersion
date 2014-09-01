@@ -1,9 +1,13 @@
 package org.game.knight.version.packer.world.model;
 
 import java.awt.image.BufferedImage;
-import java.io.File;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -13,7 +17,6 @@ import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
 
-import org.chw.util.FileUtil;
 import org.eclipse.swt.graphics.Rectangle;
 import org.game.knight.version.packer.GamePacker;
 import org.game.knight.version.packer.world.BaseWriter;
@@ -38,7 +41,7 @@ public class ImageFrameTable extends BaseWriter
 	 */
 	public ImageFrameTable(WorldWriter root)
 	{
-		this.root = root;
+		super(root, "clip");
 	}
 
 	/**
@@ -99,14 +102,15 @@ public class ImageFrameTable extends BaseWriter
 		add(frames);
 	}
 
-	/**
-	 * 开始
-	 */ 
 	@Override
-	public void start()
+	protected void startup() throws Exception
 	{
-		openVer();
+		GamePacker.log("计算动画帧的裁切矩形");
+	}
 
+	@Override
+	protected void exec() throws Exception
+	{
 		inputList = findAllFrame(root);
 
 		ExecutorService exec = Executors.newCachedThreadPool();
@@ -190,130 +194,111 @@ public class ImageFrameTable extends BaseWriter
 		newTable.put(key, frames);
 	}
 
-	/**
-	 * 获取版本文件
-	 * 
-	 * @return
-	 */
-	private File getVerFile()
-	{
-		return new File(root.getOutputFolder().getPath() + File.separatorChar + ".ver" + File.separatorChar + "clip");
-	}
-
-	/**
-	 * 打开版本信息
-	 */
-	private void openVer()
+	@Override
+	protected void readHistory(InputStream stream) throws Exception
 	{
 		this.oldTable = new HashMap<String, ImageFrame[]>();
 		this.newTable = new HashMap<String, ImageFrame[]>();
 
-		if (!getVerFile().exists())
+		BufferedReader reader = new BufferedReader(new InputStreamReader(stream, "utf8"));
+		while (true)
 		{
-			return;
-		}
-
-		try
-		{
-			String text = new String(FileUtil.getFileBytes(getVerFile()), "utf8");
-			String[] lines = text.split("\\n");
-			for (String line : lines)
+			String line = reader.readLine();
+			if (line == null)
 			{
-				// fileID_row_col =
-				// index_frameX_frameY_frameW_frameH_clipX_clipY_clipW_clipH ,
-				// ..
-				line = line.trim();
-				if (line.isEmpty())
+				break;
+			}
+
+			// fileID_row_col =
+			// index_frameX_frameY_frameW_frameH_clipX_clipY_clipW_clipH ,
+			// ..
+			line = line.trim();
+			if (line.isEmpty())
+			{
+				continue;
+			}
+
+			String[] parts = line.split("=");
+			if (parts.length == 2)
+			{
+				String[] keys = parts[0].trim().split("_");
+				String[] values = parts[1].trim().split(",");
+
+				if (keys.length != 3)
 				{
 					continue;
 				}
 
-				String[] parts = line.split("=");
-				if (parts.length == 2)
+				ProjectFile file = root.getFileTable().getFileByGID(keys[0]);
+				if (file == null)
 				{
-					String[] keys = parts[0].trim().split("_");
-					String[] values = parts[1].trim().split(",");
+					continue;
+				}
 
-					if (keys.length != 3)
+				int row = 0;
+				int col = 0;
+				ArrayList<ImageFrame> frames = new ArrayList<ImageFrame>();
+
+				try
+				{
+					row = Integer.parseInt(keys[1]);
+					col = Integer.parseInt(keys[2]);
+				}
+				catch (Error err)
+				{
+					continue;
+				}
+
+				if (row * col != values.length)
+				{
+					continue;
+				}
+
+				for (String value : values)
+				{
+					String params[] = value.split("_");
+					if (params.length != 9)
 					{
 						continue;
 					}
-
-					ProjectFile file = root.getFileTable().getFileByGID(keys[0]);
-					if (file == null)
-					{
-						continue;
-					}
-
-					int row = 0;
-					int col = 0;
-					ArrayList<ImageFrame> frames = new ArrayList<ImageFrame>();
 
 					try
 					{
-						row = Integer.parseInt(keys[1]);
-						col = Integer.parseInt(keys[2]);
+						int index = Integer.parseInt(params[0]);
+						int frameX = Integer.parseInt(params[1]);
+						int frameY = Integer.parseInt(params[2]);
+						int frameW = Integer.parseInt(params[3]);
+						int frameH = Integer.parseInt(params[4]);
+						int clipX = Integer.parseInt(params[5]);
+						int clipY = Integer.parseInt(params[6]);
+						int clipW = Integer.parseInt(params[7]);
+						int clipH = Integer.parseInt(params[8]);
+
+						if (file instanceof ProjectImgFile)
+						{
+							frames.add(new ImageFrame((ProjectImgFile) file, row, col, index, frameX, frameY, frameW, frameH, clipX, clipY, clipW, clipH));
+						}
 					}
 					catch (Error err)
 					{
 						continue;
 					}
+				}
 
-					if (row * col != values.length)
-					{
-						continue;
-					}
-
-					for (String value : values)
-					{
-						String params[] = value.split("_");
-						if (params.length != 9)
-						{
-							continue;
-						}
-
-						try
-						{
-							int index = Integer.parseInt(params[0]);
-							int frameX = Integer.parseInt(params[1]);
-							int frameY = Integer.parseInt(params[2]);
-							int frameW = Integer.parseInt(params[3]);
-							int frameH = Integer.parseInt(params[4]);
-							int clipX = Integer.parseInt(params[5]);
-							int clipY = Integer.parseInt(params[6]);
-							int clipW = Integer.parseInt(params[7]);
-							int clipH = Integer.parseInt(params[8]);
-
-							if (file instanceof ProjectImgFile)
-							{
-								frames.add(new ImageFrame((ProjectImgFile) file, row, col, index, frameX, frameY, frameW, frameH, clipX, clipY, clipW, clipH));
-							}
-						}
-						catch (Error err)
-						{
-							continue;
-						}
-					}
-
-					if (row * col == values.length && values.length > 0)
-					{
-						oldTable.put(file.gid + "_" + row + "_" + col, frames.toArray(new ImageFrame[frames.size()]));
-					}
+				if (row * col == values.length && values.length > 0)
+				{
+					oldTable.put(file.gid + "_" + row + "_" + col, frames.toArray(new ImageFrame[frames.size()]));
 				}
 			}
 		}
-		catch (UnsupportedEncodingException e)
-		{
-			e.printStackTrace();
-		}
 	}
 
-	/**
-	 * 保存版本信息
-	 */ 
 	@Override
-	public void saveVer()
+	protected void saveHistory(OutputStream stream) throws Exception
 	{
+		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(stream, "utf8"));
+
+		// 排序
 		String[] keys = newTable.keySet().toArray(new String[newTable.size()]);
 		Arrays.sort(keys, new Comparator<String>()
 		{
@@ -328,7 +313,7 @@ public class ImageFrameTable extends BaseWriter
 			}
 		});
 
-		StringBuilder sb = new StringBuilder();
+		// 写入
 		for (int i = 0; i < keys.length; i++)
 		{
 			ImageFrame[] frames = newTable.get(keys[i]);
@@ -347,31 +332,22 @@ public class ImageFrameTable extends BaseWriter
 			});
 
 			ImageFrame first = frames[0];
-			sb.append(first.file.gid + "_" + first.row + "_" + first.col);
-			sb.append(" = ");
+			writer.write(first.file.gid + "_" + first.row + "_" + first.col);
+			writer.write(" = ");
 			for (int j = 0; j < frames.length; j++)
 			{
 				ImageFrame frame = frames[j];
 				if (j > 0)
 				{
-					sb.append(",");
+					writer.write(",");
 				}
-				sb.append(frame.index + "_" + frame.frameX + "_" + frame.frameY + "_" + frame.frameW + "_" + frame.frameH + "_" + frame.clipX + "_" + frame.clipY + "_" + frame.clipW + "_" + frame.clipH);
+				writer.write(frame.index + "_" + frame.frameX + "_" + frame.frameY + "_" + frame.frameW + "_" + frame.frameH + "_" + frame.clipX + "_" + frame.clipY + "_" + frame.clipW + "_" + frame.clipH);
 			}
 
 			if (i < keys.length - 1)
 			{
-				sb.append("\n");
+				writer.write("\n");
 			}
-		}
-
-		try
-		{
-			FileUtil.writeFile(getVerFile(), sb.toString().getBytes("UTF-8"));
-		}
-		catch (UnsupportedEncodingException e)
-		{
-			e.printStackTrace();
 		}
 	}
 

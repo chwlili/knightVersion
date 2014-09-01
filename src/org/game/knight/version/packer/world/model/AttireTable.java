@@ -9,7 +9,6 @@ import java.util.List;
 import org.chw.util.PathUtil;
 import org.chw.util.XmlUtil;
 import org.dom4j.Document;
-import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 import org.game.knight.version.packer.GamePacker;
@@ -125,11 +124,17 @@ public class AttireTable extends BaseWriter
 		allAttres.add(attire);
 	}
 
+	@Override
+	protected void startup() throws Exception
+	{
+		GamePacker.log("读取所有装扮信息");
+	}
+
 	/**
 	 * 构建
 	 */
 	@Override
-	public void start()
+	protected void exec() throws Exception
 	{
 		ProjectFile[] files = root.getFileTable().getAllAttireFiles();
 		for (ProjectFile file : files)
@@ -139,37 +144,19 @@ public class AttireTable extends BaseWriter
 				return;
 			}
 
-			open(file);
-		}
-	}
+			SAXReader reader = new SAXReader();
+			Document document = reader.read(file);
 
-	/**
-	 * 打开
-	 * 
-	 * @param exporter
-	 */
-	private void open(ProjectFile file)
-	{
-		Document document = null;
-		SAXReader reader = new SAXReader();
-		try
-		{
-			document = reader.read(file);
-		}
-		catch (DocumentException e)
-		{
-			GamePacker.error(e);
-		}
-
-		if (document == null)
-		{
-			return;
-		}
-		if (document != null)
-		{
-			rebuildImgs(file, document);
-			rebuildAnims(file, document);
-			rebuildAttires(file, document);
+			if (document == null)
+			{
+				return;
+			}
+			if (document != null)
+			{
+				rebuildImgs(file, document);
+				rebuildAnims(file, document);
+				rebuildAttires(file, document);
+			}
 		}
 	}
 

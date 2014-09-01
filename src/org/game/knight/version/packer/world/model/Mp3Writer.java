@@ -1,8 +1,12 @@
 package org.game.knight.version.packer.world.model;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -16,8 +20,8 @@ import org.game.knight.version.packer.world.WorldWriter;
 public class Mp3Writer extends BaseWriter
 {
 	private WorldWriter root;
-	private HashMap<String, String> newTable;
-	private HashMap<String, String> oldTable;
+	private HashMap<String, String> newTable = new HashMap<String, String>();
+	private HashMap<String, String> oldTable = new HashMap<String, String>();
 
 	/**
 	 * 构造函数
@@ -26,17 +30,29 @@ public class Mp3Writer extends BaseWriter
 	 */
 	public Mp3Writer(WorldWriter root)
 	{
-		this.root = root;
+		super(root, "mp3");
 	}
 
 	/**
-	 * 开始
+	 * 获取MP3文件的URL
+	 * 
+	 * @param file
+	 * @return
 	 */
-	@Override
-	public void start()
+	public String getMp3URL(ProjectFile file)
 	{
-		openVer();
+		return newTable.get(file.gid);
+	}
 
+	@Override
+	protected void startup() throws Exception
+	{
+		GamePacker.log("输出MP3文件");
+	}
+
+	@Override
+	protected void exec() throws Exception
+	{
 		ArrayList<ProjectFile> newMp3s = new ArrayList<ProjectFile>();
 
 		ProjectFile[] mp3s = root.getFileTable().getAllMp3Files();
@@ -57,30 +73,10 @@ public class Mp3Writer extends BaseWriter
 
 			GamePacker.progress("输出MP3文件(" + (i + 1) + "/" + newMp3s.size() + ")：" + url);
 
-			try
-			{
-				FileUtil.copyTo(file, mp3);
-				root.addFileSuffix(file);
-				add(mp3, url);
-			}
-			catch (IOException e)
-			{
-				e.printStackTrace();
-				GamePacker.error(e);
-				return;
-			}
+			FileUtil.copyTo(file, mp3);
+			root.addFileSuffix(file);
+			add(mp3, url);
 		}
-	}
-
-	/**
-	 * 获取MP3文件的URL
-	 * 
-	 * @param file
-	 * @return
-	 */
-	public String getMp3URL(ProjectFile file)
-	{
-		return newTable.get(file.gid);
 	}
 
 	// -------------------------------------------------------------------------------------------------------------------
@@ -115,44 +111,24 @@ public class Mp3Writer extends BaseWriter
 		newTable.put(file.gid, url);
 	}
 
-	/**
-	 * 获取版本文件
-	 * 
-	 * @return
-	 */
-	private File getVerFile()
+	@Override
+	protected void readHistory(InputStream stream) throws Exception
 	{
-		return new File(root.getOutputFolder().getPath() + File.separatorChar + ".ver" + File.separatorChar + "mp3");
-	}
-
-	/**
-	 * 打开版本信息
-	 */
-	private void openVer()
-	{
-		this.oldTable = new HashMap<String, String>();
-		this.newTable = new HashMap<String, String>();
-
-		if (!getVerFile().exists())
+		BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
+		while (true)
 		{
-			return;
-		}
+			String line = reader.readLine();
+			if (line == null)
+			{
+				break;
+			}
 
-		String text = null;
+			line = line.trim();
+			if (line.isEmpty())
+			{
+				continue;
+			}
 
-		try
-		{
-			text = new String(FileUtil.getFileBytes(getVerFile()), "utf8");
-		}
-		catch (UnsupportedEncodingException e)
-		{
-			e.printStackTrace();
-			return;
-		}
-
-		String[] lines = text.split("\\n");
-		for (String line : lines)
-		{
 			String[] items = line.split("=");
 			if (items.length != 2)
 			{
@@ -175,19 +151,12 @@ public class Mp3Writer extends BaseWriter
 		}
 	}
 
-	/**
-	 * 保存版本信息
-	 */
 	@Override
-	public void saveVer()
+	protected void saveHistory(OutputStream stream) throws Exception
 	{
-		StringBuilder output = new StringBuilder();
+		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(stream));
 
-		if (newTable == null)
-		{
-			return;
-		}
-
+		// 排序
 		String[] keys = newTable.keySet().toArray(new String[newTable.size()]);
 		Arrays.sort(keys, new Comparator<String>()
 		{
@@ -200,28 +169,18 @@ public class Mp3Writer extends BaseWriter
 			}
 		});
 
+		// 写入输出流
 		for (int i = 0; i < keys.length; i++)
 		{
 			String key = keys[i];
 			String url = newTable.get(key);
 
-			output.append(key + " = " + url);
+			writer.write(key + " = " + url);
 
 			if (i < keys.length - 1)
 			{
-				output.append("\n");
+				writer.write("\n");
 			}
-		}
-
-		try
-		{
-			FileUtil.writeFile(getVerFile(), output.toString().getBytes("utf8"));
-		}
-		catch (UnsupportedEncodingException e)
-		{
-			e.printStackTrace();
-			GamePacker.error(e);
-			return;
 		}
 
 		// 记录输出文件

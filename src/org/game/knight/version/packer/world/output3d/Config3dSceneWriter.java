@@ -1,7 +1,11 @@
 package org.game.knight.version.packer.world.output3d;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
-import java.io.UnsupportedEncodingException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -11,6 +15,7 @@ import org.chw.util.MD5Util;
 import org.chw.util.TextUtil;
 import org.chw.util.ZlibUtil;
 import org.game.knight.version.packer.GamePacker;
+import org.game.knight.version.packer.world.BaseWriter;
 import org.game.knight.version.packer.world.WorldWriter;
 import org.game.knight.version.packer.world.model.Attire;
 import org.game.knight.version.packer.world.model.AttireAction;
@@ -32,9 +37,8 @@ import org.game.knight.version.packer.world.model.SceneSection;
 import org.game.knight.version.packer.world.model.SceneTrap;
 import org.game.knight.version.packer.world.model.WorldCity;
 
-public class Config3dSceneWriter
+public class Config3dSceneWriter extends BaseWriter
 {
-	private WorldWriter root;
 	private Config3d config;
 
 	private String worldCfgURL;
@@ -42,28 +46,18 @@ public class Config3dSceneWriter
 	private HashMap<Scene, String> scene_files;
 	private HashMap<Scene, Integer> scene_size;
 
-	private HashMap<String, String> newTable;
-	private HashMap<String, String> oldTable;
+	private HashMap<String, String> newTable = new HashMap<String, String>();
+	private HashMap<String, String> oldTable = new HashMap<String, String>();
 
 	/**
 	 * 构造函数
 	 * 
 	 * @param root
 	 */
-	public Config3dSceneWriter(WorldWriter root,Config3d config)
+	public Config3dSceneWriter(WorldWriter root, Config3d config)
 	{
-		this.root = root;
-		this.config=config;
-	}
-
-	/**
-	 * 获取世界配置URL
-	 * 
-	 * @return
-	 */
-	public String getWorldCfgURL()
-	{
-		return worldCfgURL;
+		super(root, "3dScene");
+		this.config = config;
 	}
 
 	/**
@@ -89,23 +83,25 @@ public class Config3dSceneWriter
 	}
 
 	/**
-	 * 开始
+	 * 获取世界配置URL
+	 * 
+	 * @return
 	 */
-	public void start()
+	public String getWorldCfgURL()
 	{
-		openVer();
+		return worldCfgURL;
+	}
+	
+	
 
-		writerAllSceneCfg();
-
-		writerWorldCfg();
-
-		measureSceneLoadInfo();
+	@Override
+	protected void startup() throws Exception
+	{
+		GamePacker.log("输出3D渲染场景配置");
 	}
 
-	/**
-	 * 输出所有场景配置
-	 */
-	private void writerAllSceneCfg()
+	@Override
+	protected void exec() throws Exception
 	{
 		scene_url = new HashMap<Scene, String>();
 
@@ -118,14 +114,29 @@ public class Config3dSceneWriter
 				return;
 			}
 		}
+
+		if (root.isCancel())
+		{
+			return;
+		}
+
+		writerWorldCfg();
+
+		if (root.isCancel())
+		{
+			return;
+		}
+
+		measureSceneLoadInfo();
 	}
 
 	/**
 	 * 输出场景配置
 	 * 
 	 * @param scene
+	 * @throws Exception
 	 */
-	private void writeSceneCfg(Scene scene)
+	private void writeSceneCfg(Scene scene) throws Exception
 	{
 		GamePacker.progress("输出场景", scene.sceneID + "." + scene.sceneName);
 
@@ -163,7 +174,7 @@ public class Config3dSceneWriter
 			{
 				continue;
 			}
-			SliceImage img = config.getSliceImageWriter().getSliceImage(frame);
+			SliceImage img = config.sliceWriter.getSliceImage(frame);
 			if (img == null)
 			{
 				continue;
@@ -185,7 +196,7 @@ public class Config3dSceneWriter
 			{
 				continue;
 			}
-			SliceImage img = config.getSliceImageWriter().getSliceImage(frame);
+			SliceImage img = config.sliceWriter.getSliceImage(frame);
 			if (img == null)
 			{
 				continue;
@@ -267,20 +278,10 @@ public class Config3dSceneWriter
 		sb.append("</scene>");
 
 		// 存储文件
-		byte[] bytes = null;
-		try
+		byte[] bytes = sb.toString().getBytes("UTF-8");
+		if (root.hasZIP())
 		{
-			bytes = sb.toString().getBytes("UTF-8");
-			if (root.hasZIP())
-			{
-				bytes = ZlibUtil.compress(bytes);
-			}
-		}
-		catch (UnsupportedEncodingException e)
-		{
-			e.printStackTrace();
-			GamePacker.error(e);
-			return;
+			bytes = ZlibUtil.compress(bytes);
 		}
 
 		String md5 = MD5Util.md5Bytes(bytes);
@@ -302,8 +303,10 @@ public class Config3dSceneWriter
 
 	/**
 	 * 输出世界配置
+	 * 
+	 * @throws Exception
 	 */
-	private void writerWorldCfg()
+	private void writerWorldCfg() throws Exception
 	{
 		// 生成配置内容
 		GamePacker.progress("生成世界配置");
@@ -323,20 +326,10 @@ public class Config3dSceneWriter
 		sb.append("</worldDB>");
 
 		// 存储文件
-		byte[] bytes = null;
-		try
+		byte[] bytes = sb.toString().getBytes("UTF-8");
+		if (root.hasZIP())
 		{
-			bytes = sb.toString().getBytes("UTF-8");
-			if (root.hasZIP())
-			{
-				bytes = ZlibUtil.compress(bytes);
-			}
-		}
-		catch (UnsupportedEncodingException e)
-		{
-			e.printStackTrace();
-			GamePacker.error(e);
-			return;
+			bytes = ZlibUtil.compress(bytes);
 		}
 
 		String md5 = MD5Util.md5Bytes(bytes);
@@ -377,7 +370,7 @@ public class Config3dSceneWriter
 					if (layer.img != null)
 					{
 						ImageFrame frame = root.getImageFrameTable().get(layer.img.imgFile.gid, 1, 1, 0);
-						SliceImage slice = config.getSliceImageWriter().getSliceImage(frame);
+						SliceImage slice = config.sliceWriter.getSliceImage(frame);
 						if (slice != null)
 						{
 							urls.add(slice.previewURL);
@@ -389,7 +382,7 @@ public class Config3dSceneWriter
 					if (layer.img != null)
 					{
 						ImageFrame frame = root.getImageFrameTable().get(layer.img.imgFile.gid, 1, 1, 0);
-						SliceImage slice = config.getSliceImageWriter().getSliceImage(frame);
+						SliceImage slice = config.sliceWriter.getSliceImage(frame);
 						if (slice != null)
 						{
 							urls.add(slice.previewURL);
@@ -455,7 +448,7 @@ public class Config3dSceneWriter
 								}
 
 								ImageFrame frame = root.getImageFrameTable().get(anim.img.gid, anim.row, anim.col, i);
-								Atlas atlas = config.getAtlasTable().findAtlasByImageFrame(frame);
+								Atlas atlas = config.atlasWriter.findAtlasByImageFrame(frame);
 								if (atlas != null)
 								{
 									urls.add(atlas.previewURL);
@@ -464,7 +457,6 @@ public class Config3dSceneWriter
 						}
 					}
 				}
-
 
 				for (Attire attire : highAttires)
 				{
@@ -480,7 +472,7 @@ public class Config3dSceneWriter
 								}
 
 								ImageFrame frame = root.getImageFrameTable().get(anim.img.gid, anim.row, anim.col, i);
-								Atlas atlas = config.getAtlasTable().findAtlasByImageFrame(frame);
+								Atlas atlas = config.atlasWriter.findAtlasByImageFrame(frame);
 								if (atlas != null)
 								{
 									urls.add(atlas.atfURL);
@@ -523,43 +515,17 @@ public class Config3dSceneWriter
 	//
 	// -------------------------------------------------------------------------------------------------------------------
 
-	/**
-	 * 获取版本文件
-	 * 
-	 * @return
-	 */
-	private File getVerFile()
+	protected void readHistory(java.io.InputStream stream) throws Exception
 	{
-		return new File(root.getOutputFolder().getPath() + File.separatorChar + ".ver" + File.separatorChar + "3dScene");
-	}
-
-	/**
-	 * 打开版本信息
-	 */
-	private void openVer()
-	{
-		newTable = new HashMap<String, String>();
-		oldTable = new HashMap<String, String>();
-
-		if (!getVerFile().exists())
+		BufferedReader reader = new BufferedReader(new InputStreamReader(stream, "utf8"));
+		while (true)
 		{
-			return;
-		}
+			String line = reader.readLine();
+			if (line == null)
+			{
+				break;
+			}
 
-		String text = null;
-		try
-		{
-			text = new String(FileUtil.getFileBytes(getVerFile()), "utf8");
-		}
-		catch (UnsupportedEncodingException e)
-		{
-			e.printStackTrace();
-			return;
-		}
-
-		String[] lines = text.split("\n");
-		for (String line : lines)
-		{
 			line = line.trim();
 			if (line.isEmpty())
 			{
@@ -577,34 +543,19 @@ public class Config3dSceneWriter
 		}
 	}
 
-	/**
-	 * 保存版本信息
-	 */
-	public void saveVer()
+	@Override
+	protected void saveHistory(OutputStream stream) throws Exception
 	{
-		if (newTable == null)
-		{
-			return;
-		}
+		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(stream, "utf8"));
 
+		// 排序
 		String[] keys = newTable.keySet().toArray(new String[newTable.size()]);
 		Arrays.sort(keys);
 
-		StringBuilder output = new StringBuilder();
+		// 写入
 		for (String key : keys)
 		{
-			output.append(key + " = " + newTable.get(key) + "\n");
-		}
-
-		try
-		{
-			FileUtil.writeFile(getVerFile(), output.toString().getBytes("utf8"));
-		}
-		catch (UnsupportedEncodingException e)
-		{
-			e.printStackTrace();
-			GamePacker.error(e);
-			return;
+			writer.write(key + " = " + newTable.get(key) + "\n");
 		}
 
 		// 记录输出文件

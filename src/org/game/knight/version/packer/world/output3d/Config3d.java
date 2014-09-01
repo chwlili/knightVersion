@@ -2,6 +2,7 @@ package org.game.knight.version.packer.world.output3d;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -19,11 +20,10 @@ import org.game.knight.version.packer.world.model.Scene;
 
 public class Config3d extends BaseWriter
 {
-	private WorldWriter root;
-	private SliceImageWriter sliceWriter;
-	private AtlasWriter atlasWriter;
-	private Config3dAttireWriter attireWriter;
-	private Config3dSceneWriter sceneWriter;
+	public final SliceImageWriter sliceWriter;
+	public final AtlasWriter atlasWriter;
+	public final Config3dAttireWriter attireWriter;
+	public final Config3dSceneWriter sceneWriter;
 
 	/**
 	 * 构造函数
@@ -32,7 +32,7 @@ public class Config3d extends BaseWriter
 	 */
 	public Config3d(WorldWriter root)
 	{
-		this.root = root;
+		super(root, "");
 		this.sliceWriter = new SliceImageWriter(root);
 		this.atlasWriter = new AtlasWriter(root);
 		this.attireWriter = new Config3dAttireWriter(root, this);
@@ -41,63 +41,46 @@ public class Config3d extends BaseWriter
 
 	// ----------------------------------------------------------------------------------------
 	//
-	// 数据表
-	//
-	// ----------------------------------------------------------------------------------------
-
-	/**
-	 * 获取切片输出器
-	 * 
-	 * @return
-	 */
-	public SliceImageWriter getSliceImageWriter()
-	{
-		return sliceWriter;
-	}
-
-	/**
-	 * 获取纹理集输出器
-	 * 
-	 * @return
-	 */
-	public AtlasWriter getAtlasTable()
-	{
-		return atlasWriter;
-	}
-
-	// ----------------------------------------------------------------------------------------
-	//
 	// db.xml
 	//
 	// ----------------------------------------------------------------------------------------
 
-	/**
-	 * 开始
-	 */
 	@Override
-	public void start()
+	protected void startup() throws Exception
 	{
-		attireWriter.start();
-		if (root.isCancel())
-		{
-			return;
-		}
-		attireWriter.saveVer();
+		GamePacker.log("输出3D渲染配置");
+	}
 
-		sceneWriter.start();
-		if (root.isCancel())
+	@Override
+	protected void exec() throws Exception
+	{
+		ArrayList<BaseWriter> writers = new ArrayList<BaseWriter>();
+		writers.add(sliceWriter);
+		writers.add(atlasWriter);
+		writers.add(attireWriter);
+		writers.add(sceneWriter);
+
+		for (BaseWriter writer : writers)
 		{
-			return;
+			writer.run();
 		}
-		sceneWriter.saveVer();
 
 		writeDB();
 	}
 
 	@Override
-	public void saveVer()
+	public void saveVer() throws Exception
 	{
+		ArrayList<BaseWriter> writers = new ArrayList<BaseWriter>();
+		writers.add(sliceWriter);
+		writers.add(atlasWriter);
+		writers.add(attireWriter);
+		writers.add(sceneWriter);
 
+		for (BaseWriter writer : writers)
+		{
+			writer.saveVer();
+		}
 	}
 
 	// ----------------------------------------------------------------------------------------
@@ -187,7 +170,7 @@ public class Config3d extends BaseWriter
 								action_urls.put(action, new HashSet<String>());
 							}
 
-							Atlas atlas = getAtlasTable().findAtlasByImageFrame(frame);
+							Atlas atlas = atlasWriter.findAtlasByImageFrame(frame);
 							if (atlas != null)
 							{
 								String url = atlas.atfURL;

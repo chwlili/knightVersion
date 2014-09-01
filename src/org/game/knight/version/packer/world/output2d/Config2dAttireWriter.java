@@ -1,7 +1,12 @@
 package org.game.knight.version.packer.world.output2d;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
-import java.io.UnsupportedEncodingException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.util.Arrays;
 import java.util.HashMap;
 
@@ -9,6 +14,7 @@ import org.chw.util.FileUtil;
 import org.chw.util.MD5Util;
 import org.chw.util.ZlibUtil;
 import org.game.knight.version.packer.GamePacker;
+import org.game.knight.version.packer.world.BaseWriter;
 import org.game.knight.version.packer.world.WorldWriter;
 import org.game.knight.version.packer.world.model.Attire;
 import org.game.knight.version.packer.world.model.AttireAction;
@@ -16,9 +22,8 @@ import org.game.knight.version.packer.world.model.AttireAnim;
 import org.game.knight.version.packer.world.model.AttireAudio;
 import org.game.knight.version.packer.world.model.ImageFrame;
 
-public class Config2dAttireWriter
+public class Config2dAttireWriter extends BaseWriter
 {
-	private WorldWriter root;
 	private AttireSwfWriter attireSWFWriter;
 	private String outputURL;
 
@@ -32,22 +37,8 @@ public class Config2dAttireWriter
 	 */
 	public Config2dAttireWriter(WorldWriter root, AttireSwfWriter attireSWFWriter)
 	{
-		this.root = root;
+		super(root, "2dAttire");
 		this.attireSWFWriter = attireSWFWriter;
-	}
-
-	/**
-	 * 开始
-	 */
-	public void start()
-	{
-		GamePacker.progress("输出装扮配置");
-
-		openVer();
-
-		writeAttireConfig();
-		
-		saveVer();
 	}
 
 	/**
@@ -60,12 +51,15 @@ public class Config2dAttireWriter
 		return outputURL;
 	}
 
-	/**
-	 * 输出装扮配置
-	 */
-	private void writeAttireConfig()
+	@Override
+	protected void startup() throws Exception
 	{
-		GamePacker.progress("输出装扮配置");
+		GamePacker.log("输出2D渲染装扮配置");
+	}
+
+	@Override
+	protected void exec() throws Exception
+	{
 		StringBuilder attireText = new StringBuilder();
 		attireText.append("<attires>\n");
 		for (Attire attire : root.getAttireTable().getAllAttire())
@@ -120,20 +114,10 @@ public class Config2dAttireWriter
 		attireText.append("</attires>");
 
 		// 存储文件
-		byte[] bytes = null;
-		try
+		byte[] bytes = attireText.toString().getBytes("UTF-8");
+		if (root.hasZIP())
 		{
-			bytes = attireText.toString().getBytes("UTF-8");
-			if(root.hasZIP())
-			{
-				bytes=ZlibUtil.compress(bytes);
-			}
-		}
-		catch (UnsupportedEncodingException e)
-		{
-			e.printStackTrace();
-			GamePacker.error(e);
-			return;
+			bytes = ZlibUtil.compress(bytes);
 		}
 
 		String md5 = MD5Util.md5Bytes(bytes);
@@ -158,43 +142,18 @@ public class Config2dAttireWriter
 	//
 	// -------------------------------------------------------------------------------------------------------------------
 
-	/**
-	 * 获取版本文件
-	 * 
-	 * @return
-	 */
-	private File getVerFile()
+	@Override
+	protected void readHistory(InputStream stream) throws Exception
 	{
-		return new File(root.getOutputFolder().getPath() + File.separatorChar + ".ver" + File.separatorChar + "2dAttire");
-	}
-
-	/**
-	 * 打开版本信息
-	 */
-	private void openVer()
-	{
-		newTable = new HashMap<String, String>();
-		oldTable = new HashMap<String, String>();
-
-		if (!getVerFile().exists())
+		BufferedReader reader = new BufferedReader(new InputStreamReader(stream, "utf8"));
+		while (true)
 		{
-			return;
-		}
+			String line = reader.readLine();
+			if (line == null)
+			{
+				break;
+			}
 
-		String text = null;
-		try
-		{
-			text = new String(FileUtil.getFileBytes(getVerFile()), "utf8");
-		}
-		catch (UnsupportedEncodingException e)
-		{
-			e.printStackTrace();
-			return;
-		}
-
-		String[] lines = text.split("\n");
-		for (String line : lines)
-		{
 			line = line.trim();
 			if (line.isEmpty())
 			{
@@ -212,34 +171,19 @@ public class Config2dAttireWriter
 		}
 	}
 
-	/**
-	 * 保存版本信息
-	 */
-	public void saveVer()
+	@Override
+	protected void saveHistory(OutputStream stream) throws Exception
 	{
-		if (newTable == null)
-		{
-			return;
-		}
+		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(stream, "utf8"));
 
+		// 排序
 		String[] keys = newTable.keySet().toArray(new String[newTable.size()]);
 		Arrays.sort(keys);
 
-		StringBuilder output = new StringBuilder();
+		// 写入
 		for (String key : keys)
 		{
-			output.append(key + " = " + newTable.get(key) + "\n");
-		}
-
-		try
-		{
-			FileUtil.writeFile(getVerFile(), output.toString().getBytes("utf8"));
-		}
-		catch (UnsupportedEncodingException e)
-		{
-			e.printStackTrace();
-			GamePacker.error(e);
-			return;
+			writer.write(key + " = " + newTable.get(key) + "\n");
 		}
 
 		// 记录输出文件
