@@ -3,11 +3,6 @@ package org.game.knight.version.packer.world.output2d;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -41,7 +36,6 @@ import org.game.knight.version.packer.world.model.WorldCity;
 
 public class Config2dSceneWriter extends BaseWriter
 {
-	private WorldWriter root;
 	private AttireSwfWriter attireSWFWriter;
 
 	private String worldCfgURL;
@@ -49,8 +43,8 @@ public class Config2dSceneWriter extends BaseWriter
 	private HashMap<Scene, String> scene_files;
 	private HashMap<Scene, Integer> scene_size;
 
-	private HashMap<String, String> newTable;
-	private HashMap<String, String> oldTable;
+	private HashMap<String, String> newTable = new HashMap<String, String>();
+	private HashMap<String, String> oldTable = new HashMap<String, String>();
 
 	/**
 	 * 构造函数
@@ -98,7 +92,7 @@ public class Config2dSceneWriter extends BaseWriter
 	@Override
 	protected void startup() throws Exception
 	{
-		GamePacker.log("输出2D渲染场景配置");
+		GamePacker.log("开始输出2D渲染场景配置");
 	}
 
 	@Override
@@ -487,20 +481,9 @@ public class Config2dSceneWriter extends BaseWriter
 	//
 	// -------------------------------------------------------------------------------------------------------------------
 
-	/**
-	 * 获取版本文件
-	 * 
-	 * @return
-	 */
-	private File getVerFile()
-	{
-		return new File(root.getOutputFolder().getPath() + File.separatorChar + ".ver" + File.separatorChar + "2dScene");
-	}
-
 	@Override
-	protected void readHistory(InputStream stream) throws Exception
+	protected void readHistory(BufferedReader reader) throws Exception
 	{
-		BufferedReader reader = new BufferedReader(new InputStreamReader(stream, "utf8"));
 		while (true)
 		{
 			String line = reader.readLine();
@@ -527,30 +510,16 @@ public class Config2dSceneWriter extends BaseWriter
 	}
 
 	@Override
-	protected void saveHistory(OutputStream stream) throws Exception
+	protected void saveHistory(BufferedWriter writer) throws Exception
 	{
-		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(stream, "utf8"));
-
-		//排序
+		// 排序
 		String[] keys = newTable.keySet().toArray(new String[newTable.size()]);
 		Arrays.sort(keys);
 
-		//
-		StringBuilder output = new StringBuilder();
+		// 写入
 		for (String key : keys)
 		{
-			output.append(key + " = " + newTable.get(key) + "\n");
-		}
-
-		try
-		{
-			FileUtil.writeFile(getVerFile(), output.toString().getBytes("utf8"));
-		}
-		catch (UnsupportedEncodingException e)
-		{
-			e.printStackTrace();
-			GamePacker.error(e);
-			return;
+			writer.write(key + " = " + newTable.get(key) + "\n");
 		}
 
 		// 记录输出文件

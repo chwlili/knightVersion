@@ -2,10 +2,6 @@ package org.game.knight.version.packer.world.model;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 
 import org.game.knight.version.packer.GamePacker;
 import org.game.knight.version.packer.world.BaseWriter;
@@ -55,11 +51,10 @@ public class OptionTable extends BaseWriter
 	{
 		GamePacker.log("开始读取全局信息");
 	}
-	
+
 	@Override
-	protected void readHistory(InputStream input) throws Exception
+	protected void readHistory(BufferedReader reader) throws Exception
 	{
-		BufferedReader reader = new BufferedReader(new InputStreamReader(input, "utf8"));
 		while (true)
 		{
 			String line = reader.readLine();
@@ -89,10 +84,8 @@ public class OptionTable extends BaseWriter
 	}
 
 	@Override
-	protected void saveHistory(OutputStream stream) throws Exception
+	protected void saveHistory(BufferedWriter writer) throws Exception
 	{
-		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(stream, "utf8"));
-
 		writer.write(NEXT_ID + " = " + nextID + "\n");
 	}
 }

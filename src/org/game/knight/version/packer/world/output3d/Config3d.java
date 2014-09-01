@@ -32,7 +32,7 @@ public class Config3d extends BaseWriter
 	 */
 	public Config3d(WorldWriter root)
 	{
-		super(root, "");
+		super(root, null);
 		this.sliceWriter = new SliceImageWriter(root);
 		this.atlasWriter = new AtlasWriter(root);
 		this.attireWriter = new Config3dAttireWriter(root, this);
@@ -44,12 +44,6 @@ public class Config3d extends BaseWriter
 	// db.xml
 	//
 	// ----------------------------------------------------------------------------------------
-
-	@Override
-	protected void startup() throws Exception
-	{
-		GamePacker.log(" ‰≥ˆ3D‰÷»æ≈‰÷√");
-	}
 
 	@Override
 	protected void exec() throws Exception
@@ -65,7 +59,10 @@ public class Config3d extends BaseWriter
 			writer.run();
 		}
 
-		writeDB();
+		if (!root.isCancel())
+		{
+			writeDB();
+		}
 	}
 
 	@Override

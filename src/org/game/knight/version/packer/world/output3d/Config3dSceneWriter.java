@@ -3,9 +3,6 @@ package org.game.knight.version.packer.world.output3d;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -91,13 +88,11 @@ public class Config3dSceneWriter extends BaseWriter
 	{
 		return worldCfgURL;
 	}
-	
-	
 
 	@Override
 	protected void startup() throws Exception
 	{
-		GamePacker.log(" ‰≥ˆ3D‰÷»æ≥°æ∞≈‰÷√");
+		GamePacker.log("ø™ º ‰≥ˆ3D‰÷»æ≥°æ∞≈‰÷√");
 	}
 
 	@Override
@@ -515,9 +510,9 @@ public class Config3dSceneWriter extends BaseWriter
 	//
 	// -------------------------------------------------------------------------------------------------------------------
 
-	protected void readHistory(java.io.InputStream stream) throws Exception
+	@Override
+	protected void readHistory(BufferedReader reader) throws Exception
 	{
-		BufferedReader reader = new BufferedReader(new InputStreamReader(stream, "utf8"));
 		while (true)
 		{
 			String line = reader.readLine();
@@ -544,10 +539,8 @@ public class Config3dSceneWriter extends BaseWriter
 	}
 
 	@Override
-	protected void saveHistory(OutputStream stream) throws Exception
+	protected void saveHistory(BufferedWriter writer) throws Exception
 	{
-		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(stream, "utf8"));
-
 		// ≈≈–Ú
 		String[] keys = newTable.keySet().toArray(new String[newTable.size()]);
 		Arrays.sort(keys);

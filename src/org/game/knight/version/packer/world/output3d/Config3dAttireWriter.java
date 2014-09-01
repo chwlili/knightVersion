@@ -3,10 +3,6 @@ package org.game.knight.version.packer.world.output3d;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -58,7 +54,7 @@ public class Config3dAttireWriter extends BaseWriter
 	@Override
 	protected void startup() throws Exception
 	{
-		GamePacker.progress(" ‰≥ˆ3D‰÷»æ◊∞∞Á≈‰÷√");
+		GamePacker.progress("ø™ º ‰≥ˆ3D‰÷»æ◊∞∞Á≈‰÷√");
 	}
 
 	@Override
@@ -204,9 +200,8 @@ public class Config3dAttireWriter extends BaseWriter
 	// -------------------------------------------------------------------------------------------------------------------
 
 	@Override
-	protected void readHistory(InputStream stream) throws Exception
+	protected void readHistory(BufferedReader reader) throws Exception
 	{
-		BufferedReader reader = new BufferedReader(new InputStreamReader(stream, "utf8"));
 		while (true)
 		{
 			String line = reader.readLine();
@@ -233,10 +228,8 @@ public class Config3dAttireWriter extends BaseWriter
 	}
 
 	@Override
-	protected void saveHistory(OutputStream stream) throws Exception
+	protected void saveHistory(BufferedWriter writer) throws Exception
 	{
-		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(stream, "utf8"));
-
 		// ≈≈–Ú
 		String[] keys = newTable.keySet().toArray(new String[newTable.size()]);
 		Arrays.sort(keys);

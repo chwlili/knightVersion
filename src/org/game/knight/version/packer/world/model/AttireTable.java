@@ -127,7 +127,7 @@ public class AttireTable extends BaseWriter
 	@Override
 	protected void startup() throws Exception
 	{
-		GamePacker.log("读取所有装扮信息");
+		GamePacker.log("开始读取装扮信息");
 	}
 
 	/**

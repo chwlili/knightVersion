@@ -80,7 +80,7 @@ public class WorldTable extends BaseWriter
 	@Override
 	protected void startup() throws Exception
 	{
-		GamePacker.log("读取所有场景信息");
+		GamePacker.log("开始读取世界信息");
 	}
 
 	/**

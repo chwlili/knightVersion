@@ -6,10 +6,6 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -106,7 +102,7 @@ public class GameUIAttireWriter extends BaseWriter
 	@Override
 	protected void startup() throws Exception
 	{
-		GamePacker.log("输出UI Avatar文件");
+		GamePacker.log("开始输出UI Avatar文件");
 	}
 
 	@Override
@@ -589,10 +585,8 @@ public class GameUIAttireWriter extends BaseWriter
 	}
 
 	@Override
-	protected void readHistory(InputStream stream) throws Exception
+	protected void readHistory(BufferedReader reader) throws Exception
 	{
-		BufferedReader reader = new BufferedReader(new InputStreamReader(stream, "utf8"));
-
 		while (true)
 		{
 			String line = reader.readLine();
@@ -630,10 +624,8 @@ public class GameUIAttireWriter extends BaseWriter
 	}
 
 	@Override
-	protected void saveHistory(OutputStream stream) throws Exception
+	protected void saveHistory(BufferedWriter writer) throws Exception
 	{
-		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(stream, "utf8"));
-
 		// 排序
 		String[] keys = newTable.keySet().toArray(new String[newTable.size()]);
 		Arrays.sort(keys);

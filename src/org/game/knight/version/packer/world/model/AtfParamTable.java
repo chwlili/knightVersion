@@ -12,7 +12,6 @@ import org.game.knight.version.packer.world.WorldWriter;
 
 public class AtfParamTable extends BaseWriter
 {
-	private WorldWriter root;
 	private HashMap<String, AtfParam> id_atfParam = new HashMap<String, AtfParam>();
 	private HashMap<String, AtfParam> value_atfParam = new HashMap<String, AtfParam>();
 
@@ -55,19 +54,18 @@ public class AtfParamTable extends BaseWriter
 		return value_atfParam.get(w + "_" + h + "_" + param);
 	}
 
-	
-	//----------------------------------------------------------------------------------
+	// ----------------------------------------------------------------------------------
 	//
-	//  功能实现
+	// 功能实现
 	//
-	//----------------------------------------------------------------------------------
-	
+	// ----------------------------------------------------------------------------------
+
 	@Override
 	protected void startup() throws Exception
 	{
 		GamePacker.log("开始读取Atf输出参数！");
 	}
-	
+
 	/**
 	 * 构建
 	 */
@@ -131,7 +129,5 @@ public class AtfParamTable extends BaseWriter
 			id_atfParam.put("default", param);
 			value_atfParam.put(param.width + "_" + param.height + "_" + param.other, param);
 		}
-
-		GamePacker.log("完成!");
 	}
 }

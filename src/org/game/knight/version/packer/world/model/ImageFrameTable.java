@@ -4,10 +4,6 @@ import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -24,8 +20,6 @@ import org.game.knight.version.packer.world.WorldWriter;
 
 public class ImageFrameTable extends BaseWriter
 {
-	private WorldWriter root;
-
 	private GridImg[] inputList;
 	private int nextIndex;
 	private int finishedCount;
@@ -105,7 +99,7 @@ public class ImageFrameTable extends BaseWriter
 	@Override
 	protected void startup() throws Exception
 	{
-		GamePacker.log("计算动画帧的裁切矩形");
+		GamePacker.log("开始计算动画帧的裁切矩形");
 	}
 
 	@Override
@@ -195,12 +189,8 @@ public class ImageFrameTable extends BaseWriter
 	}
 
 	@Override
-	protected void readHistory(InputStream stream) throws Exception
+	protected void readHistory(BufferedReader reader) throws Exception
 	{
-		this.oldTable = new HashMap<String, ImageFrame[]>();
-		this.newTable = new HashMap<String, ImageFrame[]>();
-
-		BufferedReader reader = new BufferedReader(new InputStreamReader(stream, "utf8"));
 		while (true)
 		{
 			String line = reader.readLine();
@@ -294,10 +284,8 @@ public class ImageFrameTable extends BaseWriter
 	}
 
 	@Override
-	protected void saveHistory(OutputStream stream) throws Exception
+	protected void saveHistory(BufferedWriter writer) throws Exception
 	{
-		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(stream, "utf8"));
-
 		// 排序
 		String[] keys = newTable.keySet().toArray(new String[newTable.size()]);
 		Arrays.sort(keys, new Comparator<String>()

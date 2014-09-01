@@ -9,6 +9,7 @@ import org.game.knight.version.packer.world.model.ImageFrame;
 
 public class AtlasSet
 {
+	public final boolean anim;
 	/**
 	 * 索引键
 	 */
@@ -34,8 +35,9 @@ public class AtlasSet
 	 * 
 	 * @param atlasList
 	 */
-	public AtlasSet(AtfParam atfParam, Atlas[] atlasList)
+	public AtlasSet(boolean anim, AtfParam atfParam, Atlas[] atlasList)
 	{
+		this.anim = anim;
 		this.atfParam = atfParam;
 		this.atlasList = atlasList;
 
@@ -48,16 +50,17 @@ public class AtlasSet
 			}
 		}
 		this.frameList = frames.toArray(new ImageFrame[frames.size()]);
-		this.key = createKey(atfParam, this.frameList);
+		this.key = createKey(anim, atfParam, this.frameList);
 	}
 
 	/**
 	 * 创建引用键
+	 * 
 	 * @param atfParam
 	 * @param frames
 	 * @return
 	 */
-	public static String createKey(AtfParam atfParam, ImageFrame[] frames)
+	public static String createKey(boolean anim, AtfParam atfParam, ImageFrame[] frames)
 	{
 		frames = Arrays.copyOf(frames, frames.length);
 		Arrays.sort(frames, new Comparator<ImageFrame>()
@@ -73,23 +76,23 @@ public class AtlasSet
 				}
 				else
 				{
-					id1=o1.row;
-					id2=o2.row;
-					if(id1!=id2)
+					id1 = o1.row;
+					id2 = o2.row;
+					if (id1 != id2)
 					{
-						return id1-id2;
+						return id1 - id2;
 					}
 					else
 					{
-						id1=o1.col;
-						id2=o2.col;
-						if(id1!=id2)
+						id1 = o1.col;
+						id2 = o2.col;
+						if (id1 != id2)
 						{
-							return id1-id2;
+							return id1 - id2;
 						}
 						else
 						{
-							return o1.index-o2.index;
+							return o1.index - o2.index;
 						}
 					}
 				}
@@ -97,7 +100,7 @@ public class AtlasSet
 		});
 
 		StringBuilder sb = new StringBuilder();
-		sb.append(atfParam.width + "+" + atfParam.height + "+" + atfParam.other + "<-");
+		sb.append((anim ? 1 : 2) + "+" + atfParam.width + "+" + atfParam.height + "+" + atfParam.other + "<-");
 		for (int i = 0; i < frames.length; i++)
 		{
 			if (i > 0)

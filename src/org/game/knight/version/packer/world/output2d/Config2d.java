@@ -2,6 +2,7 @@ package org.game.knight.version.packer.world.output2d;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -19,10 +20,9 @@ import org.game.knight.version.packer.world.model.Scene;
 
 public class Config2d extends BaseWriter
 {
-	private WorldWriter root;
-	private AttireSwfWriter attireSwfWriter;
-	private Config2dAttireWriter attireWriter;
-	private Config2dSceneWriter sceneWriter;
+	public final AttireSwfWriter attireSwfWriter;
+	public final Config2dAttireWriter attireWriter;
+	public final Config2dSceneWriter sceneWriter;
 
 	/**
 	 * ¹¹Ôìº¯Êý
@@ -31,40 +31,43 @@ public class Config2d extends BaseWriter
 	 */
 	public Config2d(WorldWriter root)
 	{
-		this.root = root;
+		super(root, null);
 		this.attireSwfWriter = new AttireSwfWriter(root);
 		this.attireWriter = new Config2dAttireWriter(root, attireSwfWriter);
 		this.sceneWriter = new Config2dSceneWriter(root, attireSwfWriter);
 	}
 
 	@Override
-	public void start()
+	protected void exec() throws Exception
 	{
-		attireSwfWriter.start();
-		if (root.isCancel())
+		ArrayList<BaseWriter> writers = new ArrayList<BaseWriter>();
+		writers.add(attireSwfWriter);
+		writers.add(attireWriter);
+		writers.add(sceneWriter);
+
+		for (BaseWriter write : writers)
 		{
-			return;
+			write.run();
 		}
 
-		attireWriter.start();
-		if (root.isCancel())
+		if (!root.isCancel())
 		{
-			return;
+			writeDB();
 		}
-
-		sceneWriter.start();
-		if (root.isCancel())
-		{
-			return;
-		}
-
-		writeDB();
 	}
 
 	@Override
-	public void saveVer()
+	public void saveVer() throws Exception
 	{
+		ArrayList<BaseWriter> writers = new ArrayList<BaseWriter>();
+		writers.add(attireSwfWriter);
+		writers.add(attireWriter);
+		writers.add(sceneWriter);
 
+		for (BaseWriter write : writers)
+		{
+			write.saveVer();
+		}
 	}
 
 	/**

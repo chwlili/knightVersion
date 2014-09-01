@@ -5,10 +5,6 @@ import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,7 +35,6 @@ public class SliceImageWriter extends BaseWriter
 	 */
 	private static final int SLICE_SIZE = 256;
 
-	private WorldWriter root;
 	private ImageFrame[] inputList;
 	private int nextIndex;
 	private int finishedCount;
@@ -116,7 +111,7 @@ public class SliceImageWriter extends BaseWriter
 	@Override
 	protected void startup() throws Exception
 	{
-		GamePacker.log(" ‰≥ˆ3D‰÷»æ±≥æ∞«–∆¨");
+		GamePacker.log("ø™ º ‰≥ˆ3D‰÷»æ±≥æ∞«–∆¨");
 	}
 
 	@Override
@@ -358,10 +353,8 @@ public class SliceImageWriter extends BaseWriter
 	}
 
 	@Override
-	protected void readHistory(InputStream stream) throws Exception
+	protected void readHistory(BufferedReader reader) throws Exception
 	{
-		BufferedReader reader = new BufferedReader(new InputStreamReader(stream, "utf8"));
-
 		while (true)
 		{
 			String line = reader.readLine();
@@ -413,10 +406,8 @@ public class SliceImageWriter extends BaseWriter
 	}
 
 	@Override
-	protected void saveHistory(OutputStream stream) throws Exception
+	protected void saveHistory(BufferedWriter writer) throws Exception
 	{
-		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(stream, "utf8"));
-
 		// ≈≈–Ú
 		String[] keys = newTable.keySet().toArray(new String[newTable.size()]);
 		Arrays.sort(keys, new Comparator<String>()

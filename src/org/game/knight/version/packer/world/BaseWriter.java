@@ -1,11 +1,12 @@
 package org.game.knight.version.packer.world;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 
 public abstract class BaseWriter
 {
@@ -47,9 +48,18 @@ public abstract class BaseWriter
 		startup();
 
 		File file = getVerFile();
-		if (file != null)
+		if (file != null && file.exists() && file.isFile())
 		{
-			readHistory(new FileInputStream(file));
+			BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "utf8"));
+
+			try
+			{
+				readHistory(reader);
+			}
+			finally
+			{
+				reader.close();
+			}
 		}
 
 		exec();
@@ -62,7 +72,7 @@ public abstract class BaseWriter
 	 */
 	protected void startup() throws Exception
 	{
-		
+
 	}
 
 	/**
@@ -70,7 +80,7 @@ public abstract class BaseWriter
 	 */
 	protected void exec() throws Exception
 	{
-		
+
 	}
 
 	/**
@@ -79,9 +89,23 @@ public abstract class BaseWriter
 	public void saveVer() throws Exception
 	{
 		File file = getVerFile();
-		if (file != null)
+		if (file != null && file.exists() && file.isFile())
 		{
-			saveHistory(new FileOutputStream(file));
+			if (!file.getParentFile().exists())
+			{
+				file.getParentFile().mkdirs();
+			}
+
+			BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "utf8"));
+
+			try
+			{
+				saveHistory(writer);
+			}
+			finally
+			{
+				writer.close();
+			}
 		}
 	}
 
@@ -91,7 +115,7 @@ public abstract class BaseWriter
 	 * @param stream
 	 * @throws Exception
 	 */
-	protected void readHistory(InputStream stream) throws Exception
+	protected void readHistory(BufferedReader reader) throws Exception
 	{
 
 	}
@@ -102,7 +126,7 @@ public abstract class BaseWriter
 	 * @param stream
 	 * @throws Exception
 	 */
-	protected void saveHistory(OutputStream stream) throws Exception
+	protected void saveHistory(BufferedWriter writer) throws Exception
 	{
 
 	}

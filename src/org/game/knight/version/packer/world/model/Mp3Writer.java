@@ -3,10 +3,6 @@ package org.game.knight.version.packer.world.model;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -19,7 +15,6 @@ import org.game.knight.version.packer.world.WorldWriter;
 
 public class Mp3Writer extends BaseWriter
 {
-	private WorldWriter root;
 	private HashMap<String, String> newTable = new HashMap<String, String>();
 	private HashMap<String, String> oldTable = new HashMap<String, String>();
 
@@ -47,7 +42,7 @@ public class Mp3Writer extends BaseWriter
 	@Override
 	protected void startup() throws Exception
 	{
-		GamePacker.log("输出MP3文件");
+		GamePacker.log("开始输出MP3文件");
 	}
 
 	@Override
@@ -112,9 +107,8 @@ public class Mp3Writer extends BaseWriter
 	}
 
 	@Override
-	protected void readHistory(InputStream stream) throws Exception
+	protected void readHistory(BufferedReader reader) throws Exception
 	{
-		BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
 		while (true)
 		{
 			String line = reader.readLine();
@@ -152,10 +146,8 @@ public class Mp3Writer extends BaseWriter
 	}
 
 	@Override
-	protected void saveHistory(OutputStream stream) throws Exception
+	protected void saveHistory(BufferedWriter writer) throws Exception
 	{
-		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(stream));
-
 		// 排序
 		String[] keys = newTable.keySet().toArray(new String[newTable.size()]);
 		Arrays.sort(keys, new Comparator<String>()

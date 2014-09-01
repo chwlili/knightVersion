@@ -5,10 +5,6 @@ import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,11 +29,9 @@ import org.game.knight.version.packer.world.output3d.TextureRectPacker.RectSet;
 
 public class AtlasWriter extends BaseWriter
 {
-	private WorldWriter root;
-
-	private HashMap<AtfParam, ArrayList<AtlasRect[]>> atf_rectListSet;
+	private HashMap<ParamKey, ArrayList<AtlasRect[]>> atf_rectListSet;
 	private ArrayList<AtlasRect[]> allRectList;
-	private HashMap<AtlasRect[], AtfParam> rectList_atf;
+	private HashMap<AtlasRect[], ParamKey> rectList_atf;
 	private HashMap<AtlasRect[], Atlas> rectList_atlas;
 
 	private HashMap<String, AtlasSet> newTable = new HashMap<String, AtlasSet>();
@@ -87,7 +81,7 @@ public class AtlasWriter extends BaseWriter
 		if (nextIndex < allRectList.size())
 		{
 			result = allRectList.get(nextIndex);
-			lastLog = "Ã˘Õº ‰≥ˆ(" + nextIndex + "/" + allRectList.size() + "):" + rectList_atf.get(result).id + "(ÕºœÒ*" + result.length + ")";
+			lastLog = "Ã˘Õº ‰≥ˆ(" + nextIndex + "/" + allRectList.size() + "):" + rectList_atf.get(result).param.id + "(ÕºœÒ*" + result.length + ")";
 			nextIndex++;
 		}
 
@@ -116,15 +110,15 @@ public class AtlasWriter extends BaseWriter
 	@Override
 	protected void startup() throws Exception
 	{
-		GamePacker.log(" ‰≥ˆ3D‰÷»æŒ∆¿ÌºØ");
+		GamePacker.log("ø™ º ‰≥ˆ3D‰÷»æŒ∆¿ÌºØ");
 	}
 
 	@Override
 	protected void exec() throws Exception
 	{
-		atf_rectListSet = new HashMap<AtfParam, ArrayList<AtlasRect[]>>();
+		atf_rectListSet = new HashMap<ParamKey, ArrayList<AtlasRect[]>>();
 		allRectList = new ArrayList<AtlasRect[]>();
-		rectList_atf = new HashMap<AtlasRect[], AtfParam>();
+		rectList_atf = new HashMap<AtlasRect[], ParamKey>();
 		rectList_atlas = new HashMap<AtlasRect[], Atlas>();
 
 		filterAtfGroup();
@@ -141,7 +135,7 @@ public class AtlasWriter extends BaseWriter
 			return;
 		}
 
-		for (AtfParam key : atf_rectListSet.keySet())
+		for (ParamKey key : atf_rectListSet.keySet())
 		{
 			ArrayList<AtlasRect[]> value = atf_rectListSet.get(key);
 			Atlas[] atlasList = new Atlas[value.size()];
@@ -150,7 +144,7 @@ public class AtlasWriter extends BaseWriter
 				atlasList[i] = rectList_atlas.get(value.get(i));
 			}
 
-			add(new AtlasSet(key, atlasList));
+			add(new AtlasSet(key.isAnim, key.param, atlasList));
 		}
 
 		if (root.isCancel())
@@ -196,8 +190,8 @@ public class AtlasWriter extends BaseWriter
 
 						try
 						{
-							AtfParam param = rectList_atf.get(next);
-							Atlas atlas = writeATF(param, next);
+							ParamKey key = rectList_atf.get(next);
+							Atlas atlas = writeATF(key.param, next);
 							if (atlas != null)
 							{
 								finish(next, atlas);
@@ -430,7 +424,7 @@ public class AtlasWriter extends BaseWriter
 	 */
 	private void filterAtfGroup() throws Exception
 	{
-		HashMap<AtfParam, HashSet<ImageFrame>> atf_frameset = new HashMap<AtfParam, HashSet<ImageFrame>>();
+		HashMap<ParamKey, HashSet<ImageFrame>> atf_frameset = new HashMap<ParamKey, HashSet<ImageFrame>>();
 		for (Attire attire : root.getAttireTable().getAllAttire())
 		{
 			for (AttireAction action : attire.actions)
@@ -442,20 +436,22 @@ public class AtlasWriter extends BaseWriter
 						if (anim.times[i] > 0)
 						{
 							AtfParam atf = anim.param;
-							if (!atf_frameset.containsKey(atf))
+							ParamKey key = attire.isAnimAttire() ? ParamKey.getAnimKey(atf) : ParamKey.getAttireKey(atf);
+
+							if (!atf_frameset.containsKey(key))
 							{
-								atf_frameset.put(atf, new HashSet<ImageFrame>());
+								atf_frameset.put(key, new HashSet<ImageFrame>());
 							}
 
-							atf_frameset.get(atf).add(root.getImageFrameTable().get(anim.img.gid, anim.row, anim.col, i));
+							atf_frameset.get(key).add(root.getImageFrameTable().get(anim.img.gid, anim.row, anim.col, i));
 						}
 					}
 				}
 			}
 		}
 
-		HashMap<AtfParam, ImageFrame[]> atf_frameArray = new HashMap<AtfParam, ImageFrame[]>();
-		for (AtfParam key : atf_frameset.keySet())
+		HashMap<ParamKey, ImageFrame[]> atf_frameArray = new HashMap<ParamKey, ImageFrame[]>();
+		for (ParamKey key : atf_frameset.keySet())
 		{
 			HashSet<ImageFrame> value = atf_frameset.get(key);
 			ImageFrame[] valueArray = value.toArray(new ImageFrame[value.size()]);
@@ -465,9 +461,9 @@ public class AtlasWriter extends BaseWriter
 			}
 		}
 
-		for (AtfParam param : atf_frameArray.keySet())
+		for (ParamKey param : atf_frameArray.keySet())
 		{
-			TextureRectPacker packer = new TextureRectPacker(param.width, param.height, false);
+			TextureRectPacker packer = new TextureRectPacker(param.param.width, param.param.height, false);
 			for (ImageFrame frame : atf_frameArray.get(param))
 			{
 				packer.push(frame, frame.clipW, frame.clipH);
@@ -496,6 +492,39 @@ public class AtlasWriter extends BaseWriter
 		}
 	}
 
+	private static class ParamKey
+	{
+		public final boolean isAnim;
+		public final AtfParam param;
+
+		public ParamKey(boolean isAnim, AtfParam param)
+		{
+			this.isAnim = isAnim;
+			this.param = param;
+		}
+
+		private static HashMap<AtfParam, ParamKey> keys1 = new HashMap<AtfParam, ParamKey>();
+		private static HashMap<AtfParam, ParamKey> keys2 = new HashMap<AtfParam, ParamKey>();
+
+		public static ParamKey getAnimKey(AtfParam param)
+		{
+			if (!keys1.containsKey(param))
+			{
+				keys1.put(param, new ParamKey(true, param));
+			}
+			return keys1.get(param);
+		}
+
+		public static ParamKey getAttireKey(AtfParam param)
+		{
+			if (!keys2.containsKey(param))
+			{
+				keys2.put(param, new ParamKey(true, param));
+			}
+			return keys2.get(param);
+		}
+	}
+
 	// -------------------------------------------------------------------------------------------------------------------
 	//
 	// ∞Ê±æ–≈œ¢
@@ -509,9 +538,9 @@ public class AtlasWriter extends BaseWriter
 	 * @param frames
 	 * @return
 	 */
-	private boolean activate(AtfParam param, ImageFrame[] frames)
+	private boolean activate(ParamKey param, ImageFrame[] frames)
 	{
-		String key = AtlasSet.createKey(param, frames);
+		String key = AtlasSet.createKey(param.isAnim, param.param, frames);
 		if (oldTable.containsKey(key))
 		{
 			newTable.put(key, oldTable.get(key));
@@ -532,9 +561,8 @@ public class AtlasWriter extends BaseWriter
 	}
 
 	@Override
-	protected void readHistory(InputStream stream) throws Exception
+	protected void readHistory(BufferedReader reader) throws Exception
 	{
-		BufferedReader reader = new BufferedReader(new InputStreamReader(stream, "utf8"));
 		while (true)
 		{
 			String line = reader.readLine();
@@ -556,7 +584,8 @@ public class AtlasWriter extends BaseWriter
 
 			// ATFParam:w\+h\+-c d -r
 			String[] paramItems = values[0].trim().split("\\+");
-			AtfParam param = root.getAtfParamTable().findAtfParam(Integer.parseInt(paramItems[0].trim()), Integer.parseInt(paramItems[1].trim()), paramItems[2].trim());
+			boolean anim = paramItems[0].equals("1");
+			AtfParam param = root.getAtfParamTable().findAtfParam(Integer.parseInt(paramItems[1].trim()), Integer.parseInt(paramItems[2].trim()), paramItems[3].trim());
 			if (param == null)
 			{
 				continue;
@@ -620,16 +649,14 @@ public class AtlasWriter extends BaseWriter
 				continue;
 			}
 
-			AtlasSet atlasSet = new AtlasSet(param, atlas.toArray(new Atlas[atlas.size()]));
+			AtlasSet atlasSet = new AtlasSet(anim, param, atlas.toArray(new Atlas[atlas.size()]));
 			oldTable.put(atlasSet.key, atlasSet);
 		}
 	}
 
 	@Override
-	protected void saveHistory(OutputStream stream) throws Exception
+	protected void saveHistory(BufferedWriter writer) throws Exception
 	{
-		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(stream, "utf8"));
-
 		// ≈≈–Ú
 		AtlasSet[] atlasSet = newTable.values().toArray(new AtlasSet[newTable.size()]);
 		Arrays.sort(atlasSet, new Comparator<AtlasSet>()
@@ -646,7 +673,7 @@ public class AtlasWriter extends BaseWriter
 		{
 			AtlasSet set = atlasSet[i];
 
-			writer.write(set.atfParam.width + "+" + set.atfParam.height + "+" + set.atfParam.other);
+			writer.write((set.anim ? 1 : 2) + "+" + set.atfParam.width + "+" + set.atfParam.height + "+" + set.atfParam.other);
 			writer.write(" = ");
 
 			for (int j = 0; j < set.atlasList.length; j++)

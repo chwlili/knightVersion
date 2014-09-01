@@ -3,10 +3,6 @@ package org.game.knight.version.packer.world.model;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -350,11 +346,8 @@ public class ProjectFileTable extends BaseWriter
 	 * 打开
 	 */
 	@Override
-	protected void readHistory(InputStream input) throws Exception
+	protected void readHistory(BufferedReader reader) throws Exception
 	{
-		GamePacker.progress("读取历史信息");
-
-		BufferedReader reader = new BufferedReader(new InputStreamReader(input, "utf8"));
 		while (true)
 		{
 			String line = reader.readLine();
@@ -400,10 +393,8 @@ public class ProjectFileTable extends BaseWriter
 	}
 
 	@Override
-	protected void saveHistory(OutputStream stream) throws Exception
+	protected void saveHistory(BufferedWriter writer) throws Exception
 	{
-		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(stream, "utf8"));
-
 		// 写入NextID字段
 		writer.write("$nextID = " + nextGID + "\n");
 
