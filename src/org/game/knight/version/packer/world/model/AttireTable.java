@@ -522,7 +522,11 @@ public class AttireTable
 			int w = getInt(id_w, id, attireRectW);
 			int h = getInt(id_h, id, attireRectH);
 			int nameX = getInt(id_nameX, id, 0);
-			int nameY = getInt(id_nameY, id, attireRectH);
+			int nameY = getInt(id_nameY, id, h);
+			if (nameY == 0)
+			{
+				nameY = attireRectH;
+			}
 
 			return new AttireHitRect(x, y, w, h, nameX, nameY);
 		}
