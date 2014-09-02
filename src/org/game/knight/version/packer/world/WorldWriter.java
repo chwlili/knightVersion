@@ -2,12 +2,20 @@ package org.game.knight.version.packer.world;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipOutputStream;
 
 import org.chw.util.FileUtil;
 import org.game.knight.version.packer.GamePacker;
@@ -29,21 +37,54 @@ public class WorldWriter
 
 	private final File inputFolder;
 	private final File outputFolder;
-	private final boolean zip;
 	public final int maxThreadCount;
+	private final boolean zip;
+
+	private HashMap<String, byte[]> oldHistoryMap = new HashMap<String, byte[]>();
+	private HashMap<String, byte[]> newHistoryMap = new HashMap<String, byte[]>();
+
+	/**
+	 * 选项表
+	 */
+	public final OptionTable optionTable;
+	/**
+	 * MD5文件表
+	 */
+	public final ProjectFileTable fileTable;
+	/**
+	 * ATF参数表
+	 */
+	public final AtfParamTable atfParamTable;
+	/**
+	 * 装扮数据表
+	 */
+	public final AttireTable attireTable;
+	/**
+	 * 世界数据表
+	 */
+	public final WorldTable worldTable;
+	/**
+	 * 图像裁切表
+	 */
+	public final ImageFrameTable frameTable;
+	/**
+	 * MP3输出表
+	 */
+	public final Mp3Writer mp3Writer;
+	/**
+	 * UI装扮输出表
+	 */
+	public final GameUIAttireWriter gameUIAttireWriter;
+	/**
+	 * 3D资源输出表
+	 */
+	public final Config3d config3dWriter;
+	/**
+	 * 2D资源输出表
+	 */
+	public final Config2d config2dWriter;
+
 	private final ArrayList<String> outputFiles;
-
-	private OptionTable optionTable;
-	private ProjectFileTable fileTable;
-	private AtfParamTable atfParamTable;
-	private AttireTable attireTable;
-	private WorldTable worldTable;
-	private ImageFrameTable frameTable;
-	private Mp3Writer mp3Writer;
-	private GameUIAttireWriter gameUIAttireWriter;
-
-	private Config3d config3dWriter;
-	private Config2d config2dWriter;
 
 	/**
 	 * 构造函数
@@ -51,12 +92,23 @@ public class WorldWriter
 	 * @param inputFolder
 	 * @param outputFolder
 	 */
-	public WorldWriter(File inputFolder, File outputFolder, boolean zip, int runCount)
+	public WorldWriter(File inputFolder, File outputFolder, int runCount, boolean zip)
 	{
 		this.inputFolder = inputFolder;
 		this.outputFolder = outputFolder;
-		this.zip = zip;
 		this.maxThreadCount = runCount;
+		this.zip = zip;
+
+		this.optionTable = new OptionTable(this);
+		this.fileTable = new ProjectFileTable(this);
+		this.atfParamTable = new AtfParamTable(this);
+		this.attireTable = new AttireTable(this);
+		this.worldTable = new WorldTable(this);
+		this.frameTable = new ImageFrameTable(this);
+		this.mp3Writer = new Mp3Writer(this);
+		this.gameUIAttireWriter = new GameUIAttireWriter(this);
+		this.config3dWriter = new Config3d(this);
+		this.config2dWriter = new Config2d(this);
 
 		this.outputFiles = new ArrayList<String>();
 	}
@@ -95,92 +147,6 @@ public class WorldWriter
 	public boolean hasZIP()
 	{
 		return zip;
-	}
-
-	// ----------------------------------------------------------------------------------
-	//
-	// 各种数据表
-	//
-	// ----------------------------------------------------------------------------------
-
-	/**
-	 * 全局选项表
-	 * 
-	 * @return
-	 */
-	public OptionTable getGlobalOptionTable()
-	{
-		return optionTable;
-	}
-
-	/**
-	 * 文件表
-	 * 
-	 * @return
-	 */
-	public ProjectFileTable getFileTable()
-	{
-		return fileTable;
-	}
-
-	/**
-	 * ATF参数表
-	 * 
-	 * @return
-	 */
-	public AtfParamTable getAtfParamTable()
-	{
-		return atfParamTable;
-	}
-
-	/**
-	 * 装扮表
-	 * 
-	 * @return
-	 */
-	public AttireTable getAttireTable()
-	{
-		return attireTable;
-	}
-
-	/**
-	 * 世界表
-	 * 
-	 * @return
-	 */
-	public WorldTable getWorldTable()
-	{
-		return worldTable;
-	}
-
-	/**
-	 * 获取图像帧表
-	 * 
-	 * @return
-	 */
-	public ImageFrameTable getImageFrameTable()
-	{
-		return frameTable;
-	}
-
-	/**
-	 * 获取UI装扮输出器
-	 * 
-	 * @return
-	 */
-	public GameUIAttireWriter getUIAttireWriter()
-	{
-		return gameUIAttireWriter;
-	}
-
-	/**
-	 * MP3输出器
-	 * 
-	 * @return
-	 */
-	public Mp3Writer getMp3Writer()
-	{
-		return mp3Writer;
 	}
 
 	// ----------------------------------------------------------------------------------
@@ -227,20 +193,7 @@ public class WorldWriter
 	{
 		GamePacker.beginTask("世界");
 
-		GamePacker.progress("读取全局信息");
-
 		exceptions = new ArrayList<Exception>();
-
-		optionTable = new OptionTable(this);
-		fileTable = new ProjectFileTable(this);
-		atfParamTable = new AtfParamTable(this);
-		attireTable = new AttireTable(this);
-		worldTable = new WorldTable(this);
-		frameTable = new ImageFrameTable(this);
-		mp3Writer = new Mp3Writer(this);
-		gameUIAttireWriter = new GameUIAttireWriter(this);
-		config3dWriter = new Config3d(this);
-		config2dWriter = new Config2d(this);
 
 		ArrayList<BaseWriter> writers = new ArrayList<BaseWriter>();
 		writers.add(optionTable);
@@ -256,6 +209,8 @@ public class WorldWriter
 
 		try
 		{
+			openVer();
+
 			for (BaseWriter writer : writers)
 			{
 				if (!isCancel())
@@ -270,6 +225,11 @@ public class WorldWriter
 				{
 					writer.saveVer();
 				}
+			}
+
+			if (!isCancel())
+			{
+				saveVer();
 			}
 
 			if (!isCancel())
@@ -298,6 +258,89 @@ public class WorldWriter
 		}
 
 		GamePacker.endTask();
+	}
+
+	public byte[] getHistory(String name)
+	{
+		if (oldHistoryMap.containsKey(name))
+		{
+			return oldHistoryMap.get(name);
+		}
+		return null;
+	}
+
+	public void setHistoryOutputStream(String name, byte[] bytes)
+	{
+		newHistoryMap.put(name, bytes);
+	}
+
+	private void openVer() throws ZipException, IOException
+	{
+		HashMap<String, byte[]> inputMap = new HashMap<String, byte[]>();
+
+		File file = new File(outputFolder.getPath() + File.separator + ".ver");
+		if (file.exists() && file.isFile())
+		{
+			ZipFile zipFile = new ZipFile(file);
+
+			Enumeration<? extends ZipEntry> entrys = zipFile.entries();
+			while (entrys.hasMoreElements())
+			{
+				ZipEntry entry = entrys.nextElement();
+				InputStream stream = zipFile.getInputStream(entry);
+
+				byte[] bytes = new byte[(int) entry.getSize()];
+				int offset = 0;
+				while (offset < bytes.length)
+				{
+					int readCount = stream.read(bytes, offset, bytes.length - offset);
+					if (readCount < 0)
+					{
+						break;
+					}
+					offset += readCount;
+				}
+
+				if (offset < bytes.length)
+				{
+					throw new IOException("Could not completely read file " + file.getName());
+				}
+
+				inputMap.put(entry.getName(), bytes);
+			}
+		}
+
+		oldHistoryMap = inputMap;
+	}
+
+	private void saveVer() throws IOException
+	{
+		File file = new File(outputFolder.getPath() + File.separator + ".ver");
+		if (file.getParentFile().exists())
+		{
+			file.getParentFile().mkdir();
+		}
+
+		String[] keys = newHistoryMap.keySet().toArray(new String[newHistoryMap.size()]);
+		Arrays.sort(keys);
+
+		ZipOutputStream stream = null;
+
+		try
+		{
+			stream = new ZipOutputStream(new FileOutputStream(file));
+			for (String key : keys)
+			{
+				stream.putNextEntry(new ZipEntry(key));
+				stream.write(newHistoryMap.get(key));
+				stream.flush();
+			}
+			stream.finish();
+		}
+		finally
+		{
+			stream.close();
+		}
 	}
 
 	// ----------------------------------------------------------------------------------

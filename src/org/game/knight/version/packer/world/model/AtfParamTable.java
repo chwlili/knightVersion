@@ -72,7 +72,7 @@ public class AtfParamTable extends BaseWriter
 	@Override
 	protected void exec() throws Exception
 	{
-		ProjectFile[] files = root.getFileTable().getAllParamFiles();
+		ProjectFile[] files = root.fileTable.getAllParamFiles();
 		for (int i = 0; i < files.length; i++)
 		{
 			if (root.isCancel())

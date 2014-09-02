@@ -113,7 +113,7 @@ public class GameUIAttireWriter extends BaseWriter
 		anim_file = new Hashtable<AttireAnim, SWFFile>();
 
 		GamePacker.progress("过滤装扮数据");
-		Attire[] attireList = filterAttires(root.getAttireTable().getAllAttire());
+		Attire[] attireList = filterAttires(root.attireTable.getAllAttire());
 
 		GamePacker.progress("分析动画信息");
 		for (Attire attire : attireList)
@@ -138,7 +138,7 @@ public class GameUIAttireWriter extends BaseWriter
 						int delay = anim.times[i];
 						if (delay > 0)
 						{
-							ImageFrame frame = root.getImageFrameTable().get(anim.img.gid, anim.row, anim.col, i);
+							ImageFrame frame = root.frameTable.get(anim.img.gid, anim.row, anim.col, i);
 							if (frame != null)
 							{
 								bitmaps.add(new SWFBitmap("$" + anim.img.gid + "_" + rowCount + "_" + colCount + "_" + i, frame, delay));
@@ -191,7 +191,7 @@ public class GameUIAttireWriter extends BaseWriter
 					String fileID = sb.toString();
 					if (!activate(fileID))
 					{
-						add(fileID, root.getGlobalOptionTable().getNextExportFile() + ".swf");
+						add(fileID, root.optionTable.getNextExportFile() + ".swf");
 						newAnims.add(anim);
 					}
 
@@ -311,7 +311,7 @@ public class GameUIAttireWriter extends BaseWriter
 		StringBuilder json_partner = new StringBuilder();
 		StringBuilder json_horse = new StringBuilder();
 
-		Attire[] attireList = filterAttires(root.getAttireTable().getAllAttire());
+		Attire[] attireList = filterAttires(root.attireTable.getAllAttire());
 
 		StringBuilder json_attires = new StringBuilder();
 		for (Attire attire : attireList)
@@ -435,7 +435,7 @@ public class GameUIAttireWriter extends BaseWriter
 
 		if (!activate(md5))
 		{
-			add(md5, root.getGlobalOptionTable().getNextExportFile() + ".cfg");
+			add(md5, root.optionTable.getNextExportFile() + ".cfg");
 
 			File outputFile = new File(root.getOutputFolder().getPath() + newTable.get(md5));
 

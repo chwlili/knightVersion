@@ -54,13 +54,13 @@ public class Config3dAttireWriter extends BaseWriter
 	@Override
 	protected void startup() throws Exception
 	{
-		GamePacker.progress("开始输出3D渲染装扮配置");
+		GamePacker.log("开始输出装扮配置(3D)");
 	}
 
 	@Override
 	protected void exec() throws Exception
 	{
-		Attire[] attires = root.getAttireTable().getAllAttire();
+		Attire[] attires = root.attireTable.getAllAttire();
 		Arrays.sort(attires, new Comparator<Attire>()
 		{
 			@Override
@@ -72,7 +72,7 @@ public class Config3dAttireWriter extends BaseWriter
 
 		// 统计所有的贴图文件地址
 		HashSet<String> atfURLs = new HashSet<String>();
-		for (Attire attire : root.getAttireTable().getAllAttire())
+		for (Attire attire : root.attireTable.getAllAttire())
 		{
 			for (AttireAction action : attire.actions)
 			{
@@ -82,7 +82,7 @@ public class Config3dAttireWriter extends BaseWriter
 					{
 						if (anim.times[i] > 0)
 						{
-							ImageFrame frame = root.getImageFrameTable().get(anim.img.gid, anim.row, anim.col, i);
+							ImageFrame frame = root.frameTable.get(anim.img.gid, anim.row, anim.col, i);
 							if (frame != null)
 							{
 								Atlas atlas = config.atlasWriter.findAtlasByImageFrame(frame);
@@ -121,7 +121,7 @@ public class Config3dAttireWriter extends BaseWriter
 			attireText.append(String.format("\t\t<texture id=\"%s\" path=\"%s\" size=\"%s\" />\n", atfID, root.localToCdnURL(atfURL), file.length()));
 		}
 		attireText.append("\t</textures>\n");
-		for (Attire attire : root.getAttireTable().getAllAttire())
+		for (Attire attire : root.attireTable.getAllAttire())
 		{
 			attireText.append(String.format("\t<attire id=\"%s\" name=\"%s\" x=\"%s\" y=\"%s\" width=\"%s\" height=\"%s\">\n", attire.gid, attire.name, attire.hitRect.x, attire.hitRect.y, attire.hitRect.width, attire.hitRect.height));
 			for (AttireAction action : attire.actions)
@@ -137,7 +137,7 @@ public class Config3dAttireWriter extends BaseWriter
 						int delay = anim.times[i];
 						if (delay > 0)
 						{
-							ImageFrame frame = root.getImageFrameTable().get(anim.img.gid, anim.row, anim.col, i);
+							ImageFrame frame = root.frameTable.get(anim.img.gid, anim.row, anim.col, i);
 							if (frame != null)
 							{
 								Atlas atlas = config.atlasWriter.findAtlasByImageFrame(frame);
@@ -152,7 +152,7 @@ public class Config3dAttireWriter extends BaseWriter
 				}
 				for (AttireAudio audio : action.audios)
 				{
-					attireText.append(String.format("\t\t\t<audio path=\"%s\" loop=\"%s\" volume=\"%s\"/>\n", root.localToCdnURL(root.getMp3Writer().getMp3URL(audio.mp3)), audio.loop, audio.volume));
+					attireText.append(String.format("\t\t\t<audio path=\"%s\" loop=\"%s\" volume=\"%s\"/>\n", root.localToCdnURL(root.mp3Writer.getMp3URL(audio.mp3)), audio.loop, audio.volume));
 				}
 				attireText.append("\t\t</action>\n");
 			}
@@ -182,7 +182,7 @@ public class Config3dAttireWriter extends BaseWriter
 
 		if (url == null)
 		{
-			url = root.getGlobalOptionTable().getNextExportFile() + ".cfg";
+			url = root.optionTable.getNextExportFile() + ".cfg";
 
 			File outputFile = new File(root.getOutputFolder().getPath() + url);
 			FileUtil.writeFile(outputFile, bytes);

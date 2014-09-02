@@ -136,7 +136,7 @@ public class AttireTable extends BaseWriter
 	@Override
 	protected void exec() throws Exception
 	{
-		ProjectFile[] files = root.getFileTable().getAllAttireFiles();
+		ProjectFile[] files = root.fileTable.getAllAttireFiles();
 		for (ProjectFile file : files)
 		{
 			if (root.isCancel())
@@ -180,8 +180,8 @@ public class AttireTable extends BaseWriter
 			String paramID = XmlUtil.parseString(node.attributeValue("groupID"), "");
 
 			// 检查图像引用
-			ProjectImgFile imgFile = root.getFileTable().getImgFile(url);
-			AtfParam param = root.getAtfParamTable().getAtfParam(paramID);
+			ProjectImgFile imgFile = root.fileTable.getImgFile(url);
+			AtfParam param = root.atfParamTable.getAtfParam(paramID);
 			if (imgFile != null)
 			{
 				addBitmap(file, new AttireBitmap(key, imgFile, param));
@@ -221,8 +221,8 @@ public class AttireTable extends BaseWriter
 			}
 
 			// 检查图像引用
-			ProjectImgFile img = root.getFileTable().getImgFile(imgURL);
-			AtfParam param = root.getAtfParamTable().getAtfParam(paramID);
+			ProjectImgFile img = root.fileTable.getImgFile(imgURL);
+			AtfParam param = root.atfParamTable.getAtfParam(paramID);
 			if (img != null)
 			{
 				AttireAnim anim = new AttireAnim(1, 3, 1, 0, 0, 1, 1, false, img, row, col, delays, param);
@@ -294,7 +294,7 @@ public class AttireTable extends BaseWriter
 					int loop = Integer.parseInt(actionNode.attributeValue("soundPlayCount"));
 					float volume = (float) Integer.parseInt(actionNode.attributeValue("soundVolume")) / 1000;
 
-					ProjectMp3File mp3 = root.getFileTable().getMp3File(mp3Path);
+					ProjectMp3File mp3 = root.fileTable.getMp3File(mp3Path);
 					if (mp3 != null)
 					{
 						if (!actionID_audios.containsKey(actionID))
@@ -334,8 +334,8 @@ public class AttireTable extends BaseWriter
 						}
 
 						// 检查图像引用
-						ProjectImgFile img = root.getFileTable().getImgFile(imgURL);
-						AtfParam param = root.getAtfParamTable().getAtfParam(paramID);
+						ProjectImgFile img = root.fileTable.getImgFile(imgURL);
+						AtfParam param = root.atfParamTable.getAtfParam(paramID);
 						if (img != null)
 						{
 							if (!actionID_anims.containsKey(actionID))

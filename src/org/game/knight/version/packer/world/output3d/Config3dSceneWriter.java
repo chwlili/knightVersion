@@ -92,7 +92,7 @@ public class Config3dSceneWriter extends BaseWriter
 	@Override
 	protected void startup() throws Exception
 	{
-		GamePacker.log("开始输出3D渲染场景配置");
+		GamePacker.log("开始输出场景配置(3D)");
 	}
 
 	@Override
@@ -100,7 +100,7 @@ public class Config3dSceneWriter extends BaseWriter
 	{
 		scene_url = new HashMap<Scene, String>();
 
-		for (Scene scene : root.getWorldTable().getAllScene())
+		for (Scene scene : root.worldTable.getAllScene())
 		{
 			writeSceneCfg(scene);
 
@@ -138,7 +138,7 @@ public class Config3dSceneWriter extends BaseWriter
 		String bgsPath = "";
 		if (scene.bgs != null)
 		{
-			bgsPath = root.localToCdnURL(root.getMp3Writer().getMp3URL(scene.bgs));
+			bgsPath = root.localToCdnURL(root.mp3Writer.getMp3URL(scene.bgs));
 		}
 
 		int[] sectionArr = new int[scene.sections.length];
@@ -164,7 +164,7 @@ public class Config3dSceneWriter extends BaseWriter
 			{
 				continue;
 			}
-			ImageFrame frame = root.getImageFrameTable().get(layer.img.imgFile.gid, 1, 1, 0);
+			ImageFrame frame = root.frameTable.get(layer.img.imgFile.gid, 1, 1, 0);
 			if (frame == null)
 			{
 				continue;
@@ -186,7 +186,7 @@ public class Config3dSceneWriter extends BaseWriter
 			{
 				continue;
 			}
-			ImageFrame frame = root.getImageFrameTable().get(layer.img.imgFile.gid, 1, 1, 0);
+			ImageFrame frame = root.frameTable.get(layer.img.imgFile.gid, 1, 1, 0);
 			if (frame == null)
 			{
 				continue;
@@ -284,7 +284,7 @@ public class Config3dSceneWriter extends BaseWriter
 
 		if (url == null)
 		{
-			url = root.getGlobalOptionTable().getNextExportFile() + ".xml";
+			url = root.optionTable.getNextExportFile() + ".xml";
 
 			File outputFile = new File(root.getOutputFolder().getPath() + url);
 			FileUtil.writeFile(outputFile, bytes);
@@ -308,7 +308,7 @@ public class Config3dSceneWriter extends BaseWriter
 		StringBuilder sb = new StringBuilder();
 		sb.append("<worldDB>\n");
 		sb.append("\t<citys>\n");
-		for (WorldCity city : root.getWorldTable().getCitys())
+		for (WorldCity city : root.worldTable.getCitys())
 		{
 			sb.append(String.format("\t\t<city id=\"%s\" name=\"%s\">\n", city.id, city.name));
 			for (Scene scene : city.scenes)
@@ -332,7 +332,7 @@ public class Config3dSceneWriter extends BaseWriter
 
 		if (url == null)
 		{
-			url = root.getGlobalOptionTable().getNextExportFile() + ".cfg";
+			url = root.optionTable.getNextExportFile() + ".cfg";
 
 			File outputFile = new File(root.getOutputFolder().getPath() + url);
 			FileUtil.writeFile(outputFile, bytes);
@@ -352,7 +352,7 @@ public class Config3dSceneWriter extends BaseWriter
 		scene_files = new HashMap<Scene, String>();
 		scene_size = new HashMap<Scene, Integer>();
 
-		for (WorldCity city : root.getWorldTable().getCitys())
+		for (WorldCity city : root.worldTable.getCitys())
 		{
 			for (Scene scene : city.scenes)
 			{
@@ -364,7 +364,7 @@ public class Config3dSceneWriter extends BaseWriter
 				{
 					if (layer.img != null)
 					{
-						ImageFrame frame = root.getImageFrameTable().get(layer.img.imgFile.gid, 1, 1, 0);
+						ImageFrame frame = root.frameTable.get(layer.img.imgFile.gid, 1, 1, 0);
 						SliceImage slice = config.sliceWriter.getSliceImage(frame);
 						if (slice != null)
 						{
@@ -376,7 +376,7 @@ public class Config3dSceneWriter extends BaseWriter
 				{
 					if (layer.img != null)
 					{
-						ImageFrame frame = root.getImageFrameTable().get(layer.img.imgFile.gid, 1, 1, 0);
+						ImageFrame frame = root.frameTable.get(layer.img.imgFile.gid, 1, 1, 0);
 						SliceImage slice = config.sliceWriter.getSliceImage(frame);
 						if (slice != null)
 						{
@@ -442,7 +442,7 @@ public class Config3dSceneWriter extends BaseWriter
 									continue;
 								}
 
-								ImageFrame frame = root.getImageFrameTable().get(anim.img.gid, anim.row, anim.col, i);
+								ImageFrame frame = root.frameTable.get(anim.img.gid, anim.row, anim.col, i);
 								Atlas atlas = config.atlasWriter.findAtlasByImageFrame(frame);
 								if (atlas != null)
 								{
@@ -466,7 +466,7 @@ public class Config3dSceneWriter extends BaseWriter
 									continue;
 								}
 
-								ImageFrame frame = root.getImageFrameTable().get(anim.img.gid, anim.row, anim.col, i);
+								ImageFrame frame = root.frameTable.get(anim.img.gid, anim.row, anim.col, i);
 								Atlas atlas = config.atlasWriter.findAtlasByImageFrame(frame);
 								if (atlas != null)
 								{

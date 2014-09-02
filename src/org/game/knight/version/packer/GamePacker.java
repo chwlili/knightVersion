@@ -912,7 +912,7 @@ public class GamePacker extends Composite
 		if (worldWriter != null)
 		{
 			worldWriter.cancel();
-			worldWriter=null;
+			worldWriter = null;
 		}
 	}
 
@@ -990,11 +990,7 @@ public class GamePacker extends Composite
 
 				if (worldSelected)
 				{
-					// WorldExporter world = new WorldExporter(new
-					// File(worldPath), new File(cdnPath + File.separatorChar +
-					// "world"), zip, isMobile, writeRegionImg);
-					// world.publish();
-					worldWriter = new WorldWriter(new File(worldPath), new File(cdnPath + File.separatorChar + "world"), zip, count);
+					worldWriter = new WorldWriter(new File(worldPath), new File(cdnPath + File.separatorChar + "world"), count, zip);
 					worldWriter.start();
 				}
 

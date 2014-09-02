@@ -91,7 +91,7 @@ public class WorldTable extends BaseWriter
 	@Override
 	protected void exec() throws Exception
 	{
-		ProjectFile[] links = root.getFileTable().getAllLinkFiles();
+		ProjectFile[] links = root.fileTable.getAllLinkFiles();
 		if (links.length <= 0)
 		{
 			return;
@@ -149,7 +149,7 @@ public class WorldTable extends BaseWriter
 				String sceneName = sceneNode.attributeValue("name");
 				String scenePath = PathUtil.rebuildPath(sceneNode.attributeValue("scenePath"));
 
-				ProjectFile sceneFile = root.getFileTable().getSceneFile(scenePath);
+				ProjectFile sceneFile = root.fileTable.getSceneFile(scenePath);
 				if (sceneFile != null)
 				{
 					Document sceneDom = null;
@@ -287,8 +287,8 @@ public class WorldTable extends BaseWriter
 					sceneSound = citySound;
 				}
 
-				ProjectFile sceneFile = root.getFileTable().getSceneFile(scenePath);
-				ProjectMp3File bgsoundFile = root.getFileTable().getMp3File(sceneSound);
+				ProjectFile sceneFile = root.fileTable.getSceneFile(scenePath);
+				ProjectMp3File bgsoundFile = root.fileTable.getMp3File(sceneSound);
 				if (sceneFile != null)
 				{
 					Scene scene = buildScene(sceneID, sceneName, sceneType, timeLimit, sceneGroup, bgsoundFile, sceneFile);
@@ -408,7 +408,7 @@ public class WorldTable extends BaseWriter
 
 			if (key_url.containsKey(key))
 			{
-				return root.getAttireTable().getBitmap(key_url.get(key), name);
+				return root.attireTable.getBitmap(key_url.get(key), name);
 			}
 		}
 		return null;
@@ -435,7 +435,7 @@ public class WorldTable extends BaseWriter
 
 				if (key_url.containsKey(key))
 				{
-					return root.getAttireTable().getAttire(key_url.get(key), name);
+					return root.attireTable.getAttire(key_url.get(key), name);
 				}
 			}
 		}

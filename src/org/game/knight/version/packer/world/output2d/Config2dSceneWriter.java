@@ -92,7 +92,7 @@ public class Config2dSceneWriter extends BaseWriter
 	@Override
 	protected void startup() throws Exception
 	{
-		GamePacker.log("开始输出2D渲染场景配置");
+		GamePacker.log("开始输出场景配置(2D)");
 	}
 
 	@Override
@@ -100,7 +100,7 @@ public class Config2dSceneWriter extends BaseWriter
 	{
 		scene_url = new HashMap<Scene, String>();
 
-		for (Scene scene : root.getWorldTable().getAllScene())
+		for (Scene scene : root.worldTable.getAllScene())
 		{
 			writeSceneCfg(scene);
 
@@ -138,7 +138,7 @@ public class Config2dSceneWriter extends BaseWriter
 		String bgsPath = "";
 		if (scene.bgs != null)
 		{
-			bgsPath = root.localToCdnURL(root.getMp3Writer().getMp3URL(scene.bgs));
+			bgsPath = root.localToCdnURL(root.mp3Writer.getMp3URL(scene.bgs));
 		}
 
 		int[] sectionArr = new int[scene.sections.length];
@@ -163,7 +163,7 @@ public class Config2dSceneWriter extends BaseWriter
 		{
 			if (layer.img != null)
 			{
-				ImageFrame frame = root.getImageFrameTable().get(layer.img.imgFile.gid, 1, 1, 0);
+				ImageFrame frame = root.frameTable.get(layer.img.imgFile.gid, 1, 1, 0);
 				String fileURL = root.localToCdnURL(attireSWFWriter.getFrameFileURL(frame));
 				String typeID = attireSWFWriter.getFrameClassID(frame);
 				sb.append("\t\t<layer x=\"" + layer.x + "\" y=\"" + layer.y + "\" speed=\"" + layer.speed + "\" fileURL=\"" + fileURL + "\" fileType=\"" + typeID + "\" />\n");
@@ -176,7 +176,7 @@ public class Config2dSceneWriter extends BaseWriter
 		{
 			if (layer.img != null)
 			{
-				ImageFrame frame = root.getImageFrameTable().get(layer.img.imgFile.gid, 1, 1, 0);
+				ImageFrame frame = root.frameTable.get(layer.img.imgFile.gid, 1, 1, 0);
 				String fileURL = root.localToCdnURL(attireSWFWriter.getFrameFileURL(frame));
 				String typeID = attireSWFWriter.getFrameClassID(frame);
 
@@ -280,7 +280,7 @@ public class Config2dSceneWriter extends BaseWriter
 
 		if (url == null)
 		{
-			url = root.getGlobalOptionTable().getNextExportFile() + ".xml";
+			url = root.optionTable.getNextExportFile() + ".xml";
 
 			File outputFile = new File(root.getOutputFolder().getPath() + url);
 			FileUtil.writeFile(outputFile, bytes);
@@ -304,7 +304,7 @@ public class Config2dSceneWriter extends BaseWriter
 		StringBuilder sb = new StringBuilder();
 		sb.append("<worldDB>\n");
 		sb.append("\t<citys>\n");
-		for (WorldCity city : root.getWorldTable().getCitys())
+		for (WorldCity city : root.worldTable.getCitys())
 		{
 			sb.append(String.format("\t\t<city id=\"%s\" name=\"%s\">\n", city.id, city.name));
 			for (Scene scene : city.scenes)
@@ -328,7 +328,7 @@ public class Config2dSceneWriter extends BaseWriter
 
 		if (url == null)
 		{
-			url = root.getGlobalOptionTable().getNextExportFile() + ".cfg";
+			url = root.optionTable.getNextExportFile() + ".cfg";
 
 			File outputFile = new File(root.getOutputFolder().getPath() + url);
 			FileUtil.writeFile(outputFile, bytes);
@@ -348,7 +348,7 @@ public class Config2dSceneWriter extends BaseWriter
 		scene_files = new HashMap<Scene, String>();
 		scene_size = new HashMap<Scene, Integer>();
 
-		for (WorldCity city : root.getWorldTable().getCitys())
+		for (WorldCity city : root.worldTable.getCitys())
 		{
 			for (Scene scene : city.scenes)
 			{
@@ -359,7 +359,7 @@ public class Config2dSceneWriter extends BaseWriter
 				{
 					if (layer.img != null)
 					{
-						ImageFrame frame = root.getImageFrameTable().get(layer.img.imgFile.gid, 1, 1, 0);
+						ImageFrame frame = root.frameTable.get(layer.img.imgFile.gid, 1, 1, 0);
 						String fileURL = attireSWFWriter.getFrameFileURL(frame);
 						if (fileURL != null)
 						{
@@ -371,7 +371,7 @@ public class Config2dSceneWriter extends BaseWriter
 				{
 					if (layer.img != null)
 					{
-						ImageFrame frame = root.getImageFrameTable().get(layer.img.imgFile.gid, 1, 1, 0);
+						ImageFrame frame = root.frameTable.get(layer.img.imgFile.gid, 1, 1, 0);
 						String fileURL = attireSWFWriter.getFrameFileURL(frame);
 						if (fileURL != null)
 						{
@@ -437,7 +437,7 @@ public class Config2dSceneWriter extends BaseWriter
 									continue;
 								}
 
-								ImageFrame frame = root.getImageFrameTable().get(anim.img.gid, anim.row, anim.col, i);
+								ImageFrame frame = root.frameTable.get(anim.img.gid, anim.row, anim.col, i);
 								String fileURL = attireSWFWriter.getFrameFileURL(frame);
 								if (fileURL != null)
 								{

@@ -2,9 +2,8 @@ package org.game.knight.version.packer.world;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 
@@ -25,20 +24,6 @@ public abstract class BaseWriter
 	}
 
 	/**
-	 * 获取版本文件
-	 * 
-	 * @return
-	 */
-	private File getVerFile()
-	{
-		if (verFileName != null && !verFileName.isEmpty())
-		{
-			return new File(root.getOutputFolder().getPath() + File.separatorChar + ".ver" + File.separatorChar + verFileName);
-		}
-		return null;
-	}
-
-	/**
 	 * 开始执行
 	 * 
 	 * @throws Exception
@@ -47,18 +32,20 @@ public abstract class BaseWriter
 	{
 		startup();
 
-		File file = getVerFile();
-		if (file != null && file.exists() && file.isFile())
+		if (verFileName != null)
 		{
-			BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "utf8"));
-
-			try
+			byte[] bytes = root.getHistory(verFileName);
+			if (bytes != null)
 			{
-				readHistory(reader);
-			}
-			finally
-			{
-				reader.close();
+				BufferedReader reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(bytes), "utf8"));
+				try
+				{
+					readHistory(reader);
+				}
+				finally
+				{
+					reader.close();
+				}
 			}
 		}
 
@@ -76,6 +63,17 @@ public abstract class BaseWriter
 	}
 
 	/**
+	 * 读取历史
+	 * 
+	 * @param stream
+	 * @throws Exception
+	 */
+	protected void readHistory(BufferedReader reader) throws Exception
+	{
+
+	}
+
+	/**
 	 * 执行
 	 */
 	protected void exec() throws Exception
@@ -88,36 +86,21 @@ public abstract class BaseWriter
 	 */
 	public void saveVer() throws Exception
 	{
-		File file = getVerFile();
-		if (file != null && file.exists() && file.isFile())
+		if (verFileName != null)
 		{
-			if (!file.getParentFile().exists())
-			{
-				file.getParentFile().mkdirs();
-			}
-
-			BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "utf8"));
-
+			ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
+			BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(byteOutput, "utf8"));
 			try
 			{
 				saveHistory(writer);
+				writer.flush();
+				root.setHistoryOutputStream(verFileName, byteOutput.toByteArray());
 			}
 			finally
 			{
 				writer.close();
 			}
 		}
-	}
-
-	/**
-	 * 读取历史
-	 * 
-	 * @param stream
-	 * @throws Exception
-	 */
-	protected void readHistory(BufferedReader reader) throws Exception
-	{
-
 	}
 
 	/**

@@ -50,7 +50,7 @@ public class Config2dAttireWriter extends BaseWriter
 	@Override
 	protected void startup() throws Exception
 	{
-		GamePacker.log("开始输出2D渲染装扮配置");
+		GamePacker.log("开始输出装扮配置(2D)");
 	}
 
 	@Override
@@ -58,7 +58,7 @@ public class Config2dAttireWriter extends BaseWriter
 	{
 		StringBuilder attireText = new StringBuilder();
 		attireText.append("<attires>\n");
-		for (Attire attire : root.getAttireTable().getAllAttire())
+		for (Attire attire : root.attireTable.getAllAttire())
 		{
 			attireText.append(String.format("\t<attire id=\"%s\" name=\"%s\" x=\"%s\" y=\"%s\" width=\"%s\" height=\"%s\">\n", attire.gid, attire.name, attire.hitRect.x, attire.hitRect.y, attire.hitRect.width, attire.hitRect.height));
 
@@ -78,7 +78,7 @@ public class Config2dAttireWriter extends BaseWriter
 						int delay = anim.times[i];
 						if (delay > 0)
 						{
-							ImageFrame frame = root.getImageFrameTable().get(anim.img.gid, anim.row, anim.col, i);
+							ImageFrame frame = root.frameTable.get(anim.img.gid, anim.row, anim.col, i);
 
 							int offSetX = frame.clipX + frame.clipW / 2 - frame.frameW / 2;
 							int offsetY = frame.clipY + frame.clipH - frame.frameH;
@@ -95,7 +95,7 @@ public class Config2dAttireWriter extends BaseWriter
 				}
 				for (AttireAudio audio : action.audios)
 				{
-					String audioURL = root.getMp3Writer().getMp3URL(audio.mp3);
+					String audioURL = root.mp3Writer.getMp3URL(audio.mp3);
 					if (audioURL != null)
 					{
 						attireText.append(String.format("\t\t\t<audio path=\"%s\" loop=\"%s\" volume=\"%s\"/>\n", audioURL, audio.loop, audio.volume));
@@ -121,7 +121,7 @@ public class Config2dAttireWriter extends BaseWriter
 
 		if (url == null)
 		{
-			url = root.getGlobalOptionTable().getNextExportFile() + ".cfg";
+			url = root.optionTable.getNextExportFile() + ".cfg";
 
 			File outputFile = new File(root.getOutputFolder().getPath() + url);
 			FileUtil.writeFile(outputFile, bytes);

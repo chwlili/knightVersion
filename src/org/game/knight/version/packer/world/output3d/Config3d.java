@@ -97,7 +97,7 @@ public class Config3d extends BaseWriter
 		String worldURL = sceneWriter.getWorldCfgURL();
 		File worldFile = new File(root.getOutputFolder().getPath() + worldURL);
 
-		String uiAttireURL = root.getUIAttireWriter().getCfgFileURL();
+		String uiAttireURL = root.gameUIAttireWriter.getCfgFileURL();
 		File uiAttireFile = new File(root.getOutputFolder().getPath() + uiAttireURL);
 
 		StringBuilder txt = new StringBuilder();
@@ -136,7 +136,7 @@ public class Config3d extends BaseWriter
 		HashMap<AttireAction, HashSet<String>> action_urls = new HashMap<AttireAction, HashSet<String>>();
 		HashMap<AttireAction, String> action_urlIDs = new HashMap<AttireAction, String>();
 
-		for (Attire attire : root.getAttireTable().getAllAttire())
+		for (Attire attire : root.attireTable.getAllAttire())
 		{
 			if (!filterAttire(attire))
 			{
@@ -156,7 +156,7 @@ public class Config3d extends BaseWriter
 					{
 						if (anim.times[i] > 0)
 						{
-							ImageFrame frame = root.getImageFrameTable().get(anim.img.gid, anim.row, anim.col, i);
+							ImageFrame frame = root.frameTable.get(anim.img.gid, anim.row, anim.col, i);
 							if (frame == null)
 							{
 								continue;
@@ -234,7 +234,7 @@ public class Config3d extends BaseWriter
 		StringBuilder labels = new StringBuilder();
 		StringBuilder horses = new StringBuilder();
 
-		for (Attire attire : root.getAttireTable().getAllAttire())
+		for (Attire attire : root.attireTable.getAllAttire())
 		{
 			if (!filterAttire(attire))
 			{
@@ -417,7 +417,7 @@ public class Config3d extends BaseWriter
 	 */
 	private String getSceneSummay()
 	{
-		Scene[] scenes = root.getWorldTable().getAllScene();
+		Scene[] scenes = root.worldTable.getAllScene();
 		Arrays.sort(scenes, new Comparator<Scene>()
 		{
 			@Override

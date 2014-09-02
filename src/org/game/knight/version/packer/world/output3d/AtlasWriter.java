@@ -81,7 +81,7 @@ public class AtlasWriter extends BaseWriter
 		if (nextIndex < allRectList.size())
 		{
 			result = allRectList.get(nextIndex);
-			lastLog = "贴图输出(" + nextIndex + "/" + allRectList.size() + "):" + rectList_atf.get(result).param.id + "(图像*" + result.length + ")";
+			lastLog = "纹理集输出(" + nextIndex + "/" + allRectList.size() + "):" + rectList_atf.get(result).param.id + "(图像*" + result.length + ")";
 			nextIndex++;
 		}
 
@@ -110,7 +110,7 @@ public class AtlasWriter extends BaseWriter
 	@Override
 	protected void startup() throws Exception
 	{
-		GamePacker.log("开始输出3D渲染纹理集");
+		GamePacker.log("开始输出纹理集(3D)");
 	}
 
 	@Override
@@ -287,7 +287,7 @@ public class AtlasWriter extends BaseWriter
 		graphicsA.dispose();
 		graphicsB.dispose();
 
-		String saveURL = root.getGlobalOptionTable().getNextExportFile();
+		String saveURL = root.optionTable.getNextExportFile();
 
 		String url1 = writerAtfImage(rects, param, imageA, saveURL);
 		String url2 = writerAtfPreview(rects, param, imageB, saveURL);
@@ -425,7 +425,7 @@ public class AtlasWriter extends BaseWriter
 	private void filterAtfGroup() throws Exception
 	{
 		HashMap<ParamKey, HashSet<ImageFrame>> atf_frameset = new HashMap<ParamKey, HashSet<ImageFrame>>();
-		for (Attire attire : root.getAttireTable().getAllAttire())
+		for (Attire attire : root.attireTable.getAllAttire())
 		{
 			for (AttireAction action : attire.actions)
 			{
@@ -443,7 +443,7 @@ public class AtlasWriter extends BaseWriter
 								atf_frameset.put(key, new HashSet<ImageFrame>());
 							}
 
-							atf_frameset.get(key).add(root.getImageFrameTable().get(anim.img.gid, anim.row, anim.col, i));
+							atf_frameset.get(key).add(root.frameTable.get(anim.img.gid, anim.row, anim.col, i));
 						}
 					}
 				}
@@ -585,7 +585,7 @@ public class AtlasWriter extends BaseWriter
 			// ATFParam:w\+h\+-c d -r
 			String[] paramItems = values[0].trim().split("\\+");
 			boolean anim = paramItems[0].equals("1");
-			AtfParam param = root.getAtfParamTable().findAtfParam(Integer.parseInt(paramItems[1].trim()), Integer.parseInt(paramItems[2].trim()), paramItems[3].trim());
+			AtfParam param = root.atfParamTable.findAtfParam(Integer.parseInt(paramItems[1].trim()), Integer.parseInt(paramItems[2].trim()), paramItems[3].trim());
 			if (param == null)
 			{
 				continue;
@@ -622,7 +622,7 @@ public class AtlasWriter extends BaseWriter
 						break;
 					}
 
-					ImageFrame frame = root.getImageFrameTable().get(rectValues[0].trim(), Integer.parseInt(rectValues[1].trim()), Integer.parseInt(rectValues[2].trim()), Integer.parseInt(rectValues[3].trim()));
+					ImageFrame frame = root.frameTable.get(rectValues[0].trim(), Integer.parseInt(rectValues[1].trim()), Integer.parseInt(rectValues[2].trim()), Integer.parseInt(rectValues[3].trim()));
 					if (frame == null)
 					{
 						rects = null;

@@ -219,7 +219,7 @@ public class ImageFrameTable extends BaseWriter
 					continue;
 				}
 
-				ProjectFile file = root.getFileTable().getFileByGID(keys[0]);
+				ProjectFile file = root.fileTable.getFileByGID(keys[0]);
 				if (file == null)
 				{
 					continue;
@@ -352,7 +352,7 @@ public class ImageFrameTable extends BaseWriter
 	{
 		HashMap<String, GridImg> frameMap = new HashMap<String, GridImg>();
 
-		for (Scene scene : root.getWorldTable().getAllScene())
+		for (Scene scene : root.worldTable.getAllScene())
 		{
 			for (SceneBackLayer layer : scene.backLayers)
 			{
@@ -370,7 +370,7 @@ public class ImageFrameTable extends BaseWriter
 			}
 		}
 
-		for (Attire attire : root.getAttireTable().getAllAttire())
+		for (Attire attire : root.attireTable.getAllAttire())
 		{
 			for (AttireAction action : attire.actions)
 			{

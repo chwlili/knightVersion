@@ -136,7 +136,7 @@ public class AttireSwfWriter extends BaseWriter
 	@Override
 	protected void startup() throws Exception
 	{
-		GamePacker.log("开始输出2D渲染装扮资源");
+		GamePacker.log("开始输出装扮资源(2D)");
 	}
 
 	@Override
@@ -196,9 +196,9 @@ public class AttireSwfWriter extends BaseWriter
 		final Hashtable<String, ArrayList<ImageFrame>> bagID_frames = new Hashtable<String, ArrayList<ImageFrame>>();
 
 		GamePacker.progress("分析装扮数据");
-		for (AttireBitmap bitmap : root.getAttireTable().getAllBitmaps())
+		for (AttireBitmap bitmap : root.attireTable.getAllBitmaps())
 		{
-			ImageFrame frame = root.getImageFrameTable().get(bitmap.imgFile.gid, 1, 1, 0);
+			ImageFrame frame = root.frameTable.get(bitmap.imgFile.gid, 1, 1, 0);
 			if (frame == null)
 			{
 				continue;
@@ -217,7 +217,7 @@ public class AttireSwfWriter extends BaseWriter
 			}
 		}
 
-		for (Attire attire : root.getAttireTable().getAllAttire())
+		for (Attire attire : root.attireTable.getAllAttire())
 		{
 			for (AttireAction action : attire.actions)
 			{
@@ -236,7 +236,7 @@ public class AttireSwfWriter extends BaseWriter
 							continue;
 						}
 
-						ImageFrame frame = root.getImageFrameTable().get(anim.img.gid, anim.row, anim.col, i);
+						ImageFrame frame = root.frameTable.get(anim.img.gid, anim.row, anim.col, i);
 						if (frame == null)
 						{
 							continue;
@@ -287,7 +287,7 @@ public class AttireSwfWriter extends BaseWriter
 
 			if (!activate(saveKey))
 			{
-				String saveURL = root.getGlobalOptionTable().getNextExportFile() + ".swf";
+				String saveURL = root.optionTable.getNextExportFile() + ".swf";
 
 				add(saveKey, saveURL);
 

@@ -111,7 +111,7 @@ public class SliceImageWriter extends BaseWriter
 	@Override
 	protected void startup() throws Exception
 	{
-		GamePacker.log("¿ªÊ¼Êä³ö3DäÖÈ¾±³¾°ÇÐÆ¬");
+		GamePacker.log("¿ªÊ¼Êä³ö±³¾°ÇÐÆ¬(3D)");
 	}
 
 	@Override
@@ -165,11 +165,11 @@ public class SliceImageWriter extends BaseWriter
 	{
 		HashSet<ImageFrame> imgFiles = new HashSet<ImageFrame>();
 
-		for (Scene scene : root.getWorldTable().getAllScene())
+		for (Scene scene : root.worldTable.getAllScene())
 		{
 			for (SceneBackLayer layer : scene.backLayers)
 			{
-				ImageFrame frame = root.getImageFrameTable().get(layer.img.imgFile.gid, 1, 1, 0);
+				ImageFrame frame = root.frameTable.get(layer.img.imgFile.gid, 1, 1, 0);
 				if (frame != null)
 				{
 					if (!activate(frame))
@@ -196,12 +196,12 @@ public class SliceImageWriter extends BaseWriter
 		int col = (int) Math.ceil((double) frame.clipW / SLICE_SIZE);
 
 		String previewURL = null;
-		synchronized (root.getGlobalOptionTable())
+		synchronized (root.optionTable)
 		{
-			previewURL = root.getGlobalOptionTable().getNextExportFile();
+			previewURL = root.optionTable.getNextExportFile();
 			for (int i = 0; i < row * col; i++)
 			{
-				root.getGlobalOptionTable().getNextExportFile();
+				root.optionTable.getNextExportFile();
 			}
 		}
 
@@ -385,7 +385,7 @@ public class SliceImageWriter extends BaseWriter
 						int col = Integer.parseInt(keys[2].trim());
 						int index = Integer.parseInt(keys[3].trim());
 
-						ImageFrame frame = root.getImageFrameTable().get(gid + "", row, col, index);
+						ImageFrame frame = root.frameTable.get(gid + "", row, col, index);
 						if (frame != null)
 						{
 							String previewURL = params[0].trim();

@@ -50,7 +50,7 @@ public class Mp3Writer extends BaseWriter
 	{
 		ArrayList<ProjectFile> newMp3s = new ArrayList<ProjectFile>();
 
-		ProjectFile[] mp3s = root.getFileTable().getAllMp3Files();
+		ProjectFile[] mp3s = root.fileTable.getAllMp3Files();
 		for (ProjectFile mp3 : mp3s)
 		{
 			if (!activate(mp3))
@@ -63,7 +63,7 @@ public class Mp3Writer extends BaseWriter
 		{
 			ProjectFile mp3 = newMp3s.get(i);
 
-			String url = root.getGlobalOptionTable().getNextExportFile() + ".mp3";
+			String url = root.optionTable.getNextExportFile() + ".mp3";
 			File file = new File(root.getOutputFolder().getPath() + url);
 
 			GamePacker.progress("Êä³öMP3ÎÄ¼þ(" + (i + 1) + "/" + newMp3s.size() + ")£º" + url);

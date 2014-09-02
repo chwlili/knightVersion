@@ -124,7 +124,7 @@ public class Version
 		versionBox.setLayout(new GridLayout(1, false));
 		versionExporter = new VerExportUtil(versionBox, SWT.NONE);
 		versionExporter.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 1, 1));
-		logXlsUtil=new Log2XlsUtil(versionBox, SWT.NONE);
+		logXlsUtil = new Log2XlsUtil(versionBox, SWT.NONE);
 		logXlsUtil.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 1, 1));
 		cdnSyncUtil = new CdnSyncUtil(versionBox, SWT.NONE);
 		cdnSyncUtil.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, 1, 1));
@@ -134,9 +134,9 @@ public class Version
 		checkerItem.setText("  ¼ì²éÆ÷  ");
 		Composite checkerBox = new Composite(tabFolder_1, SWT.NONE);
 		checkerBox.setLayout(new GridLayout(1, false));
-		checker=new GameServerCheckerUI(checkerBox, SWT.NONE);
+		checker = new GameServerCheckerUI(checkerBox, SWT.NONE);
 		checkerItem.setControl(checkerBox);
-		
+
 		CTabItem tbtmNewItem = new CTabItem(tabFolder_1, SWT.NONE);
 		tbtmNewItem.setText("  \u6D4B \u8BD5  ");
 		debugExporter = new GamePacker(tabFolder_1, SWT.NONE);

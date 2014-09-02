@@ -39,18 +39,20 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
+
 public class GameServerCheckerUI extends Composite implements Runnable
 {
 
 	/**
 	 * Create the composite.
+	 * 
 	 * @param parent
 	 * @param style
 	 */
 	public GameServerCheckerUI(Composite parent, int style)
 	{
 		super(parent, style);
-		
+
 		createContents();
 	}
 
@@ -60,8 +62,6 @@ public class GameServerCheckerUI extends Composite implements Runnable
 		// Disable the check that prevents subclassing of SWT components
 	}
 
-
-	
 	private static class TreeContentProvider implements ITreeContentProvider
 	{
 		public void inputChanged(Viewer viewer, Object oldInput, Object newInput)
@@ -109,15 +109,15 @@ public class GameServerCheckerUI extends Composite implements Runnable
 			GameServerChecker.GameArea area = (GameServerChecker.GameArea) element;
 			if (columnIndex == 0)
 			{
-				return area.serverID;
+				return area.serverName;
 			}
 			else if (columnIndex == 1)
 			{
-				return area.serverName;
+				return area.version;
 			}
 			else if (columnIndex == 2)
 			{
-				return area.version;
+				return "s" + area.serverID + ".app1101079868.qqopenapp.com";
 			}
 			else if (columnIndex == 3)
 			{
@@ -143,7 +143,7 @@ public class GameServerCheckerUI extends Composite implements Runnable
 		{
 		}
 	}
-	
+
 	private Table table;
 	private TableViewer tableViewer;
 	private TableColumn tblclmnNewColumn;
@@ -180,11 +180,6 @@ public class GameServerCheckerUI extends Composite implements Runnable
 		table.setHeaderVisible(true);
 		table.setLinesVisible(true);
 
-		tableViewerColumn_1 = new TableViewerColumn(tableViewer, SWT.NONE);
-		tblclmnNewColumn_1 = tableViewerColumn_1.getColumn();
-		tblclmnNewColumn_1.setWidth(100);
-		tblclmnNewColumn_1.setText("ID");
-
 		tableViewerColumn = new TableViewerColumn(tableViewer, SWT.NONE);
 		tblclmnNewColumn = tableViewerColumn.getColumn();
 		tblclmnNewColumn.setWidth(100);
@@ -195,14 +190,19 @@ public class GameServerCheckerUI extends Composite implements Runnable
 		tblclmnNewColumn_5.setWidth(100);
 		tblclmnNewColumn_5.setText("\u7248\u672C\u53F7");
 
+		tableViewerColumn_1 = new TableViewerColumn(tableViewer, SWT.NONE);
+		tblclmnNewColumn_1 = tableViewerColumn_1.getColumn();
+		tblclmnNewColumn_1.setWidth(100);
+		tblclmnNewColumn_1.setText("\u767B\u5F55\u57DF\u540D");
+
 		tableViewerColumn_2 = new TableViewerColumn(tableViewer, SWT.NONE);
 		tblclmnNewColumn_2 = tableViewerColumn_2.getColumn();
 		tblclmnNewColumn_2.setWidth(109);
-		tblclmnNewColumn_2.setText("\u670D\u52A1");
+		tblclmnNewColumn_2.setText("\u670D\u52A1\u5668\u57DF\u540D");
 		tableViewer.setLabelProvider(new TableLabelProvider());
 		tableViewer.setContentProvider(new ContentProvider());
 
-		verTreeViewer = new TreeViewer(composite, SWT.BORDER|SWT.FULL_SELECTION);
+		verTreeViewer = new TreeViewer(composite, SWT.BORDER | SWT.FULL_SELECTION);
 		verTree = verTreeViewer.getTree();
 		verTree.setLinesVisible(true);
 		verTree.setHeaderVisible(true);
@@ -276,7 +276,7 @@ public class GameServerCheckerUI extends Composite implements Runnable
 		});
 		verTreeViewer.setContentProvider(new TreeContentProvider());
 
-		megerTreeViewer = new TreeViewer(composite, SWT.BORDER|SWT.FULL_SELECTION);
+		megerTreeViewer = new TreeViewer(composite, SWT.BORDER | SWT.FULL_SELECTION);
 		megerTree = megerTreeViewer.getTree();
 		megerTree.setLinesVisible(true);
 		megerTree.setHeaderVisible(true);
