@@ -269,7 +269,6 @@ public class Config3dSceneWriter extends BaseWriter
 			}
 		}
 		sb.append("\t</monsters>\n");
-
 		sb.append("</scene>");
 
 		// ´æ´¢ÎÄ¼þ
@@ -313,7 +312,9 @@ public class Config3dSceneWriter extends BaseWriter
 			sb.append(String.format("\t\t<city id=\"%s\" name=\"%s\">\n", city.id, city.name));
 			for (Scene scene : city.scenes)
 			{
-				sb.append(String.format("\t\t\t<scene id=\"%s\" name=\"%s\" type=\"%s\" group=\"%s\" level=\"%s\" achieve=\"%s\" finishQuest=\"%s\" acceptQuest=\"%s\" />\n", scene.sceneID, scene.sceneName, scene.sceneType, scene.sceneGroup, 0, "-", "-", "-"));
+				sb.append(String.format("\t\t\t<scene id=\"%s\" name=\"%s\" type=\"%s\" group=\"%s\" level=\"%s\" achieve=\"%s\" finishQuest=\"%s\" acceptQuest=\"%s\">\n", scene.sceneID, scene.sceneName, scene.sceneType, scene.sceneGroup, 0, "-", "-", "-"));
+				sb.append(String.format("\t\t\t\t%s\n", getFileListNode(scene)));
+				sb.append(String.format("\t\t\t</scene>\n"));
 			}
 			sb.append("\t\t</city>\n");
 		}
@@ -342,6 +343,130 @@ public class Config3dSceneWriter extends BaseWriter
 		newTable.put(md5, url);
 
 		worldCfgURL = url;
+	}
+
+	private String getFileListNode(Scene scene)
+	{
+		HashSet<String> urls = new HashSet<String>();
+		HashSet<Attire> highAttires = new HashSet<Attire>();
+
+		for (SceneBackLayer layer : scene.backLayers)
+		{
+			if (layer.img != null)
+			{
+				ImageFrame frame = root.frameTable.get(layer.img.imgFile.gid, 1, 1, 0);
+				SliceImage slice = config.sliceWriter.getSliceImage(frame);
+				if (slice != null)
+				{
+					for (String url : slice.sliceURLs)
+					{
+						urls.add(url);
+					}
+				}
+			}
+		}
+		for (SceneForeLayer layer : scene.foreLayers)
+		{
+			if (layer.img != null)
+			{
+				ImageFrame frame = root.frameTable.get(layer.img.imgFile.gid, 1, 1, 0);
+				SliceImage slice = config.sliceWriter.getSliceImage(frame);
+				if (slice != null)
+				{
+					for (String url : slice.sliceURLs)
+					{
+						urls.add(url);
+					}
+				}
+			}
+		}
+		for (SceneAnim anim : scene.backAnims)
+		{
+			if (anim.attire != null)
+			{
+				highAttires.add(anim.attire);
+			}
+		}
+		for (SceneAnim anim : scene.anims)
+		{
+			if (anim.attire != null)
+			{
+				highAttires.add(anim.attire);
+			}
+		}
+		for (SceneNpc npc : scene.npcs)
+		{
+			if (npc.attire != null)
+			{
+				highAttires.add(npc.attire);
+			}
+		}
+		// for (SceneDoor door : scene.doors)
+		// {
+		// if (door.attire != null)
+		// {
+		// attires.add(door.attire);
+		// }
+		// }
+		for (ScenePart part : scene.parts)
+		{
+			for (SceneMonsterTimer timer : part.timers)
+			{
+				for (SceneMonsterBatch batch : timer.getBatchList())
+				{
+					for (SceneMonster monster : batch.getMonsters())
+					{
+						if (monster.attire != null)
+						{
+							highAttires.add(monster.attire);
+						}
+					}
+				}
+			}
+		}
+
+		for (Attire attire : highAttires)
+		{
+			for (AttireAction action : attire.actions)
+			{
+				for (AttireAnim anim : action.anims)
+				{
+					for (int i = 0; i < anim.times.length; i++)
+					{
+						if (anim.times[i] <= 0)
+						{
+							continue;
+						}
+
+						ImageFrame frame = root.frameTable.get(anim.img.gid, anim.row, anim.col, i);
+						Atlas atlas = config.atlasWriter.findAtlasByImageFrame(frame);
+						if (atlas != null)
+						{
+							urls.add(atlas.atfURL);
+						}
+					}
+				}
+			}
+		}
+
+		int sceneLength = 0;
+		StringBuilder urlString = new StringBuilder();
+
+		String cfgURL = scene_url.get(scene);
+		File cfgFile = new File(root.getOutputFolder().getPath() + cfgURL);
+		urlString.append(root.localToCdnURL(cfgURL));
+		sceneLength += cfgFile.length();
+
+		for (String url : urls)
+		{
+			File file = new File(root.getOutputFolder().getPath() + url);
+
+			urlString.append(",");
+			urlString.append(root.localToCdnURL(url));
+			sceneLength += file.length();
+		}
+
+		return "<imgs files=\"" + urlString.toString() + "\" size=\"" + sceneLength + "\"/>";
 	}
 
 	/**

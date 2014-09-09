@@ -864,14 +864,30 @@ public class WorldTable extends BaseWriter
 			npcs.remove(npc);
 		}
 
-		// 转换ID为0的NPC到动画列表
+		// 转换ID为0的NPC到动画列表、传送门列表
 		for (SceneNpc npc : npcs)
 		{
 			if (npc.id == 0)
 			{
 				deledNPC.add(npc);
-				anims.add(new SceneAnim(npc.name, npc.x, npc.y, 0, 0, npc.direction, npc.attire));
+
+				if (npc.name.equals("跳转点"))
+				{
+					SceneHotLink[] hotLinkArray = new SceneHotLink[] {};
+					SceneHot sceneHot = new SceneHot(0, 0, 0, 0, "", "", "", "", hotLinkArray);
+					doors.add(new SceneDoor(npc.x, npc.y, npc.direction, npc.attire, sceneHot));
+				}
+				else
+				{
+					anims.add(new SceneAnim(npc.name, npc.x, npc.y, 0, 0, npc.direction, npc.attire));
+				}
 			}
+		}
+
+		// 删除已经转移的NPC
+		for (SceneNpc npc : deledNPC)
+		{
+			npcs.remove(npc);
 		}
 
 		// 保存场景结构

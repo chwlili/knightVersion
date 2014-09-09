@@ -147,7 +147,7 @@ public class ProjectFileTable extends BaseWriter
 		if (nextIndex < inputList.length)
 		{
 			result = inputList[nextIndex];
-			lastLog = "MD5(" + nextIndex + "/" + inputList.length + "): " + result.getPath().substring(root.getInputFolder().getPath().length());
+			lastLog = "¼ì²éÎÄ¼þ(" + nextIndex + "/" + inputList.length + "): " + result.getPath().substring(root.getInputFolder().getPath().length());
 			nextIndex++;
 		}
 		return result;
