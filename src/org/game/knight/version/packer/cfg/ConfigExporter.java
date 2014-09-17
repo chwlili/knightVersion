@@ -20,6 +20,8 @@ import org.chw.util.ZlibUtil;
 import org.game.knight.version.packer.GamePacker;
 import org.game.knight.version.packer.base.AbsExporter;
 import org.xml.sax.SAXException;
+import org.xml2as.builder.ClassTable;
+import org.xml2as.builder.UnitConfigBuilder;
 
 public class ConfigExporter extends AbsExporter
 {
@@ -43,6 +45,7 @@ public class ConfigExporter extends AbsExporter
 	protected void exportContent() throws Exception
 	{
 		files = new Hashtable<String, File>();
+		xml2Files = new Hashtable<String, File>();
 
 		if (isCancel())
 		{
@@ -79,7 +82,7 @@ public class ConfigExporter extends AbsExporter
 
 			file_names.add(getFileName(file));
 			file_sizes.add(fileByte.length);
-			
+
 			output.write(fileByte);
 
 			if (isCancel())
@@ -88,11 +91,10 @@ public class ConfigExporter extends AbsExporter
 			}
 		}
 		/*
-		byte[] fileByte = ZlibUtil.compress(getSkillContent());
-		file_names.add("skill2");
-		file_sizes.add(fileByte.length);
-		output.write(fileByte);
-		*/
+		 * byte[] fileByte = ZlibUtil.compress(getSkillContent());
+		 * file_names.add("skill2"); file_sizes.add(fileByte.length);
+		 * output.write(fileByte);
+		 */
 
 		// 拆分并输出文件
 		ByteArrayInputStream input = new ByteArrayInputStream(output.toByteArray());
@@ -101,11 +103,11 @@ public class ConfigExporter extends AbsExporter
 		while (input.available() > 0)
 		{
 			byte[] part = new byte[Math.min(input.available(), partSize)];
-			
+
 			input.read(part);
-			
-			part=MD5Util.addSuffix(part);
-			
+
+			part = MD5Util.addSuffix(part);
+
 			String md5 = MD5Util.md5Bytes(part);
 
 			partMD5.add(md5);
@@ -128,33 +130,22 @@ public class ConfigExporter extends AbsExporter
 		cfgData.append("\t</configs>\n");
 
 		// 导出文件
-		/*GamePacker.beginLogSet("输出文件");
-		for (String url : urls)
-		{
-			System.out.println("输出配置:" + url);
-			GamePacker.progress("输出文件", url);
-			if (zip)
-			{
-				exportFile("z" + getChecksumTable().getChecksumID(url), ZlibUtil.compress(FileUtil.getFileBytes(files.get(url))), FileUtil.getExt(url));
-			}
-			else
-			{
-				exportFile(getChecksumTable().getChecksumID(url), files.get(url));
-			}
-
-			if (isCancel())
-			{
-				return;
-			}
-		}
-		GamePacker.endLogSet();*/
+		/*
+		 * GamePacker.beginLogSet("输出文件"); for (String url : urls) {
+		 * System.out.println("输出配置:" + url); GamePacker.progress("输出文件", url);
+		 * if (zip) { exportFile("z" + getChecksumTable().getChecksumID(url),
+		 * ZlibUtil.compress(FileUtil.getFileBytes(files.get(url))),
+		 * FileUtil.getExt(url)); } else {
+		 * exportFile(getChecksumTable().getChecksumID(url), files.get(url)); }
+		 * 
+		 * if (isCancel()) { return; } } GamePacker.endLogSet();
+		 */
 
 		if (isCancel())
 		{
 			return;
 		}
 
-		
 		SkillConfigHandler skillHandler = new SkillConfigHandler();
 		for (String url : urls)
 		{
@@ -163,12 +154,34 @@ public class ConfigExporter extends AbsExporter
 				File file = new File(getSourceDir().getPath() + File.separator + url);
 				if (file.exists())
 				{
-					//输出技能配置
+					// 输出技能配置
 					SAXParserFactory factory = SAXParserFactory.newInstance();
 					SAXParser parser = factory.newSAXParser();
 
 					parser.parse(new FileInputStream(file), skillHandler);
 					break;
+				}
+			}
+		}
+
+		String[] xml2URLs = xml2Files.keySet().toArray(new String[] {});
+		for (int i = 0; i < xml2URLs.length; i++)
+		{
+			File xml2File = xml2Files.get(xml2URLs[i]);
+
+			GamePacker.progress("转换配置文件中:(" + i + "/" + xml2URLs.length + ") : " + xml2URLs[i]);
+
+			ClassTable table = new ClassTable(xml2File);
+
+			String inputURL = table.getInputFile();
+			if (inputURL != null)
+			{
+				File inputFile = files.get(inputURL);
+				if (inputFile != null)
+				{
+					UnitConfigBuilder builder = new UnitConfigBuilder(inputFile, table);
+					byte[] bytes = builder.build();
+					FileUtil.writeFile(new File(getDestDir().getPath() + "/" + inputFile.getName() + ".cfg"), bytes);
 				}
 			}
 		}
@@ -179,14 +192,17 @@ public class ConfigExporter extends AbsExporter
 		StringBuilder sb = new StringBuilder();
 		sb.append("<project>\n");
 		sb.append(cfgData.toString());
-		//sb.append("\t<configs>\n");
-		//for (String url : urls)
-		//{
-			//System.out.println("标记:" + url);
-			//String checksum = (zip ? "z" : "") + getChecksumTable().getChecksumID(url);
-			//sb.append(String.format("\t\t<config name=\"%s\" path=\"%s\" size=\"%s\"/>\n", getFileName(url), getExportedFileUrl(checksum), getExportedFileSize(checksum)));
-		//}
-		//sb.append("\t</configs>\n");
+		// sb.append("\t<configs>\n");
+		// for (String url : urls)
+		// {
+		// System.out.println("标记:" + url);
+		// String checksum = (zip ? "z" : "") +
+		// getChecksumTable().getChecksumID(url);
+		// sb.append(String.format("\t\t<config name=\"%s\" path=\"%s\" size=\"%s\"/>\n",
+		// getFileName(url), getExportedFileUrl(checksum),
+		// getExportedFileSize(checksum)));
+		// }
+		// sb.append("\t</configs>\n");
 		sb.append("\t<skills>\n");
 		for (String key : skillHandler.groupToActions.keySet())
 		{
@@ -270,6 +286,8 @@ public class ConfigExporter extends AbsExporter
 	private Hashtable<String, File> files;
 	private File skillFile;
 
+	private Hashtable<String, File> xml2Files;
+
 	/**
 	 * 读取目录
 	 * 
@@ -303,20 +321,25 @@ public class ConfigExporter extends AbsExporter
 				if (innerPath.toLowerCase().endsWith(".xml"))
 				{
 					GamePacker.progress("读取文件", innerPath);
-
 					this.files.put(innerPath, file);
-					
-					if(innerPath.endsWith("skills.xml"))
+
+					if (innerPath.endsWith("skills.xml"))
 					{
-						skillFile=file;
+						skillFile = file;
 					}
+				}
+				else if (innerPath.toLowerCase().endsWith(".xml2"))
+				{
+					GamePacker.progress("读取文件", innerPath);
+					this.xml2Files.put(innerPath, file);
 				}
 			}
 		}
 	}
-	
+
 	/**
 	 * 转换配置文件内容
+	 * 
 	 * @param file
 	 * @return
 	 * @throws FileNotFoundException
@@ -326,18 +349,18 @@ public class ConfigExporter extends AbsExporter
 	 */
 	private byte[] getFileContent(File file) throws FileNotFoundException, ParserConfigurationException, SAXException, IOException
 	{
-		//转换技能
-		if(skillFile!=null && skillFile.getPath().equals(file.getPath()))
+		// 转换技能
+		if (skillFile != null && skillFile.getPath().equals(file.getPath()))
 		{
-			SkillConvert convert=new SkillConvert();
+			SkillConvert convert = new SkillConvert();
 			convert.build(skillFile);
 
-			//转换技能
+			// 转换技能
 			FileUtil.writeFile(new File(getDestDir().getPath() + "/skills.xml"), convert.getContent().getBytes("UTF-8"));
-			
+
 			return convert.getContent().getBytes("UTF-8");
 		}
-		
+
 		return FileUtil.getFileBytes(file);
 	}
 }

@@ -42,7 +42,6 @@ public class Version
 	private VerExportUtil versionExporter;
 	private CdnSyncUtil cdnSyncUtil;
 	private Log2XlsUtil logXlsUtil;
-	private GameServerCheckerUI checker;
 
 	/**
 	 * Launch the application.
@@ -134,7 +133,7 @@ public class Version
 		checkerItem.setText("  ¼ì²éÆ÷  ");
 		Composite checkerBox = new Composite(tabFolder_1, SWT.NONE);
 		checkerBox.setLayout(new GridLayout(1, false));
-		checker = new GameServerCheckerUI(checkerBox, SWT.NONE);
+		new GameServerCheckerUI(checkerBox, SWT.NONE);
 		checkerItem.setControl(checkerBox);
 
 		CTabItem tbtmNewItem = new CTabItem(tabFolder_1, SWT.NONE);
