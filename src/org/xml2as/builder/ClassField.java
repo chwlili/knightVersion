@@ -33,34 +33,17 @@ public class ClassField
 	public final String[] indexKeys;
 
 	/**
-	 * 单值字段构造函数
-	 * 
-	 * @param xpath
-	 * @param name
-	 * @param comment
-	 * @param type
+	 * 是否为切片列表
 	 */
-	public ClassField(String xpath, String name, String comment, String type)
-	{
-		this(xpath, name, comment, type, false, null);
-	}
+	public final Boolean slice;
 
 	/**
-	 * 多值字段构造函数
-	 * 
-	 * @param xpath
-	 * @param name
-	 * @param comment
-	 * @param type
-	 * @param repeted
+	 * 切片时使用的分割字符
 	 */
-	public ClassField(String xpath, String name, String comment, String type, boolean repeted)
-	{
-		this(xpath, name, comment, type, repeted, null);
-	}
+	public final String sliceChar;
 
 	/**
-	 * 多值带索引字段构造函数
+	 * 构造函数
 	 * 
 	 * @param xpath
 	 * @param name
@@ -71,12 +54,44 @@ public class ClassField
 	 */
 	public ClassField(String xpath, String name, String comment, String type, boolean repeted, String[] indexKeys)
 	{
+		this(xpath, name, comment, type, repeted, indexKeys, false, null);
+	}
+
+	/**
+	 * 段构造函数
+	 * 
+	 * @param xpath
+	 * @param name
+	 * @param comment
+	 * @param type
+	 * @param repeted
+	 * @param indexKeys
+	 */
+	public ClassField(String xpath, String name, String comment, String type, boolean slice, String sliceChar)
+	{
+		this(xpath, name, comment, type, false, null, slice, sliceChar);
+	}
+
+	/**
+	 * 构造函数
+	 * 
+	 * @param xpath
+	 * @param name
+	 * @param comment
+	 * @param type
+	 * @param repeted
+	 * @param indexKeys
+	 */
+	public ClassField(String xpath, String name, String comment, String type, boolean repeted, String[] indexKeys, boolean slice, String sliceChar)
+	{
 		this.xpath = xpath;
 		this.name = name;
 		this.comment = comment;
 		this.type = type;
 		this.repeted = repeted;
 		this.indexKeys = indexKeys;
+		this.slice = slice;
+		this.sliceChar = sliceChar;
 	}
 
 	/**

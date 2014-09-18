@@ -8,6 +8,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Hashtable;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -69,18 +70,50 @@ public class ConfigExporter extends AbsExporter
 			return;
 		}
 
+		// 读取并解析配置转换文件
+		HashMap<String, ClassTable> url_classTable = new HashMap<String, ClassTable>();
+		String[] xml2URLs = xml2Files.keySet().toArray(new String[] {});
+		for (int i = 0; i < xml2URLs.length; i++)
+		{
+			File xml2File = xml2Files.get(xml2URLs[i]);
+
+			GamePacker.progress("读取配置转换文件中:(" + (i + 1) + "/" + xml2URLs.length + ") : " + xml2URLs[i]);
+
+			ClassTable table = new ClassTable(xml2File);
+
+			String inputURL = table.getInputFile();
+			if (inputURL != null)
+			{
+				url_classTable.put(inputURL, table);
+			}
+		}
+
 		// 压缩并合并配置文件
 		ByteArrayOutputStream output = new ByteArrayOutputStream();
 		ArrayList<String> file_names = new ArrayList<String>();
 		ArrayList<Integer> file_sizes = new ArrayList<Integer>();
-		for (String url : urls)
+		for (int i = 0; i < urls.length; i++)
 		{
-			GamePacker.progress("压缩配置文件:", url);
+			String url = urls[i];
 
 			File file = files.get(url);
-			byte[] fileByte = ZlibUtil.compress(getFileContent(file));
+			byte[] fileByte = null;
 
-			file_names.add(getFileName(file));
+			if (url_classTable.containsKey(url))
+			{
+				GamePacker.progress("转换配置文件(" + (i + 1) + "/" + urls.length + "):", url);
+				UnitConfigBuilder builder = new UnitConfigBuilder(file, url_classTable.get(url));
+				fileByte = builder.build();
+
+				FileUtil.writeFile(new File(getDestDir().getPath() + "/" + file.getName() + ".cfg"), fileByte);
+			}
+			else
+			{
+				GamePacker.progress("压缩配置文件(" + (i + 1) + "/" + urls.length + "):", url);
+				fileByte = ZlibUtil.compress(getFileContent(file));
+			}
+
+			file_names.add(url_classTable.containsKey(url) ? file.getName() : getFileName(file));
 			file_sizes.add(fileByte.length);
 
 			output.write(fileByte);
@@ -90,11 +123,6 @@ public class ConfigExporter extends AbsExporter
 				return;
 			}
 		}
-		/*
-		 * byte[] fileByte = ZlibUtil.compress(getSkillContent());
-		 * file_names.add("skill2"); file_sizes.add(fileByte.length);
-		 * output.write(fileByte);
-		 */
 
 		// 拆分并输出文件
 		ByteArrayInputStream input = new ByteArrayInputStream(output.toByteArray());
@@ -129,18 +157,6 @@ public class ConfigExporter extends AbsExporter
 		}
 		cfgData.append("\t</configs>\n");
 
-		// 导出文件
-		/*
-		 * GamePacker.beginLogSet("输出文件"); for (String url : urls) {
-		 * System.out.println("输出配置:" + url); GamePacker.progress("输出文件", url);
-		 * if (zip) { exportFile("z" + getChecksumTable().getChecksumID(url),
-		 * ZlibUtil.compress(FileUtil.getFileBytes(files.get(url))),
-		 * FileUtil.getExt(url)); } else {
-		 * exportFile(getChecksumTable().getChecksumID(url), files.get(url)); }
-		 * 
-		 * if (isCancel()) { return; } } GamePacker.endLogSet();
-		 */
-
 		if (isCancel())
 		{
 			return;
@@ -164,45 +180,12 @@ public class ConfigExporter extends AbsExporter
 			}
 		}
 
-		String[] xml2URLs = xml2Files.keySet().toArray(new String[] {});
-		for (int i = 0; i < xml2URLs.length; i++)
-		{
-			File xml2File = xml2Files.get(xml2URLs[i]);
-
-			GamePacker.progress("转换配置文件中:(" + i + "/" + xml2URLs.length + ") : " + xml2URLs[i]);
-
-			ClassTable table = new ClassTable(xml2File);
-
-			String inputURL = table.getInputFile();
-			if (inputURL != null)
-			{
-				File inputFile = files.get(inputURL);
-				if (inputFile != null)
-				{
-					UnitConfigBuilder builder = new UnitConfigBuilder(inputFile, table);
-					byte[] bytes = builder.build();
-					FileUtil.writeFile(new File(getDestDir().getPath() + "/" + inputFile.getName() + ".cfg"), bytes);
-				}
-			}
-		}
-
 		// 生成项目配置
 		GamePacker.beginLogSet("输出汇总信息");
 		GamePacker.log("生成汇总信息");
 		StringBuilder sb = new StringBuilder();
 		sb.append("<project>\n");
 		sb.append(cfgData.toString());
-		// sb.append("\t<configs>\n");
-		// for (String url : urls)
-		// {
-		// System.out.println("标记:" + url);
-		// String checksum = (zip ? "z" : "") +
-		// getChecksumTable().getChecksumID(url);
-		// sb.append(String.format("\t\t<config name=\"%s\" path=\"%s\" size=\"%s\"/>\n",
-		// getFileName(url), getExportedFileUrl(checksum),
-		// getExportedFileSize(checksum)));
-		// }
-		// sb.append("\t</configs>\n");
 		sb.append("\t<skills>\n");
 		for (String key : skillHandler.groupToActions.keySet())
 		{

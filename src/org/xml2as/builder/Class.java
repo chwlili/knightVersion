@@ -3,19 +3,9 @@ package org.xml2as.builder;
 public class Class
 {
 	/**
-	 * 输入文件
-	 */
-	public final String filePath;
-
-	/**
 	 * 输入路径
 	 */
 	public final String xpath;
-
-	/**
-	 * 包名
-	 */
-	public final String packName;
 
 	/**
 	 * 类名
@@ -46,12 +36,10 @@ public class Class
 	 * @param name
 	 * @param comment
 	 */
-	public Class(String filePath, String xpath, String packName, String name, String comment, int order, ClassField[] fields)
+	public Class(String xpath, String name, String comment, int order, ClassField[] fields)
 	{
-		this.filePath = filePath;
 		this.xpath = xpath;
 
-		this.packName = packName;
 		this.name = name;
 		this.comment = comment;
 		this.order = order;

@@ -4,19 +4,18 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 import org.antlr.v4.runtime.ANTLRFileStream;
 import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.Token;
 import org.xml2as.parser.Xml2AsLexer;
 import org.xml2as.parser.Xml2AsParser;
 import org.xml2as.parser.Xml2AsParser.FieldContext;
-import org.xml2as.parser.Xml2AsParser.HashTypeContext;
-import org.xml2as.parser.Xml2AsParser.InputContext;
-import org.xml2as.parser.Xml2AsParser.ListTypeContext;
-import org.xml2as.parser.Xml2AsParser.NativeTypeContext;
+import org.xml2as.parser.Xml2AsParser.FieldMetaContext;
+import org.xml2as.parser.Xml2AsParser.ListMetaContext;
+import org.xml2as.parser.Xml2AsParser.SliceMetaContext;
 import org.xml2as.parser.Xml2AsParser.TypeContext;
+import org.xml2as.parser.Xml2AsParser.TypeMetaContext;
+import org.xml2as.parser.Xml2AsParser.TypeNameContext;
 import org.xml2as.parser.Xml2AsParser.Xml2Context;
 
 public class ClassTable
@@ -121,6 +120,17 @@ public class ClassTable
 	}
 
 	/**
+	 * 是否为基础类型
+	 * 
+	 * @param name
+	 * @return
+	 */
+	private boolean isBaseType(String name)
+	{
+		return "int".equals(name) || "uint".equals(name) || "Boolean".equals(name) || "Number".equals(name) || "String".equals(name);
+	}
+
+	/**
 	 * 读取文件
 	 * 
 	 * @param file
@@ -136,88 +146,118 @@ public class ClassTable
 
 		Xml2Context root = parser.xml2();
 
-		packName = "";
-		if (root.packName() != null)
+		inputFile = null;
+		if (root.input != null && root.input.url != null)
 		{
-			packName = root.packName().getText();
+			inputFile = root.input.url.getText();
+			if (inputFile.charAt(0) == '\"')
+			{
+				inputFile = inputFile.substring(1, inputFile.length() - 1);
+			}
+		}
+
+		packName = "";
+		if (root.pack != null && root.pack.pack != null)
+		{
+			packName = root.pack.pack.getText();
 		}
 
 		int order = 1;
 		for (TypeContext type : root.type())
 		{
-			InputContext typeMeta = type.input();
+			TypeMetaContext typeMeta = type.typeMeta();
 
 			String typeName = type.typeName().getText();
-			String typeInputFile = typeMeta != null && typeMeta.filePath != null ? typeMeta.filePath.getText() : null;
-			String typeInputPath = typeMeta != null && typeMeta.nodePath != null ? typeMeta.nodePath.getText() : null;
-			ArrayList<ClassField> typeFields = new ArrayList<ClassField>();
+			String typeXPath = typeMeta != null && typeMeta.xpath != null ? typeMeta.xpath.getText() : null;
+			if (typeXPath != null && typeXPath.charAt(0) == '"')
+			{
+				typeXPath = typeXPath.substring(1, typeXPath.length() - 1);
+			}
 
-			if (typeInputFile != null && typeInputFile.charAt(0) == '"')
-			{
-				typeInputFile = typeInputFile.substring(1, typeInputFile.length() - 1);
-			}
-			if (typeInputPath != null && typeInputPath.charAt(0) == '"')
-			{
-				typeInputPath = typeInputPath.substring(1, typeInputPath.length() - 1);
-			}
+			ArrayList<ClassField> typeFields = new ArrayList<ClassField>();
 
 			for (FieldContext field : type.field())
 			{
-				String fieldName = field.typeName().getText();
-				String fieldType = "";
+				String fieldType = field.fieldType.getText();
+				String fieldName = field.fieldName.getText();
+				String fieldXPath = field.fieldXPath.getText();
 				boolean fieldRepeted = false;
 				String[] indexList = null;
-				String fieldInputPath = field.nodePath != null ? field.nodePath.getText() : "";
+				boolean sliceList = false;
+				String sliceChar = null;
 
-				if (fieldInputPath != null && fieldInputPath.charAt(0) == '"')
+				boolean isNative = isBaseType(fieldType);
+
+				if (fieldXPath != null && fieldXPath.charAt(0) == '"')
 				{
-					fieldInputPath = fieldInputPath.substring(1, fieldInputPath.length() - 1);
+					fieldXPath = fieldXPath.substring(1, fieldXPath.length() - 1);
 				}
 
-				NativeTypeContext nativeType = field.nativeType();
-				ListTypeContext listType = field.listType();
-				HashTypeContext hashType = field.hashType();
+				ListMetaContext listMeta = null;
+				SliceMetaContext sliceMeta = null;
 
-				if (nativeType != null)
+				FieldMetaContext metaList = field.fieldMeta();
+				if (metaList != null && metaList.getChildCount() > 0)
 				{
-					fieldType = nativeType.typeName().getText();
-				}
-				else if (listType != null)
-				{
-					fieldType = listType.typeName().getText();
-					fieldRepeted = true;
-				}
-				else if (hashType != null)
-				{
-					fieldType = hashType.typeName().getText();
-					fieldRepeted = true;
-					List<Token> tokens = hashType.params;
-					if (tokens != null)
+					for (int i = metaList.getChildCount() - 1; i >= 0; i--)
 					{
-						ArrayList<String> keys = new ArrayList<String>();
-						for (Token token : tokens)
+						if (metaList.getChild(i) instanceof ListMetaContext)
 						{
-							String key = token.getText();
-							if (!key.trim().isEmpty())
-							{
-								keys.add(key);
-							}
+							listMeta = (ListMetaContext) metaList.getChild(i);
+							break;
 						}
-						indexList = keys.toArray(new String[] {});
+						else if (metaList.getChild(i) instanceof SliceMetaContext)
+						{
+							sliceMeta = (SliceMetaContext) metaList.getChild(i);
+							break;
+						}
 					}
 				}
 
-				typeFields.add(new ClassField(fieldInputPath, fieldName, "", fieldType, fieldRepeted, indexList));
+				if (listMeta != null)
+				{
+					fieldRepeted = true;
+
+					if (!isNative)
+					{
+						ArrayList<String> indexs = new ArrayList<String>();
+						for (TypeNameContext key : listMeta.key)
+						{
+							String name = key.getText().trim();
+							if (name != null && name.isEmpty() == false)
+							{
+								indexs.add(name);
+							}
+						}
+
+						if (indexs.size() > 0)
+						{
+							indexList = indexs.toArray(new String[] {});
+						}
+					}
+				}
+				else if (sliceMeta != null)
+				{
+					if (isNative)
+					{
+						sliceList = true;
+						sliceChar = sliceMeta.sliceChar.getText();
+						if(sliceChar.charAt(0)=='"')
+						{
+							sliceChar=sliceChar.substring(1, sliceChar.length()-1);
+						}
+					}
+				}
+
+				typeFields.add(new ClassField(fieldXPath, fieldName, "", fieldType, fieldRepeted, indexList, sliceList, sliceChar));
 			}
 
-			Class clazz = new Class(typeInputFile, typeInputPath, packName, typeName, "", order, typeFields.toArray(new ClassField[] {}));
+			Class clazz = new Class(typeXPath, typeName, "", order, typeFields.toArray(new ClassField[] {}));
 			order++;
 
 			name2Class.put(typeName, clazz);
-			if (typeInputFile != null)
+			if (typeXPath != null)
 			{
-				inputFile = typeInputFile;
-
 				mainClass.add(clazz);
 			}
 		}

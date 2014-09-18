@@ -57,12 +57,12 @@ public class UnitInstanceBuilder
 		ArrayList<ClassField> fields = new ArrayList<ClassField>();
 		for (Class clazz : classTable.getAllMainClass())
 		{
-			fields.add(new ClassField(clazz.xpath, clazz.name, clazz.comment, clazz.name));
+			fields.add(new ClassField(clazz.xpath, clazz.name, clazz.comment, clazz.name, false, null, false, null));
 		}
 
 		if (fields.size() > 0)
 		{
-			Instance instance = new Instance(new Class("", "", "", "", "", 0, fields.toArray(new ClassField[] {})));
+			Instance instance = new Instance(new Class("", "", "", 0, fields.toArray(new ClassField[] {})));
 			for (ClassField field : instance.type.fields)
 			{
 				InstanceField instanceField = new InstanceField(field, "");
@@ -269,6 +269,13 @@ public class UnitInstanceBuilder
 			extendToAllSelf(childs);
 		}
 
+		/**
+		 * 处理属性值
+		 * 
+		 * @param xpath
+		 * @param attributeName
+		 * @param attributeValue
+		 */
 		@SuppressWarnings("unchecked")
 		private void onAttribute(String xpath, String attributeName, String attributeValue)
 		{
@@ -295,55 +302,16 @@ public class UnitInstanceBuilder
 					continue;
 				}
 
-				Object fieldValue = null;
-
-				if (field.meta.isBoolean())
-				{
-					fieldValue = attributeValue != null && !attributeValue.trim().isEmpty() && !attributeValue.trim().equals("false") && !attributeValue.trim().equals("0");
-				}
-				else if (field.meta.isInt() || field.meta.isUint())
-				{
-					try
-					{
-						fieldValue = Integer.parseInt(attributeValue);
-					}
-					catch (NumberFormatException err)
-					{
-						fieldValue = 0;
-					}
-				}
-				else if (field.meta.isNumber())
-				{
-					try
-					{
-						fieldValue = Float.parseFloat(attributeValue);
-					}
-					catch (NumberFormatException err)
-					{
-						fieldValue = 0;
-					}
-				}
-				else if (field.meta.isString())
-				{
-					fieldValue = attributeValue;
-				}
-
-				if (field.meta.repeted)
-				{
-					if (field.value == null)
-					{
-						field.value = new ArrayList<Object>();
-					}
-
-					((List<Object>) field.value).add(fieldValue);
-				}
-				else
-				{
-					field.value = fieldValue;
-				}
+				setFieldValue(field, attributeValue);
 			}
 		}
 
+		/**
+		 * 处理文本值
+		 * 
+		 * @param xpath
+		 * @param text
+		 */
 		@SuppressWarnings("unchecked")
 		private void onText(String xpath, String text)
 		{
@@ -367,39 +335,20 @@ public class UnitInstanceBuilder
 					continue;
 				}
 
-				Object fieldValue = null;
+				setFieldValue(field, text);
+			}
+		}
 
-				if (field.meta.isBoolean())
-				{
-					fieldValue = text != null && !text.trim().isEmpty() && !text.trim().equals("false") && !text.trim().equals("0");
-				}
-				else if (field.meta.isInt() || field.meta.isUint())
-				{
-					try
-					{
-						fieldValue = Integer.parseInt(text);
-					}
-					catch (NumberFormatException err)
-					{
-						fieldValue = 0;
-					}
-				}
-				else if (field.meta.isNumber())
-				{
-					try
-					{
-						fieldValue = Float.parseFloat(text);
-					}
-					catch (NumberFormatException err)
-					{
-						fieldValue = Float.NaN;
-					}
-				}
-				else if (field.meta.isString())
-				{
-					fieldValue = text;
-				}
-
+		/**
+		 * 设置字段值
+		 * 
+		 * @param field
+		 * @param text
+		 */
+		private void setFieldValue(InstanceField field, String text)
+		{
+			if (text != null)
+			{
 				if (field.meta.repeted)
 				{
 					if (field.value == null)
@@ -407,13 +356,77 @@ public class UnitInstanceBuilder
 						field.value = new ArrayList<Object>();
 					}
 
-					((List<Object>) field.value).add(fieldValue);
+					((List<Object>) field.value).add(parseFieldValue(field, text));
 				}
 				else
 				{
-					field.value = fieldValue;
+					if (field.meta.slice && !field.meta.isExtendType())
+					{
+						@SuppressWarnings("rawtypes")
+						ArrayList list = new ArrayList();
+						String[] parts = text.split(field.meta.sliceChar);
+						for (String part : parts)
+						{
+							list.add(parseFieldValue(field, part));
+						}
+						field.value = list;
+					}
+					else
+					{
+						field.value = parseFieldValue(field, text);
+					}
 				}
 			}
+		}
+
+		/**
+		 * 解析字段值
+		 * 
+		 * @param field
+		 * @param text
+		 * @return
+		 */
+		private Object parseFieldValue(InstanceField field, String text)
+		{
+			Object fieldValue = null;
+
+			if (text != null)
+			{
+				text = text.trim();
+			}
+
+			if (field.meta.isBoolean())
+			{
+				fieldValue = text != null && !text.isEmpty() && !text.equals("false") && !text.equals("0");
+			}
+			else if (field.meta.isInt() || field.meta.isUint())
+			{
+				try
+				{
+					fieldValue = Integer.parseInt(text);
+				}
+				catch (NumberFormatException err)
+				{
+					fieldValue = 0;
+				}
+			}
+			else if (field.meta.isNumber())
+			{
+				try
+				{
+					fieldValue = Float.parseFloat(text);
+				}
+				catch (NumberFormatException err)
+				{
+					fieldValue = 0;
+				}
+			}
+			else if (field.meta.isString())
+			{
+				fieldValue = text;
+			}
+
+			return fieldValue;
 		}
 
 		private void onExitElement(String xpath)

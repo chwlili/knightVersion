@@ -2,58 +2,74 @@ grammar Xml2As;
 
 xml2
 :
-	COMMENT* C_PACKAGE packName? C_SEMICOLON?
 	(
-		type
+		input = inputDef pack = packDef
+		| pack = packDef input = inputDef
+		| pack = packDef
+		| input = inputDef
+	)
+	(
+		types += type
 		| COMMENT
 	)*
 ;
 
+inputDef
+:
+	COMMENT* C_INPUT url = STRING C_SEMICOLON
+;
+
+packDef
+:
+	COMMENT* C_PACKAGE pack = packName? C_SEMICOLON?
+;
+
 type
 :
-	input? C_TYPE typeName C_BRACE_L
+	typeMeta? C_TYPE typeName C_BRACE_L
 	(
 		field
 		| COMMENT
 	)* C_BRACE_R
 ;
 
-input
+typeMeta
 :
-	C_BRACKET_L C_INPUT C_PAREN_L C_FILE C_EQUALS filePath = STRING
-	(
-		C_COMMA C_NODE C_EQUALS nodePath = STRING
-	)? C_PAREN_R C_BRACKET_R
+	C_BRACKET_L C_MAIN C_PAREN_L xpath = STRING C_PAREN_R C_BRACKET_R
 ;
 
 field
 :
+	fieldMeta fieldType = typeName fieldName = typeName C_EQUALS fieldXPath =
+	STRING C_SEMICOLON?
+;
+
+fieldMeta
+:
 	(
-		nativeType
-		| listType
-		| hashType
-	) typeName C_EQUALS nodePath = STRING C_SEMICOLON?
+		listMeta
+		| sliceMeta
+	)*
 ;
 
-nativeType
+listMeta
 :
-	typeName
-;
-
-listType
-:
-	C_LIST C_ANGLE_L typeName C_ANGLE_R
-;
-
-hashType
-:
-	C_HASH C_ANGLE_L typeName C_ANGLE_R
+	C_BRACKET_L C_LIST
 	(
-		C_PAREN_L params += NAME
+		C_PAREN_L
 		(
-			C_COMMA params += NAME
-		)* C_PAREN_R
-	)?
+			key += typeName
+			(
+				C_COMMA key += typeName
+			)*
+		)? C_PAREN_R
+	)? C_BRACKET_R
+;
+
+sliceMeta
+:
+	C_BRACKET_L prefix = C_SLICE C_PAREN_L sliceChar = STRING C_PAREN_R
+	C_BRACKET_R
 ;
 
 packName
@@ -67,8 +83,7 @@ packName
 typeName
 :
 	C_INPUT
-	| C_FILE
-	| C_NODE
+	| C_MAIN
 	| C_TYPE
 	| C_INT
 	| C_UINT
@@ -76,7 +91,6 @@ typeName
 	| C_NUMBER
 	| C_STRING
 	| C_LIST
-	| C_HASH
 	| NAME
 ;
 
@@ -140,14 +154,24 @@ C_INPUT
 	'input'
 ;
 
-C_FILE
+C_PACKAGE
 :
-	'file'
+	'package'
 ;
 
-C_NODE
+C_MAIN
 :
-	'node'
+	'Main'
+;
+
+C_LIST
+:
+	'List'
+;
+
+C_SLICE
+:
+	'Slice'
 ;
 
 C_TYPE
@@ -178,21 +202,6 @@ C_NUMBER
 C_STRING
 :
 	'String'
-;
-
-C_LIST
-:
-	'List'
-;
-
-C_HASH
-:
-	'Hash'
-;
-
-C_PACKAGE
-:
-	'package'
 ;
 
 NAME

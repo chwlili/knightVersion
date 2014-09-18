@@ -130,7 +130,7 @@ public class UnitConfigBuilder
 				continue;
 			}
 
-			if (field.meta.repeted)
+			if (field.meta.repeted || field.meta.slice)
 			{
 				@SuppressWarnings("rawtypes")
 				ArrayList list = (ArrayList) field.value;
@@ -180,7 +180,6 @@ public class UnitConfigBuilder
 			Integer[] idArray = ids.toArray(new Integer[ids.size()]);
 			Arrays.sort(idArray, new Comparator<Integer>()
 			{
-				@Override
 				public int compare(Integer o1, Integer o2)
 				{
 					o1 = id_refCount.get(o1);
@@ -467,7 +466,6 @@ public class UnitConfigBuilder
 		InstanceField[] fields = instance.fields.toArray(new InstanceField[instance.fields.size()]);
 		Arrays.sort(fields, new Comparator<InstanceField>()
 		{
-			@Override
 			public int compare(InstanceField o1, InstanceField o2)
 			{
 				return getID(o1.meta) - getID(o2.meta);
@@ -507,7 +505,7 @@ public class UnitConfigBuilder
 
 		if (!def.isExtendType())
 		{
-			if (def.repeted)
+			if (def.repeted || def.slice)
 			{
 				sb.append("[");
 				@SuppressWarnings("rawtypes")
@@ -529,7 +527,7 @@ public class UnitConfigBuilder
 		}
 		else
 		{
-			if (def.repeted)
+			if (def.repeted || def.slice)
 			{
 				sb.append("[");
 				@SuppressWarnings("rawtypes")
@@ -752,7 +750,7 @@ public class UnitConfigBuilder
 					contentOutputStream.writeVarInt(getOrder(fieldDef, val));
 				}
 			}
-			else if (fieldDef.repeted)
+			else if (fieldDef.repeted || fieldDef.slice)
 			{
 				@SuppressWarnings("rawtypes")
 				ArrayList vals = (ArrayList) field.value;
@@ -844,7 +842,7 @@ public class UnitConfigBuilder
 				sb.append(field.meta.name);
 				sb.append(":");
 				ClassField def = field.meta;
-				if (def.repeted)
+				if (def.repeted || def.slice)
 				{
 					sb.append("[");
 					if (field.value != null)

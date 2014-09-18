@@ -31,37 +31,37 @@ public interface Xml2AsListener extends ParseTreeListener {
 	void exitField(@NotNull Xml2AsParser.FieldContext ctx);
 
 	/**
-	 * Enter a parse tree produced by {@link Xml2AsParser#input}.
+	 * Enter a parse tree produced by {@link Xml2AsParser#typeMeta}.
 	 * @param ctx the parse tree
 	 */
-	void enterInput(@NotNull Xml2AsParser.InputContext ctx);
+	void enterTypeMeta(@NotNull Xml2AsParser.TypeMetaContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link Xml2AsParser#input}.
+	 * Exit a parse tree produced by {@link Xml2AsParser#typeMeta}.
 	 * @param ctx the parse tree
 	 */
-	void exitInput(@NotNull Xml2AsParser.InputContext ctx);
+	void exitTypeMeta(@NotNull Xml2AsParser.TypeMetaContext ctx);
 
 	/**
-	 * Enter a parse tree produced by {@link Xml2AsParser#hashType}.
+	 * Enter a parse tree produced by {@link Xml2AsParser#sliceMeta}.
 	 * @param ctx the parse tree
 	 */
-	void enterHashType(@NotNull Xml2AsParser.HashTypeContext ctx);
+	void enterSliceMeta(@NotNull Xml2AsParser.SliceMetaContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link Xml2AsParser#hashType}.
+	 * Exit a parse tree produced by {@link Xml2AsParser#sliceMeta}.
 	 * @param ctx the parse tree
 	 */
-	void exitHashType(@NotNull Xml2AsParser.HashTypeContext ctx);
+	void exitSliceMeta(@NotNull Xml2AsParser.SliceMetaContext ctx);
 
 	/**
-	 * Enter a parse tree produced by {@link Xml2AsParser#listType}.
+	 * Enter a parse tree produced by {@link Xml2AsParser#inputDef}.
 	 * @param ctx the parse tree
 	 */
-	void enterListType(@NotNull Xml2AsParser.ListTypeContext ctx);
+	void enterInputDef(@NotNull Xml2AsParser.InputDefContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link Xml2AsParser#listType}.
+	 * Exit a parse tree produced by {@link Xml2AsParser#inputDef}.
 	 * @param ctx the parse tree
 	 */
-	void exitListType(@NotNull Xml2AsParser.ListTypeContext ctx);
+	void exitInputDef(@NotNull Xml2AsParser.InputDefContext ctx);
 
 	/**
 	 * Enter a parse tree produced by {@link Xml2AsParser#packName}.
@@ -86,6 +86,39 @@ public interface Xml2AsListener extends ParseTreeListener {
 	void exitType(@NotNull Xml2AsParser.TypeContext ctx);
 
 	/**
+	 * Enter a parse tree produced by {@link Xml2AsParser#packDef}.
+	 * @param ctx the parse tree
+	 */
+	void enterPackDef(@NotNull Xml2AsParser.PackDefContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link Xml2AsParser#packDef}.
+	 * @param ctx the parse tree
+	 */
+	void exitPackDef(@NotNull Xml2AsParser.PackDefContext ctx);
+
+	/**
+	 * Enter a parse tree produced by {@link Xml2AsParser#listMeta}.
+	 * @param ctx the parse tree
+	 */
+	void enterListMeta(@NotNull Xml2AsParser.ListMetaContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link Xml2AsParser#listMeta}.
+	 * @param ctx the parse tree
+	 */
+	void exitListMeta(@NotNull Xml2AsParser.ListMetaContext ctx);
+
+	/**
+	 * Enter a parse tree produced by {@link Xml2AsParser#fieldMeta}.
+	 * @param ctx the parse tree
+	 */
+	void enterFieldMeta(@NotNull Xml2AsParser.FieldMetaContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link Xml2AsParser#fieldMeta}.
+	 * @param ctx the parse tree
+	 */
+	void exitFieldMeta(@NotNull Xml2AsParser.FieldMetaContext ctx);
+
+	/**
 	 * Enter a parse tree produced by {@link Xml2AsParser#xml2}.
 	 * @param ctx the parse tree
 	 */
@@ -95,15 +128,4 @@ public interface Xml2AsListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitXml2(@NotNull Xml2AsParser.Xml2Context ctx);
-
-	/**
-	 * Enter a parse tree produced by {@link Xml2AsParser#nativeType}.
-	 * @param ctx the parse tree
-	 */
-	void enterNativeType(@NotNull Xml2AsParser.NativeTypeContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link Xml2AsParser#nativeType}.
-	 * @param ctx the parse tree
-	 */
-	void exitNativeType(@NotNull Xml2AsParser.NativeTypeContext ctx);
 }
