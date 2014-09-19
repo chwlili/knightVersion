@@ -33,7 +33,7 @@ public class UnitInstanceBuilder
 	 * @throws IOException
 	 * @throws ParserConfigurationException
 	 */
-	public static Instance[] build(ClassTable classTable, InputStream stream) throws SAXException, IOException, ParserConfigurationException
+	public static Instance build(ClassTable classTable, InputStream stream) throws SAXException, IOException, ParserConfigurationException
 	{
 		return new UnitInstanceBuilder().exec(classTable, stream);
 	}
@@ -46,7 +46,7 @@ public class UnitInstanceBuilder
 	 * @throws IOException
 	 * @throws ParserConfigurationException
 	 */
-	private Instance[] exec(ClassTable classTable, InputStream stream) throws SAXException, IOException, ParserConfigurationException
+	private Instance exec(ClassTable classTable, InputStream stream) throws SAXException, IOException, ParserConfigurationException
 	{
 		this.classTable = classTable;
 
@@ -54,37 +54,19 @@ public class UnitInstanceBuilder
 		this.path2Field = new Hashtable<String, ArrayList<InstanceField>>();
 		this.stackFields = new Stack<ArrayList<InstanceField>>();
 
-		ArrayList<ClassField> fields = new ArrayList<ClassField>();
-		for (Class clazz : classTable.getAllMainClass())
+		Class mainClass = classTable.getMainClass();
+		ClassField mainField = new ClassField(mainClass.xpath, mainClass.name, mainClass.comment, mainClass.name, 3, false, null, false, null);
+
+		InstanceField instanceField = new InstanceField(mainField, "");
+		if (!path2Field.containsKey(instanceField.meta.xpath))
 		{
-			fields.add(new ClassField(clazz.xpath, clazz.name, clazz.comment, clazz.name, false, null, false, null));
+			path2Field.put(instanceField.meta.xpath, new ArrayList<InstanceField>());
 		}
+		path2Field.get(instanceField.meta.xpath).add(instanceField);
 
-		if (fields.size() > 0)
-		{
-			Instance instance = new Instance(new Class("", "", "", 0, fields.toArray(new ClassField[] {})));
-			for (ClassField field : instance.type.fields)
-			{
-				InstanceField instanceField = new InstanceField(field, "");
-				if (!path2Field.containsKey(instanceField.meta.xpath))
-				{
-					path2Field.put(instanceField.meta.xpath, new ArrayList<InstanceField>());
-				}
-				path2Field.get(instanceField.meta.xpath).add(instanceField);
-				instance.fields.add(instanceField);
-			}
+		SAXParserFactory.newInstance().newSAXParser().parse(stream, new MyHandler());
 
-			SAXParserFactory.newInstance().newSAXParser().parse(stream, new MyHandler());
-
-			ArrayList<Instance> result = new ArrayList<Instance>();
-			for (InstanceField field : instance.fields)
-			{
-				result.add((Instance) field.value);
-			}
-			return result.toArray(new Instance[] {});
-		}
-
-		return new Instance[] {};
+		return (Instance) instanceField.value;
 	}
 
 	private class MyHandler extends DefaultHandler
@@ -424,6 +406,10 @@ public class UnitInstanceBuilder
 			else if (field.meta.isString())
 			{
 				fieldValue = text;
+			}
+			else if (field.meta.isEnumType())
+			{
+				return classTable.getEnum(field.meta.type).getOrder(text);
 			}
 
 			return fieldValue;

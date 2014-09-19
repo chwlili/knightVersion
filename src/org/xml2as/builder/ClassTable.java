@@ -4,26 +4,31 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import org.antlr.v4.runtime.ANTLRFileStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.xml2as.parser.Xml2AsLexer;
 import org.xml2as.parser.Xml2AsParser;
-import org.xml2as.parser.Xml2AsParser.FieldContext;
+import org.xml2as.parser.Xml2AsParser.EnumFieldContext;
+import org.xml2as.parser.Xml2AsParser.EnumTypeContext;
 import org.xml2as.parser.Xml2AsParser.FieldMetaContext;
 import org.xml2as.parser.Xml2AsParser.ListMetaContext;
 import org.xml2as.parser.Xml2AsParser.SliceMetaContext;
 import org.xml2as.parser.Xml2AsParser.TypeContext;
+import org.xml2as.parser.Xml2AsParser.TypeFieldContext;
 import org.xml2as.parser.Xml2AsParser.TypeMetaContext;
 import org.xml2as.parser.Xml2AsParser.TypeNameContext;
 import org.xml2as.parser.Xml2AsParser.Xml2Context;
 
 public class ClassTable
 {
-	private String packName;
-	private String inputFile;
-	private ArrayList<Class> mainClass = new ArrayList<Class>();
+	private String packName = "";
+	private String inputFile = null;
+
+	private Class mainClass = null;
 	private HashMap<String, Class> name2Class = new HashMap<String, Class>();
+	private HashMap<String, Enum> name2Enum = new HashMap<String, Enum>();
 
 	/**
 	 * 打开
@@ -37,6 +42,16 @@ public class ClassTable
 	}
 
 	/**
+	 * 获取输入文件
+	 * 
+	 * @return
+	 */
+	public String getInputFile()
+	{
+		return inputFile;
+	}
+
+	/**
 	 * 获取包名
 	 * 
 	 * @return
@@ -47,13 +62,13 @@ public class ClassTable
 	}
 
 	/**
-	 * 获取输入文件
+	 * 获取所有主类
 	 * 
 	 * @return
 	 */
-	public String getInputFile()
+	public Class getMainClass()
 	{
-		return inputFile;
+		return mainClass;
 	}
 
 	/**
@@ -67,13 +82,13 @@ public class ClassTable
 	}
 
 	/**
-	 * 获取所有主类
+	 * 获取所有枚举
 	 * 
 	 * @return
 	 */
-	public Class[] getAllMainClass()
+	public Enum[] getAllEnum()
 	{
-		return mainClass.toArray(new Class[] {});
+		return name2Enum.values().toArray(new Enum[] {});
 	}
 
 	/**
@@ -85,6 +100,17 @@ public class ClassTable
 	public Class getClass(String name)
 	{
 		return name2Class.get(name);
+	}
+
+	/**
+	 * 获取枚举
+	 * 
+	 * @param name
+	 * @return
+	 */
+	public Enum getEnum(String name)
+	{
+		return name2Enum.get(name);
 	}
 
 	/**
@@ -131,6 +157,28 @@ public class ClassTable
 	}
 
 	/**
+	 * 是否为扩展类型
+	 * 
+	 * @param name
+	 * @return
+	 */
+	private boolean isExtendType(String name)
+	{
+		return name2Class.containsKey(name);
+	}
+
+	/**
+	 * 是否为枚举类型
+	 * 
+	 * @param name
+	 * @return
+	 */
+	private boolean isEnumType(String name)
+	{
+		return name2Enum.containsKey(name);
+	}
+
+	/**
 	 * 读取文件
 	 * 
 	 * @param file
@@ -138,13 +186,19 @@ public class ClassTable
 	 */
 	private void open(File file) throws IOException
 	{
-		mainClass = new ArrayList<Class>();
+		mainClass = null;
 		name2Class = new HashMap<String, Class>();
 
 		Xml2AsLexer lexer = new Xml2AsLexer(new ANTLRFileStream(file.getPath()));
 		Xml2AsParser parser = new Xml2AsParser(new CommonTokenStream(lexer));
 
 		Xml2Context root = parser.xml2();
+
+		packName = "";
+		if (root.pack != null && root.pack.pack != null)
+		{
+			packName = root.pack.pack.getText();
+		}
 
 		inputFile = null;
 		if (root.input != null && root.input.url != null)
@@ -156,41 +210,89 @@ public class ClassTable
 			}
 		}
 
-		packName = "";
-		if (root.pack != null && root.pack.pack != null)
+		HashSet<String> typeNames = new HashSet<String>();
+		for (EnumTypeContext type : root.enumType())
 		{
-			packName = root.pack.pack.getText();
+			String enumName = type.typeName().getText();
+			EnumField[] enumFields = null;
+
+			if (typeNames.contains(enumName))
+			{
+				continue;
+			}
+
+			ArrayList<EnumField> fields = new ArrayList<EnumField>();
+			for (EnumFieldContext field : type.enumField())
+			{
+				String enumFieldName = field.fieldName.getText();
+				String enumFieldValue = field.fieldValue.getText();
+				if (enumFieldValue.charAt(0) == '"')
+				{
+					enumFieldValue = enumFieldValue.substring(1, enumFieldValue.length() - 1);
+				}
+
+				fields.add(new EnumField("", enumFieldName, enumFieldValue, fields.size() + 1));
+			}
+			enumFields = fields.toArray(new EnumField[] {});
+
+			Enum clazz = new Enum("", enumName, enumFields);
+
+			name2Enum.put(enumName, clazz);
+
+			typeNames.add(enumName);
 		}
 
 		int order = 1;
 		for (TypeContext type : root.type())
 		{
-			TypeMetaContext typeMeta = type.typeMeta();
-
 			String typeName = type.typeName().getText();
+
+			TypeMetaContext typeMeta = type.typeMeta();
 			String typeXPath = typeMeta != null && typeMeta.xpath != null ? typeMeta.xpath.getText() : null;
 			if (typeXPath != null && typeXPath.charAt(0) == '"')
 			{
 				typeXPath = typeXPath.substring(1, typeXPath.length() - 1);
 			}
 
-			ArrayList<ClassField> typeFields = new ArrayList<ClassField>();
-
-			for (FieldContext field : type.field())
+			if (typeNames.contains(typeName))
 			{
-				String fieldType = field.fieldType.getText();
+				continue;
+			}
+
+			HashSet<String> fieldNames = new HashSet<String>();
+
+			ArrayList<ClassField> typeFields = new ArrayList<ClassField>();
+			for (TypeFieldContext field : type.typeField())
+			{
 				String fieldName = field.fieldName.getText();
 				String fieldXPath = field.fieldXPath.getText();
-				boolean fieldRepeted = false;
+				String fieldType = field.fieldType.getText();
+				int fieldTypeKind = 3;
+				boolean fieldList = false;
 				String[] indexList = null;
 				boolean sliceList = false;
 				String sliceChar = null;
 
-				boolean isNative = isBaseType(fieldType);
-
 				if (fieldXPath != null && fieldXPath.charAt(0) == '"')
 				{
 					fieldXPath = fieldXPath.substring(1, fieldXPath.length() - 1);
+				}
+
+				if (fieldNames.contains(fieldName))
+				{
+					continue;
+				}
+
+				boolean isBase = isBaseType(fieldType);
+				boolean isEnum = isEnumType(fieldType);
+
+				if (isBase)
+				{
+					fieldTypeKind = 1;
+				}
+				else if (isEnum)
+				{
+					fieldTypeKind = 2;
 				}
 
 				ListMetaContext listMeta = null;
@@ -216,9 +318,9 @@ public class ClassTable
 
 				if (listMeta != null)
 				{
-					fieldRepeted = true;
+					fieldList = true;
 
-					if (!isNative)
+					if (!isBase && !isEnum)
 					{
 						ArrayList<String> indexs = new ArrayList<String>();
 						for (TypeNameContext key : listMeta.key)
@@ -238,28 +340,32 @@ public class ClassTable
 				}
 				else if (sliceMeta != null)
 				{
-					if (isNative)
+					if (isBase || isEnum)
 					{
 						sliceList = true;
 						sliceChar = sliceMeta.sliceChar.getText();
-						if(sliceChar.charAt(0)=='"')
+						if (sliceChar.charAt(0) == '"')
 						{
-							sliceChar=sliceChar.substring(1, sliceChar.length()-1);
+							sliceChar = sliceChar.substring(1, sliceChar.length() - 1);
 						}
 					}
 				}
 
-				typeFields.add(new ClassField(fieldXPath, fieldName, "", fieldType, fieldRepeted, indexList, sliceList, sliceChar));
+				typeFields.add(new ClassField(fieldXPath, fieldName, "", fieldType, fieldTypeKind, fieldList, indexList, sliceList, sliceChar));
+
+				fieldNames.add(fieldType);
 			}
 
 			Class clazz = new Class(typeXPath, typeName, "", order, typeFields.toArray(new ClassField[] {}));
 			order++;
 
 			name2Class.put(typeName, clazz);
-			if (typeXPath != null)
+			if (typeXPath != null && mainClass == null)
 			{
-				mainClass.add(clazz);
+				mainClass = clazz;
 			}
+
+			typeNames.add(typeName);
 		}
 	}
 }

@@ -65,7 +65,7 @@ public class UnitConfigBuilder
 	 */
 	public byte[] build() throws IOException, CoreException, SAXException, ParserConfigurationException
 	{
-		return getBytes(UnitInstanceBuilder.build(classTable, new FileInputStream(file)));
+		return build(UnitInstanceBuilder.build(classTable, new FileInputStream(file)));
 	}
 
 	/**
@@ -125,7 +125,14 @@ public class UnitConfigBuilder
 	{
 		for (InstanceField field : instance.fields)
 		{
+			// 忽略空值
 			if (field.value == null)
+			{
+				continue;
+			}
+
+			// 忽略枚举类型的值
+			if (field.meta.isEnumType())
 			{
 				continue;
 			}
@@ -140,7 +147,7 @@ public class UnitConfigBuilder
 					incrementRefCount(field.meta, value);
 
 					// 所有主键计入引用数
-					if ((value instanceof Instance) && field.meta.indexKeys != null)
+					if ((value instanceof Instance) && field.meta.hasIndex())
 					{
 						Instance valueInstance = (Instance) value;
 						for (String key : field.meta.indexKeys)
@@ -572,16 +579,13 @@ public class UnitConfigBuilder
 	 * @throws ParserConfigurationException
 	 * @throws SAXException
 	 */
-	private byte[] getBytes(Instance[] allInstance) throws IOException, SAXException, ParserConfigurationException, CoreException
+	private byte[] build(Instance instance) throws IOException, SAXException, ParserConfigurationException, CoreException
 	{
 		// 遍历所有根节点
-		for (Instance instance : allInstance)
-		{
-			parseInstance(instance);
-		}
+		parseInstance(instance);
 
 		// debugs
-		System.out.println(toDebugString(allInstance));
+		// System.out.println(toDebugString(allInstance));
 
 		// 排序类名列表
 		String[] allTypeName = typeName_idArray.keySet().toArray(new String[typeName_idArray.size()]);
@@ -598,11 +602,8 @@ public class UnitConfigBuilder
 			dataOutput.write(getBytes(typeName_idArray.get(typeName)));
 		}
 
-		for (Instance instance : allInstance)
-		{
-			dataOutput.writeVarInt(classTable.getClassID(instance.type.name));
-			dataOutput.write(getBytes(instance));
-		}
+		dataOutput.writeVarInt(classTable.getClassID(instance.type.name));
+		dataOutput.write(getBytes(instance));
 
 		return compress(byteArrayOutput.toByteArray());
 	}
@@ -724,7 +725,7 @@ public class UnitConfigBuilder
 			}
 
 			// 输出字段内容
-			if (fieldDef.repeted && fieldDef.indexKeys != null)
+			if (fieldDef.repeted && fieldDef.hasIndex())
 			{
 				@SuppressWarnings("rawtypes")
 				ArrayList vals = (ArrayList) field.value;
@@ -757,12 +758,26 @@ public class UnitConfigBuilder
 				contentOutputStream.writeVarInt(vals.size());
 				for (Object val : vals)
 				{
-					contentOutputStream.writeVarInt(getOrder(fieldDef, val));
+					if (fieldDef.isEnumType())
+					{
+						contentOutputStream.writeVarInt((Integer) field.value);
+					}
+					else
+					{
+						contentOutputStream.writeVarInt(getOrder(fieldDef, val));
+					}
 				}
 			}
 			else
 			{
-				contentOutputStream.writeVarInt(getOrder(fieldDef, field.value));
+				if (fieldDef.isEnumType())
+				{
+					contentOutputStream.writeVarInt((Integer) field.value);
+				}
+				else
+				{
+					contentOutputStream.writeVarInt(getOrder(fieldDef, field.value));
+				}
 			}
 		}
 
@@ -778,7 +793,7 @@ public class UnitConfigBuilder
 	/**
 	 * 转换成debug字符串
 	 */
-	private String toDebugString(Instance[] allInstance)
+	private String toDebugString(Instance mainInstance)
 	{
 		StringBuilder sb = new StringBuilder();
 
@@ -834,38 +849,35 @@ public class UnitConfigBuilder
 			sb.append("\n");
 		}
 
-		for (Instance instance : allInstance)
+		sb.append("{");
+		for (InstanceField field : mainInstance.fields)
 		{
-			sb.append("{");
-			for (InstanceField field : instance.fields)
+			sb.append(field.meta.name);
+			sb.append(":");
+			ClassField def = field.meta;
+			if (def.repeted || def.slice)
 			{
-				sb.append(field.meta.name);
-				sb.append(":");
-				ClassField def = field.meta;
-				if (def.repeted || def.slice)
+				sb.append("[");
+				if (field.value != null)
 				{
-					sb.append("[");
-					if (field.value != null)
+					@SuppressWarnings("rawtypes")
+					ArrayList list = (ArrayList) field.value;
+					for (Object item : list)
 					{
-						@SuppressWarnings("rawtypes")
-						ArrayList list = (ArrayList) field.value;
-						for (Object item : list)
-						{
-							sb.append(getOrder(def, item));
-							sb.append(",");
-						}
+						sb.append(getOrder(def, item));
+						sb.append(",");
 					}
-					sb.append("]");
 				}
-				else
-				{
-					sb.append(getOrder(def, field.value));
-				}
-				sb.append(",");
+				sb.append("]");
 			}
-			sb.append("}");
-			sb.append("\n");
+			else
+			{
+				sb.append(getOrder(def, field.value));
+			}
+			sb.append(",");
 		}
+		sb.append("}");
+		sb.append("\n");
 
 		return sb.toString();
 	}

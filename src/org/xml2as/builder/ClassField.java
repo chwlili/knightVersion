@@ -23,6 +23,11 @@ public class ClassField
 	public final String type;
 
 	/**
+	 * 字段类别
+	 */
+	private final int typeKind;
+
+	/**
 	 * 是否为列表
 	 */
 	public final Boolean repeted;
@@ -52,9 +57,9 @@ public class ClassField
 	 * @param repeted
 	 * @param indexKeys
 	 */
-	public ClassField(String xpath, String name, String comment, String type, boolean repeted, String[] indexKeys)
+	public ClassField(String xpath, String name, String comment, String type, int typeKind, boolean repeted, String[] indexKeys)
 	{
-		this(xpath, name, comment, type, repeted, indexKeys, false, null);
+		this(xpath, name, comment, type, typeKind, repeted, indexKeys, false, null);
 	}
 
 	/**
@@ -67,9 +72,9 @@ public class ClassField
 	 * @param repeted
 	 * @param indexKeys
 	 */
-	public ClassField(String xpath, String name, String comment, String type, boolean slice, String sliceChar)
+	public ClassField(String xpath, String name, String comment, String type, int typeKind, boolean slice, String sliceChar)
 	{
-		this(xpath, name, comment, type, false, null, slice, sliceChar);
+		this(xpath, name, comment, type, typeKind, false, null, slice, sliceChar);
 	}
 
 	/**
@@ -82,12 +87,13 @@ public class ClassField
 	 * @param repeted
 	 * @param indexKeys
 	 */
-	public ClassField(String xpath, String name, String comment, String type, boolean repeted, String[] indexKeys, boolean slice, String sliceChar)
+	public ClassField(String xpath, String name, String comment, String type, int typeKind, boolean repeted, String[] indexKeys, boolean slice, String sliceChar)
 	{
 		this.xpath = xpath;
 		this.name = name;
 		this.comment = comment;
 		this.type = type;
+		this.typeKind = typeKind;
 		this.repeted = repeted;
 		this.indexKeys = indexKeys;
 		this.slice = slice;
@@ -145,12 +151,41 @@ public class ClassField
 	}
 
 	/**
+	 * 是否为基础类型
+	 * 
+	 * @return
+	 */
+	public boolean isBaseType()
+	{
+		return typeKind == 1;
+	}
+
+	/**
+	 * 是否为枚举类型
+	 * 
+	 * @return
+	 */
+	public boolean isEnumType()
+	{
+		return typeKind == 2;
+	}
+
+	/**
 	 * 是否为自定义类型
 	 * 
 	 * @return
 	 */
 	public boolean isExtendType()
 	{
-		return !(isBoolean() || isInt() || isUint() || isNumber() || isString());
+		return typeKind == 3;
+	}
+
+	/**
+	 * 是否有索引
+	 * @return
+	 */
+	public boolean hasIndex()
+	{
+		return indexKeys != null && indexKeys.length > 0;
 	}
 }

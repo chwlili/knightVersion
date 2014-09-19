@@ -10,6 +10,7 @@ xml2
 	)
 	(
 		types += type
+		| enums += enumType
 		| COMMENT
 	)*
 ;
@@ -28,7 +29,7 @@ type
 :
 	typeMeta? C_TYPE typeName C_BRACE_L
 	(
-		field
+		typeField
 		| COMMENT
 	)* C_BRACE_R
 ;
@@ -38,7 +39,7 @@ typeMeta
 	C_BRACKET_L C_MAIN C_PAREN_L xpath = STRING C_PAREN_R C_BRACKET_R
 ;
 
-field
+typeField
 :
 	fieldMeta fieldType = typeName fieldName = typeName C_EQUALS fieldXPath =
 	STRING C_SEMICOLON?
@@ -72,6 +73,20 @@ sliceMeta
 	C_BRACKET_R
 ;
 
+enumType
+:
+	C_ENUM typeName C_BRACE_L
+	(
+		enumField
+		| COMMENT
+	)* C_BRACE_R
+;
+
+enumField
+:
+	fieldName = typeName C_EQUALS fieldValue = STRING C_SEMICOLON?
+;
+
 packName
 :
 	typeName
@@ -85,6 +100,7 @@ typeName
 	C_INPUT
 	| C_MAIN
 	| C_TYPE
+	| C_ENUM
 	| C_INT
 	| C_UINT
 	| C_BOOL
@@ -177,6 +193,11 @@ C_SLICE
 C_TYPE
 :
 	'type'
+;
+
+C_ENUM
+:
+	'enum'
 ;
 
 C_INT

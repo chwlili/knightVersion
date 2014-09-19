@@ -53,9 +53,13 @@ public class ConfigExporter extends AbsExporter
 			return;
 		}
 
+		File xmlFolder = new File(getSourceDir().getPath() + File.separator + "xml");
+		File xml2Folder = new File(getSourceDir().getPath() + File.separator + "xml2");
+
 		// 遍历文件
 		GamePacker.beginLogSet("读取文件");
-		readDir(getSourceDir());
+		readDir(xmlFolder);
+		readDir(xml2Folder);
 		GamePacker.endLogSet();
 
 		// 排序文件
@@ -82,7 +86,7 @@ public class ConfigExporter extends AbsExporter
 			ClassTable table = new ClassTable(xml2File);
 
 			String inputURL = table.getInputFile();
-			if (inputURL != null)
+			if (inputURL != null && table.getMainClass() != null)
 			{
 				url_classTable.put(inputURL, table);
 			}
@@ -99,13 +103,13 @@ public class ConfigExporter extends AbsExporter
 			File file = files.get(url);
 			byte[] fileByte = null;
 
-			if (url_classTable.containsKey(url))
+			if (url_classTable.containsKey(url) && url_classTable.get(url).getMainClass() != null)
 			{
 				GamePacker.progress("转换配置文件(" + (i + 1) + "/" + urls.length + "):", url);
 				UnitConfigBuilder builder = new UnitConfigBuilder(file, url_classTable.get(url));
 				fileByte = builder.build();
 
-				FileUtil.writeFile(new File(getDestDir().getPath() + "/" + file.getName() + ".cfg"), fileByte);
+				// FileUtil.writeFile(new File(getDestDir().getPath() + "/" + file.getName() + ".cfg"), fileByte);
 			}
 			else
 			{
@@ -276,45 +280,53 @@ public class ConfigExporter extends AbsExporter
 	 * 
 	 * @param dir
 	 */
-	private void readDir(File dir)
+	private void readDir(File root)
 	{
-		File[] files = dir.listFiles();
-
-		if (files == null)
+		if (root == null)
 		{
 			return;
 		}
 
-		for (int i = 0; i < files.length; i++)
+		ArrayList<File> folders = new ArrayList<File>();
+		if (root.isDirectory())
 		{
-			File file = files[i];
+			folders.add(root);
+		}
 
-			if (file.isHidden())
-			{
-				continue;
-			}
+		while (folders.size() > 0)
+		{
+			File folder = folders.remove(0);
 
-			if (file.isDirectory())
+			File[] files = folder.listFiles();
+			for (File file : files)
 			{
-				readDir(file);
-			}
-			else
-			{
-				String innerPath = file.getPath().substring(getSourceDir().getPath().length()).replaceAll("\\\\", "/");
-				if (innerPath.toLowerCase().endsWith(".xml"))
+				if (file.isHidden())
 				{
-					GamePacker.progress("读取文件", innerPath);
-					this.files.put(innerPath, file);
-
-					if (innerPath.endsWith("skills.xml"))
-					{
-						skillFile = file;
-					}
+					continue;
 				}
-				else if (innerPath.toLowerCase().endsWith(".xml2"))
+
+				if (file.isDirectory())
 				{
-					GamePacker.progress("读取文件", innerPath);
-					this.xml2Files.put(innerPath, file);
+					folders.add(file);
+				}
+				else
+				{
+					String innerPath = file.getPath().substring(root.getPath().length()).replaceAll("\\\\", "/");
+					if (innerPath.toLowerCase().endsWith(".xml"))
+					{
+						GamePacker.progress("读取文件", innerPath);
+						this.files.put(innerPath, file);
+
+						if (innerPath.endsWith("skills.xml"))
+						{
+							skillFile = file;
+						}
+					}
+					else if (innerPath.toLowerCase().endsWith(".xml2"))
+					{
+						GamePacker.progress("读取文件", innerPath);
+						this.xml2Files.put(innerPath, file);
+					}
 				}
 			}
 		}

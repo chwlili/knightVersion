@@ -30,19 +30,6 @@ public class Xml2AsBaseListener implements Xml2AsListener {
 	 * <p/>
 	 * The default implementation does nothing.
 	 */
-	@Override public void enterField(@NotNull Xml2AsParser.FieldContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 * <p/>
-	 * The default implementation does nothing.
-	 */
-	@Override public void exitField(@NotNull Xml2AsParser.FieldContext ctx) { }
-
-	/**
-	 * {@inheritDoc}
-	 * <p/>
-	 * The default implementation does nothing.
-	 */
 	@Override public void enterTypeMeta(@NotNull Xml2AsParser.TypeMetaContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -50,6 +37,32 @@ public class Xml2AsBaseListener implements Xml2AsListener {
 	 * The default implementation does nothing.
 	 */
 	@Override public void exitTypeMeta(@NotNull Xml2AsParser.TypeMetaContext ctx) { }
+
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void enterTypeField(@NotNull Xml2AsParser.TypeFieldContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void exitTypeField(@NotNull Xml2AsParser.TypeFieldContext ctx) { }
+
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void enterEnumType(@NotNull Xml2AsParser.EnumTypeContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void exitEnumType(@NotNull Xml2AsParser.EnumTypeContext ctx) { }
 
 	/**
 	 * {@inheritDoc}
@@ -115,6 +128,19 @@ public class Xml2AsBaseListener implements Xml2AsListener {
 	 * The default implementation does nothing.
 	 */
 	@Override public void exitPackDef(@NotNull Xml2AsParser.PackDefContext ctx) { }
+
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void enterEnumField(@NotNull Xml2AsParser.EnumFieldContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void exitEnumField(@NotNull Xml2AsParser.EnumFieldContext ctx) { }
 
 	/**
 	 * {@inheritDoc}

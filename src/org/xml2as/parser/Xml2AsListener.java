@@ -20,17 +20,6 @@ public interface Xml2AsListener extends ParseTreeListener {
 	void exitTypeName(@NotNull Xml2AsParser.TypeNameContext ctx);
 
 	/**
-	 * Enter a parse tree produced by {@link Xml2AsParser#field}.
-	 * @param ctx the parse tree
-	 */
-	void enterField(@NotNull Xml2AsParser.FieldContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link Xml2AsParser#field}.
-	 * @param ctx the parse tree
-	 */
-	void exitField(@NotNull Xml2AsParser.FieldContext ctx);
-
-	/**
 	 * Enter a parse tree produced by {@link Xml2AsParser#typeMeta}.
 	 * @param ctx the parse tree
 	 */
@@ -40,6 +29,28 @@ public interface Xml2AsListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitTypeMeta(@NotNull Xml2AsParser.TypeMetaContext ctx);
+
+	/**
+	 * Enter a parse tree produced by {@link Xml2AsParser#typeField}.
+	 * @param ctx the parse tree
+	 */
+	void enterTypeField(@NotNull Xml2AsParser.TypeFieldContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link Xml2AsParser#typeField}.
+	 * @param ctx the parse tree
+	 */
+	void exitTypeField(@NotNull Xml2AsParser.TypeFieldContext ctx);
+
+	/**
+	 * Enter a parse tree produced by {@link Xml2AsParser#enumType}.
+	 * @param ctx the parse tree
+	 */
+	void enterEnumType(@NotNull Xml2AsParser.EnumTypeContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link Xml2AsParser#enumType}.
+	 * @param ctx the parse tree
+	 */
+	void exitEnumType(@NotNull Xml2AsParser.EnumTypeContext ctx);
 
 	/**
 	 * Enter a parse tree produced by {@link Xml2AsParser#sliceMeta}.
@@ -95,6 +106,17 @@ public interface Xml2AsListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitPackDef(@NotNull Xml2AsParser.PackDefContext ctx);
+
+	/**
+	 * Enter a parse tree produced by {@link Xml2AsParser#enumField}.
+	 * @param ctx the parse tree
+	 */
+	void enterEnumField(@NotNull Xml2AsParser.EnumFieldContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link Xml2AsParser#enumField}.
+	 * @param ctx the parse tree
+	 */
+	void exitEnumField(@NotNull Xml2AsParser.EnumFieldContext ctx);
 
 	/**
 	 * Enter a parse tree produced by {@link Xml2AsParser#listMeta}.
