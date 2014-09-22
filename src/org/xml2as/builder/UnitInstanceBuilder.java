@@ -8,10 +8,13 @@ import java.util.List;
 import java.util.Stack;
 
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
 import org.xml.sax.Attributes;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
 public class UnitInstanceBuilder
@@ -400,7 +403,7 @@ public class UnitInstanceBuilder
 				}
 				catch (NumberFormatException err)
 				{
-					fieldValue = 0;
+					fieldValue = 0.0f;
 				}
 			}
 			else if (field.meta.isString())
