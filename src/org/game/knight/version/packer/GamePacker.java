@@ -138,6 +138,16 @@ public class GamePacker extends Composite
 
 		cfgButton = new Button(inputs, SWT.NONE);
 		cfgButton.setText("    ...    ");
+		new Label(inputs, SWT.NONE);
+
+		xml2Label = new Link(inputs, SWT.NONE);
+		xml2Label.setText("<a>\u8F6C\u6362</a>\uFF1A");
+
+		xml2Input = new Text(inputs, SWT.BORDER);
+		xml2Input.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
+
+		xml2Button = new Button(inputs, SWT.NONE);
+		xml2Button.setText("    ...    ");
 
 		fileSelection = new Button(inputs, SWT.CHECK);
 
@@ -341,6 +351,7 @@ public class GamePacker extends Composite
 
 		// 输入标签
 		cfgLabel.addSelectionListener(new DirOpenHandler(cfgInput));
+		xml2Label.addSelectionListener(new DirOpenHandler(xml2Input));
 		fileLabel.addSelectionListener(new DirOpenHandler(fileInput));
 		iconLabel.addSelectionListener(new DirOpenHandler(iconInput));
 		viewLabel.addSelectionListener(new DirOpenHandler(viewInput));
@@ -510,6 +521,7 @@ public class GamePacker extends Composite
 
 		cfgSelection.setSelection(section.getBoolean("cfgSelection"));
 		cfgInput.setText(section.get("cfgInput") != null ? section.get("cfgInput") : "");
+		xml2Input.setText(section.get("xml2Input") != null ? section.get("xml2Input") : "");
 
 		fileSelection.setSelection(section.getBoolean("fileSelection"));
 		fileInput.setText(section.get("fileInput") != null ? section.get("fileInput") : "");
@@ -548,6 +560,7 @@ public class GamePacker extends Composite
 	private void saveSetting()
 	{
 		section.put("cfgSelection", cfgSelection.getSelection());
+		section.put("xml2Input", xml2Input.getText());
 		section.put("cfgInput", cfgInput.getText());
 
 		section.put("fileSelection", fileSelection.getSelection());
@@ -919,6 +932,9 @@ public class GamePacker extends Composite
 	private WorldWriter worldWriter;
 	private Combo runCount;
 	private Label label;
+	private Text xml2Input;
+	private Button xml2Button;
+	private Link xml2Label;
 
 	/**
 	 * 执行导出
@@ -936,6 +952,7 @@ public class GamePacker extends Composite
 		final boolean codeSelected = codeSelection.getSelection();
 
 		final String cfgPath = cfgInput.getText();
+		final String xml2Path = xml2Input.getText();
 		final String filePath = fileInput.getText();
 		final String iconPath = iconInput.getText();
 		final String viewPath = viewInput.getText();
@@ -966,7 +983,7 @@ public class GamePacker extends Composite
 
 				if (cfgSelected)
 				{
-					ConfigExporter configs = new ConfigExporter(new File(cfgPath), new File(cdnPath + File.separatorChar + "configs"), zip);
+					ConfigExporter configs = new ConfigExporter(new File(cfgPath), new File(xml2Path), new File(cdnPath + File.separatorChar + "configs"), zip);
 					configs.publish();
 				}
 

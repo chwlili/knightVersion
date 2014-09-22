@@ -26,15 +26,19 @@ import org.xml2as.builder.UnitConfigBuilder;
 
 public class ConfigExporter extends AbsExporter
 {
+	private File xml2Folder;
+
 	/**
 	 * 构造函数
 	 * 
 	 * @param src
 	 * @param dst
 	 */
-	public ConfigExporter(File src, File dst, boolean zip)
+	public ConfigExporter(File src, File xml2, File dst, boolean zip)
 	{
 		super("导出配置", src, dst);
+
+		xml2Folder = xml2;
 	}
 
 	/**
@@ -53,12 +57,9 @@ public class ConfigExporter extends AbsExporter
 			return;
 		}
 
-		File xmlFolder = new File(getSourceDir().getPath() + File.separator + "xml");
-		File xml2Folder = new File(getSourceDir().getPath() + File.separator + "xml2");
-
 		// 遍历文件
 		GamePacker.beginLogSet("读取文件");
-		readDir(xmlFolder);
+		readDir(getSourceDir());
 		readDir(xml2Folder);
 		GamePacker.endLogSet();
 
@@ -109,7 +110,8 @@ public class ConfigExporter extends AbsExporter
 				UnitConfigBuilder builder = new UnitConfigBuilder(file, url_classTable.get(url));
 				fileByte = builder.build();
 
-				// FileUtil.writeFile(new File(getDestDir().getPath() + "/" + file.getName() + ".cfg"), fileByte);
+				// FileUtil.writeFile(new File(getDestDir().getPath() + "/" +
+				// file.getName() + ".cfg"), fileByte);
 			}
 			else
 			{
