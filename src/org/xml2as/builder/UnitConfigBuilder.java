@@ -2,13 +2,13 @@ package org.xml2as.builder;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.zip.Deflater;
@@ -20,7 +20,6 @@ import org.xml.sax.SAXException;
 
 public class UnitConfigBuilder
 {
-	private File file;
 	private ClassTable classTable;
 
 	private int nextID = 1;
@@ -48,9 +47,8 @@ public class UnitConfigBuilder
 	 * @param instance
 	 * @throws IOException
 	 */
-	public UnitConfigBuilder(File file, ClassTable types)
+	public UnitConfigBuilder(ClassTable types)
 	{
-		this.file = file;
 		this.classTable = types;
 	}
 
@@ -63,9 +61,9 @@ public class UnitConfigBuilder
 	 * @throws ParserConfigurationException
 	 * @throws SAXException
 	 */
-	public byte[] build() throws IOException, CoreException, SAXException, ParserConfigurationException
+	public byte[] build(InputStream input) throws IOException, CoreException, SAXException, ParserConfigurationException
 	{
-		return build(UnitInstanceBuilder.build(classTable, new FileInputStream(file)));
+		return build(UnitInstanceBuilder.build(classTable, input));
 	}
 
 	/**
@@ -123,6 +121,10 @@ public class UnitConfigBuilder
 	 */
 	private void parseInstance(Instance instance)
 	{
+		if(instance==null)
+		{
+			System.out.println("..");
+		}
 		for (InstanceField field : instance.fields)
 		{
 			// 忽略空值
@@ -178,38 +180,6 @@ public class UnitConfigBuilder
 					parseInstance((Instance) field.value);
 				}
 			}
-		}
-
-		// 按引用次数排序ID
-		for (String typeName : typeName_ids.keySet())
-		{
-			HashSet<Integer> ids = typeName_ids.get(typeName);
-			Integer[] idArray = ids.toArray(new Integer[ids.size()]);
-			Arrays.sort(idArray, new Comparator<Integer>()
-			{
-				public int compare(Integer o1, Integer o2)
-				{
-					o1 = id_refCount.get(o1);
-					o2 = id_refCount.get(o2);
-					if (o1 > o2)
-					{
-						return -1;
-					}
-					else if (o1 < o2)
-					{
-						return 1;
-					}
-					return 0;
-				}
-			});
-
-			for (int i = 0; i < idArray.length; i++)
-			{
-				int id = idArray[i];
-				id_order.put(id, i + 1);
-			}
-
-			typeName_idArray.put(typeName, idArray);
 		}
 	}
 
@@ -583,6 +553,38 @@ public class UnitConfigBuilder
 	{
 		// 遍历所有根节点
 		parseInstance(instance);
+
+		// 按引用次数排序ID
+		for (String typeName : typeName_ids.keySet())
+		{
+			HashSet<Integer> ids = typeName_ids.get(typeName);
+			Integer[] idArray = ids.toArray(new Integer[ids.size()]);
+			Arrays.sort(idArray, new Comparator<Integer>()
+			{
+				public int compare(Integer o1, Integer o2)
+				{
+					o1 = id_refCount.get(o1);
+					o2 = id_refCount.get(o2);
+					if (o1 > o2)
+					{
+						return -1;
+					}
+					else if (o1 < o2)
+					{
+						return 1;
+					}
+					return 0;
+				}
+			});
+
+			for (int i = 0; i < idArray.length; i++)
+			{
+				int id = idArray[i];
+				id_order.put(id, i + 1);
+			}
+
+			typeName_idArray.put(typeName, idArray);
+		}
 
 		// debugs
 		// System.out.println(toDebugString(allInstance));

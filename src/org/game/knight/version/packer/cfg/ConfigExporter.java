@@ -107,8 +107,8 @@ public class ConfigExporter extends AbsExporter
 			if (url_classTable.containsKey(url) && url_classTable.get(url).getMainClass() != null)
 			{
 				GamePacker.progress("×ª»»ÅäÖÃÎÄ¼þ(" + (i + 1) + "/" + urls.length + "):", url);
-				UnitConfigBuilder builder = new UnitConfigBuilder(file, url_classTable.get(url));
-				fileByte = builder.build();
+				UnitConfigBuilder builder = new UnitConfigBuilder(url_classTable.get(url));
+				fileByte = builder.build(new FileInputStream(file));
 
 				// FileUtil.writeFile(new File(getDestDir().getPath() + "/" +
 				// file.getName() + ".cfg"), fileByte);

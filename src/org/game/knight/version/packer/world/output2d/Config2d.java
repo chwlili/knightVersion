@@ -75,6 +75,7 @@ public class Config2d extends BaseWriter
 	 */
 	private void writeDB()
 	{
+		String attireKey = attireWriter.getOutputKey();
 		String attireURL = attireWriter.getOutputURL();
 		File attireFile = new File(root.getOutputFolder().getPath() + attireURL);
 
@@ -88,7 +89,7 @@ public class Config2d extends BaseWriter
 		txt.append("<project>\n");
 		txt.append("\t<configs>\n");
 		txt.append(String.format("\t\t<config name=\"%s\" path=\"%s\" size=\"%s\"/>\n", "uiAvatar", root.localToCdnURL(uiAttireURL), uiAttireFile.length()));
-		txt.append(String.format("\t\t<config name=\"%s\" path=\"%s\" size=\"%s\"/>\n", "attire", root.localToCdnURL(attireURL), attireFile.length()));
+		txt.append(String.format("\t\t<config name=\"%s\" path=\"%s\" size=\"%s\"/>\n", attireKey, root.localToCdnURL(attireURL), attireFile.length()));
 		txt.append(String.format("\t\t<config name=\"%s\" path=\"%s\" size=\"%s\"/>\n", "world", root.localToCdnURL(worldURL), worldFile.length()));
 		txt.append("\t</configs>\n");
 		txt.append(getAttireSummay());

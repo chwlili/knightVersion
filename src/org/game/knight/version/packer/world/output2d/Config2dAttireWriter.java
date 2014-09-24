@@ -2,6 +2,7 @@ package org.game.knight.version.packer.world.output2d;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -21,6 +22,7 @@ import org.game.knight.version.packer.world.model.ImageFrame;
 public class Config2dAttireWriter extends BaseWriter
 {
 	private AttireSwfWriter attireSWFWriter;
+	private String outputKey;
 	private String outputURL;
 
 	private HashMap<String, String> newTable = new HashMap<String, String>();
@@ -35,6 +37,16 @@ public class Config2dAttireWriter extends BaseWriter
 	{
 		super(root, "2dAttire");
 		this.attireSWFWriter = attireSWFWriter;
+	}
+
+	/**
+	 * 获取输出键
+	 * 
+	 * @return
+	 */
+	public String getOutputKey()
+	{
+		return outputKey;
 	}
 
 	/**
@@ -111,11 +123,18 @@ public class Config2dAttireWriter extends BaseWriter
 
 		// 存储文件
 		byte[] bytes = attireText.toString().getBytes("UTF-8");
-		if (root.hasZIP())
+
+		byte[] cfgBytes = root.convertXmlToAs(new ByteArrayInputStream(bytes), "attire.xml2");
+		if (cfgBytes != null)
+		{
+			bytes = cfgBytes;
+		}
+		else if (root.hasZIP())
 		{
 			bytes = ZlibUtil.compress(bytes);
 		}
 
+		String key = cfgBytes != null ? "attire.xml" : "attire";
 		String md5 = MD5Util.md5Bytes(bytes);
 		String url = oldTable.get(md5);
 
@@ -129,6 +148,7 @@ public class Config2dAttireWriter extends BaseWriter
 		}
 
 		newTable.put(md5, url);
+		outputKey = key;
 		outputURL = url;
 	}
 

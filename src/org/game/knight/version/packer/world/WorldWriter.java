@@ -1,5 +1,6 @@
 package org.game.knight.version.packer.world;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -17,18 +18,24 @@ import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
+import javax.xml.parsers.ParserConfigurationException;
+
 import org.chw.util.FileUtil;
+import org.eclipse.core.runtime.CoreException;
 import org.game.knight.version.packer.GamePacker;
 import org.game.knight.version.packer.world.model.AtfParamTable;
 import org.game.knight.version.packer.world.model.AttireTable;
 import org.game.knight.version.packer.world.model.GameUIAttireWriter;
-import org.game.knight.version.packer.world.model.OptionTable;
 import org.game.knight.version.packer.world.model.ImageFrameTable;
 import org.game.knight.version.packer.world.model.Mp3Writer;
+import org.game.knight.version.packer.world.model.OptionTable;
 import org.game.knight.version.packer.world.model.ProjectFileTable;
 import org.game.knight.version.packer.world.model.WorldTable;
 import org.game.knight.version.packer.world.output2d.Config2d;
 import org.game.knight.version.packer.world.output3d.Config3d;
+import org.xml.sax.SAXException;
+import org.xml2as.builder.ClassTable;
+import org.xml2as.builder.UnitConfigBuilder;
 
 public class WorldWriter
 {
@@ -37,6 +44,7 @@ public class WorldWriter
 
 	private final File inputFolder;
 	private final File outputFolder;
+	private final File xml2Folder;
 	public final int maxThreadCount;
 	private final boolean zip;
 
@@ -92,10 +100,11 @@ public class WorldWriter
 	 * @param inputFolder
 	 * @param outputFolder
 	 */
-	public WorldWriter(File inputFolder, File outputFolder, int runCount, boolean zip)
+	public WorldWriter(File inputFolder, File outputFolder, File xml2Folder, int runCount, boolean zip)
 	{
 		this.inputFolder = inputFolder;
 		this.outputFolder = outputFolder;
+		this.xml2Folder = xml2Folder;
 		this.maxThreadCount = runCount;
 		this.zip = zip;
 
@@ -147,6 +156,54 @@ public class WorldWriter
 	public boolean hasZIP()
 	{
 		return zip;
+	}
+
+	/**
+	 * 获取XML2文件
+	 * 
+	 * @param name
+	 * @return
+	 * @throws ParserConfigurationException
+	 * @throws SAXException
+	 * @throws CoreException
+	 * @throws IOException
+	 */
+	public byte[] convertXmlToAs(InputStream input, String name) throws IOException, CoreException, SAXException, ParserConfigurationException
+	{
+		File file = null;
+		if (xml2Folder != null)
+		{
+			ArrayList<File> folders = new ArrayList<File>();
+			folders.add(xml2Folder);
+
+			while (folders.size() > 0)
+			{
+				File folder = folders.remove(0);
+				for (File child : folder.listFiles())
+				{
+					if (child.isHidden())
+					{
+						continue;
+					}
+
+					if (child.isDirectory())
+					{
+						folders.add(child);
+					}
+					else if (child.getName().endsWith(name))
+					{
+						file = child;
+						break;
+					}
+				}
+			}
+		}
+		if (file != null)
+		{
+			UnitConfigBuilder builder = new UnitConfigBuilder(new ClassTable(file));
+			return builder.build(input);
+		}
+		return null;
 	}
 
 	// ----------------------------------------------------------------------------------

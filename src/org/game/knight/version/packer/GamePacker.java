@@ -1007,7 +1007,7 @@ public class GamePacker extends Composite
 
 				if (worldSelected)
 				{
-					worldWriter = new WorldWriter(new File(worldPath), new File(cdnPath + File.separatorChar + "world"), count, zip);
+					worldWriter = new WorldWriter(new File(worldPath), new File(cdnPath + File.separatorChar + "world"), new File(xml2Path), count, zip);
 					worldWriter.start();
 				}
 
