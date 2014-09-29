@@ -4,6 +4,7 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.ArrayList;
@@ -21,6 +22,7 @@ import org.chw.swf.writer.SwfBitmap;
 import org.chw.swf.writer.SwfWriter;
 import org.chw.util.FileUtil;
 import org.chw.util.MD5Util;
+import org.chw.util.ZlibUtil;
 import org.game.knight.version.packer.GamePacker;
 import org.game.knight.version.packer.world.BaseWriter;
 import org.game.knight.version.packer.world.WorldWriter;
@@ -40,6 +42,7 @@ public class GameUIAttireWriter extends BaseWriter
 	private int finishedCount = 0;
 	private String lastLog;
 
+	private String cfgFileKey;
 	private String cfgFileURL;
 
 	/**
@@ -50,6 +53,16 @@ public class GameUIAttireWriter extends BaseWriter
 	public GameUIAttireWriter(WorldWriter root)
 	{
 		super(root, "uiAttire");
+	}
+
+	/**
+	 * 获取配置文件键
+	 * 
+	 * @return
+	 */
+	public String getCfgFileKey()
+	{
+		return cfgFileKey;
 	}
 
 	/**
@@ -305,34 +318,30 @@ public class GameUIAttireWriter extends BaseWriter
 	private void writerCfgFile() throws Exception
 	{
 		GamePacker.progress("输出动画配置");
-		StringBuilder json_role = new StringBuilder();
-		StringBuilder json_role_light = new StringBuilder();
-		StringBuilder json_equip = new StringBuilder();
+		StringBuilder json_attires = new StringBuilder();
+		// StringBuilder json_role = new StringBuilder();
+		// StringBuilder json_role_light = new StringBuilder();
+		// StringBuilder json_equip = new StringBuilder();
 		StringBuilder json_partner = new StringBuilder();
 		StringBuilder json_horse = new StringBuilder();
 
 		Attire[] attireList = filterAttires(root.attireTable.getAllAttire());
-
-		StringBuilder json_attires = new StringBuilder();
 		for (Attire attire : attireList)
 		{
-			StringBuilder json_actions = new StringBuilder();
+			json_attires.append(String.format("\t\t<attire name=\"%s\" nameX=\"%s\" nameY=\"%s\" width=\"%s\" height=\"%s\">\n", attire.name, attire.hitRect.nameX, attire.hitRect.nameY, attire.hitRect.width, attire.hitRect.height));
 			for (AttireAction action : attire.actions)
 			{
 				if (action.id != 0 && action.id != 1 && action.id != 51)
 				{
 					continue;
 				}
-
-				StringBuilder json_anims = new StringBuilder();
+				json_attires.append(String.format("\t\t\t<action id=\"%s\" nameX=\"%s\" nameY=\"%s\">\n", action.id, action.hitRect.nameX, action.hitRect.nameY));
 				for (AttireAnim anim : action.anims)
 				{
 					SWFFile file = anim_file.get(anim);
 					String animFilePath = file.url;
-					File savedFile = new File(root.getOutputFolder().getPath() + animFilePath);
-					int animFileSize = (int) savedFile.length();
 
-					StringBuilder json_frames = new StringBuilder();
+					json_attires.append(String.format("\t\t\t\t<anim x=\"%s\" y=\"%s\" scaleX=\"%s\" scaleY=\"%s\" flip=\"%s\" groupID=\"%s\" layerID=\"%s\" fileURL=\"%s\">\n", anim.x, anim.y, anim.scaleX, anim.scaleY, anim.flip, anim.groupID, anim.layerID, root.localToCdnURL(animFilePath)));
 					for (int i = 0; i < file.bitmaps.length; i++)
 					{
 						SWFBitmap bitmap = file.bitmaps[i];
@@ -340,99 +349,57 @@ public class GameUIAttireWriter extends BaseWriter
 						int offSetX = frame.clipX + frame.clipW / 2 - frame.frameW / 2;
 						int offsetY = frame.clipY + frame.clipH - frame.frameH;
 
-						// 帧信息
-						if (json_frames.length() > 0)
-						{
-							json_frames.append(",");
-						}
-						json_frames.append(String.format("{\"x\":%s,\"y\":%s,\"delay\":%s,\"classID\":\"%s\"}", offSetX, offsetY, bitmap.time, bitmap.typeID));
+						json_attires.append(String.format("\t\t\t\t\t<frame x=\"%s\" y=\"%s\" delay=\"%s\" classID=\"%s\"/>\n", offSetX, offsetY, bitmap.time, bitmap.typeID));
 					}
-
-					// 动画信息
-					if (json_anims.length() > 0)
-					{
-						json_anims.append(",");
-					}
-					json_anims.append(String.format("{\"x\":%s,\"y\":%s,\"scaleX\":%s,\"scaleY\":%s,\"flip\":%s,\"groupID\":%s,\"layerID\":%s,\"fileURL\":\"%s\",\"fileSize\":%s,\"frames\":[%s]}", anim.x, anim.y, anim.scaleX, anim.scaleY, anim.flip, anim.groupID, anim.layerID, root.localToCdnURL(animFilePath), animFileSize, json_frames.toString()));
+					json_attires.append(String.format("\t\t\t\t</anim>\n"));
 				}
-
-				// 动作信息
-				if (json_actions.length() > 0)
-				{
-					json_actions.append(",");
-				}
-				json_actions.append(String.format("\"%s\":{\"nameX\":%s,\"nameY\":%s,\"anims\":[%s]}", action.id, action.hitRect.nameX, action.hitRect.nameY, json_anims.toString()));
+				json_attires.append(String.format("\t\t\t</action>\n"));
 			}
-
-			// 装扮信息
-			if (json_attires.length() > 0)
-			{
-				json_attires.append(",");
-			}
-			json_attires.append(String.format("\"%s\":{\"nameX\":%s,\"nameY\":%s,\"width\":%s,\"height\":%s,\"actions\":{%s}}", attire.name, attire.hitRect.nameX, attire.hitRect.nameY, attire.hitRect.width, attire.hitRect.height, json_actions.toString()));
+			json_attires.append(String.format("\t\t</attire>\n"));
 
 			// 装扮分类
 			String[] params = attire.typeParams;
 			if (params.length > 0)
 			{
-				if (params[0].equals("1") && params.length >= 3)
-				{
-					// 装扮
-					if (json_role.length() > 0)
-					{
-						json_role.append(",");
-					}
-					json_role.append(String.format("\"%s_%s\":\"%s\"", params[1], params[2], attire.name));
-				}
-				else if (params[0].equals("2") && params.length >= 4)
-				{
-					// 装备
-					int fromID = Integer.parseInt(params[1]);
-					int destID = Integer.parseInt(params[2]);
-					int sectID = Integer.parseInt(params[3]);
-					for (int i = fromID; i <= destID; i++)
-					{
-						if (json_equip.length() > 0)
-						{
-							json_equip.append(",");
-						}
-						json_equip.append(String.format("\"%s_%s\":\"%s\"", i, sectID, attire.name));
-					}
-				}
-				else if (params[0].equals("6") && params.length >= 2)
-				{
-					// 刀光
-					if (json_role_light.length() > 0)
-					{
-						json_role_light.append(",");
-					}
-					json_role_light.append(String.format("\"%s\":\"%s\"", params[1], attire.name));
-				}
-				else if (params[0].equals("7") && params.length >= 2)
+				if (params[0].equals("7") && params.length >= 2)
 				{
 					// 伙伴
-					if (json_partner.length() > 0)
-					{
-						json_partner.append(",");
-					}
-					json_partner.append(String.format("\"%s\":\"%s\"", params[1], attire.name));
+					json_partner.append(String.format("\t\t<partner id=\"%s\" attireID=\"%s\"/>\n", params[1], attire.name));
 				}
 				else if (params[0].equals("8") && params.length >= 2)
 				{
 					// 坐骑
-					if (json_horse.length() > 0)
-					{
-						json_horse.append(",");
-					}
-					json_horse.append(String.format("\"%s\":\"%s\"", params[1], attire.name));
+					json_horse.append(String.format("\t\t<horse id=\"%s\" attireID=\"%s\"/>\n", params[1], attire.name));
 				}
 			}
 		}
 
-		String text = String.format("{\"classPackageName\":\"%s\",\"roleMap\":{%s},\"roleLightMap\":{%s},\"equipMap\":{%s},\"partnerMap\":{%s},\"horseMap\":{%s},\"attires\":{%s}}", UI_AVATAR_FRAME_PACK, json_role.toString(), json_role_light.toString(), json_equip.toString(), json_partner.toString(), json_horse.toString(), json_attires.toString());
-		byte[] bytes = text.getBytes("utf8");
-		String md5 = MD5Util.md5Bytes(bytes);
+		StringBuilder content = new StringBuilder();
+		content.append(String.format("<uiAttire>\n"));
+		content.append(String.format("\t<imgTypePack>%s</imgTypePack>\n", UI_AVATAR_FRAME_PACK));
+		content.append(String.format("\t<attires>\n"));
+		content.append(String.format("%s", json_attires.toString()));
+		content.append(String.format("\t</attires>\n"));
+		content.append(String.format("\t<partners>\n"));
+		content.append(String.format("%s", json_partner.toString()));
+		content.append(String.format("\t</partners>\n"));
+		content.append(String.format("\t<horses>\n"));
+		content.append(String.format("%s", json_horse.toString()));
+		content.append(String.format("\t</horses>\n"));
+		content.append(String.format("</uiAttire>"));
 
+		byte[] bytes = content.toString().getBytes("utf8");
+		byte[] cfgBytes = root.convertXmlToAs(new ByteArrayInputStream(bytes), "uiAttire.xml2");
+		if (cfgBytes != null)
+		{
+			bytes = cfgBytes;
+		}
+		else if (root.hasZIP())
+		{
+			bytes = ZlibUtil.compress(bytes);
+		}
+
+		String md5 = MD5Util.md5Bytes(bytes);
 		if (!activate(md5))
 		{
 			add(md5, root.optionTable.getNextExportFile() + ".cfg");
@@ -443,6 +410,7 @@ public class GameUIAttireWriter extends BaseWriter
 			root.addFileSuffix(outputFile);
 		}
 
+		cfgFileKey = cfgBytes != null ? "uiAttire.xml" : "uiAttire";
 		cfgFileURL = newTable.get(md5);
 	}
 

@@ -360,6 +360,7 @@ public class GamePacker extends Composite
 
 		//  ‰»Î∞¥≈•
 		cfgButton.addSelectionListener(new DirSelectionHandler(cfgInput));
+		xml2Button.addSelectionListener(new DirSelectionHandler(xml2Input));
 		fileButton.addSelectionListener(new DirSelectionHandler(fileInput));
 		iconButton.addSelectionListener(new DirSelectionHandler(iconInput));
 		viewButton.addSelectionListener(new DirSelectionHandler(viewInput));

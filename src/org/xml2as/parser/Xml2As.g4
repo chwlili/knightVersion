@@ -84,7 +84,15 @@ enumType
 
 enumField
 :
-	fieldName = typeName C_EQUALS fieldValue = STRING C_SEMICOLON?
+	meta=defaultMeta? fieldName = typeName C_EQUALS fieldValue = STRING C_SEMICOLON?
+;
+
+defaultMeta
+:
+	C_BRACKET_L prefix = C_DEFAULT
+	(
+		C_PAREN_L C_PAREN_R
+	)? C_BRACKET_R
 ;
 
 packName
@@ -99,6 +107,7 @@ typeName
 :
 	C_INPUT
 	| C_MAIN
+	| C_DEFAULT
 	| C_TYPE
 	| C_ENUM
 	| C_INT
@@ -188,6 +197,11 @@ C_LIST
 C_SLICE
 :
 	'Slice'
+;
+
+C_DEFAULT
+:
+	'Default'
 ;
 
 C_TYPE

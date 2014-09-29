@@ -75,22 +75,24 @@ public class Config2d extends BaseWriter
 	 */
 	private void writeDB()
 	{
+		String uiAttireKey = root.gameUIAttireWriter.getCfgFileKey();
+		String uiAttireURL = root.gameUIAttireWriter.getCfgFileURL();
+		File uiAttireFile = new File(root.getOutputFolder().getPath() + uiAttireURL);
+
 		String attireKey = attireWriter.getOutputKey();
 		String attireURL = attireWriter.getOutputURL();
 		File attireFile = new File(root.getOutputFolder().getPath() + attireURL);
 
+		String worldKey = sceneWriter.getWorldCfgKey();
 		String worldURL = sceneWriter.getWorldCfgURL();
 		File worldFile = new File(root.getOutputFolder().getPath() + worldURL);
-
-		String uiAttireURL = root.gameUIAttireWriter.getCfgFileURL();
-		File uiAttireFile = new File(root.getOutputFolder().getPath() + uiAttireURL);
 
 		StringBuilder txt = new StringBuilder();
 		txt.append("<project>\n");
 		txt.append("\t<configs>\n");
-		txt.append(String.format("\t\t<config name=\"%s\" path=\"%s\" size=\"%s\"/>\n", "uiAvatar", root.localToCdnURL(uiAttireURL), uiAttireFile.length()));
+		txt.append(String.format("\t\t<config name=\"%s\" path=\"%s\" size=\"%s\"/>\n", uiAttireKey, root.localToCdnURL(uiAttireURL), uiAttireFile.length()));
 		txt.append(String.format("\t\t<config name=\"%s\" path=\"%s\" size=\"%s\"/>\n", attireKey, root.localToCdnURL(attireURL), attireFile.length()));
-		txt.append(String.format("\t\t<config name=\"%s\" path=\"%s\" size=\"%s\"/>\n", "world", root.localToCdnURL(worldURL), worldFile.length()));
+		txt.append(String.format("\t\t<config name=\"%s\" path=\"%s\" size=\"%s\"/>\n", worldKey, root.localToCdnURL(worldURL), worldFile.length()));
 		txt.append("\t</configs>\n");
 		txt.append(getAttireSummay());
 		txt.append(getSceneSummay());

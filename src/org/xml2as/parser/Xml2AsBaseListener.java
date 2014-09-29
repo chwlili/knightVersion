@@ -17,19 +17,6 @@ public class Xml2AsBaseListener implements Xml2AsListener {
 	 * <p/>
 	 * The default implementation does nothing.
 	 */
-	@Override public void enterTypeName(@NotNull Xml2AsParser.TypeNameContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 * <p/>
-	 * The default implementation does nothing.
-	 */
-	@Override public void exitTypeName(@NotNull Xml2AsParser.TypeNameContext ctx) { }
-
-	/**
-	 * {@inheritDoc}
-	 * <p/>
-	 * The default implementation does nothing.
-	 */
 	@Override public void enterTypeMeta(@NotNull Xml2AsParser.TypeMetaContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -37,6 +24,97 @@ public class Xml2AsBaseListener implements Xml2AsListener {
 	 * The default implementation does nothing.
 	 */
 	@Override public void exitTypeMeta(@NotNull Xml2AsParser.TypeMetaContext ctx) { }
+
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void enterSliceMeta(@NotNull Xml2AsParser.SliceMetaContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void exitSliceMeta(@NotNull Xml2AsParser.SliceMetaContext ctx) { }
+
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void enterDefaultMeta(@NotNull Xml2AsParser.DefaultMetaContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void exitDefaultMeta(@NotNull Xml2AsParser.DefaultMetaContext ctx) { }
+
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void enterPackDef(@NotNull Xml2AsParser.PackDefContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void exitPackDef(@NotNull Xml2AsParser.PackDefContext ctx) { }
+
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void enterType(@NotNull Xml2AsParser.TypeContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void exitType(@NotNull Xml2AsParser.TypeContext ctx) { }
+
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void enterEnumField(@NotNull Xml2AsParser.EnumFieldContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void exitEnumField(@NotNull Xml2AsParser.EnumFieldContext ctx) { }
+
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void enterXml2(@NotNull Xml2AsParser.Xml2Context ctx) { }
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void exitXml2(@NotNull Xml2AsParser.Xml2Context ctx) { }
+
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void enterTypeName(@NotNull Xml2AsParser.TypeNameContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void exitTypeName(@NotNull Xml2AsParser.TypeNameContext ctx) { }
 
 	/**
 	 * {@inheritDoc}
@@ -69,19 +147,6 @@ public class Xml2AsBaseListener implements Xml2AsListener {
 	 * <p/>
 	 * The default implementation does nothing.
 	 */
-	@Override public void enterSliceMeta(@NotNull Xml2AsParser.SliceMetaContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 * <p/>
-	 * The default implementation does nothing.
-	 */
-	@Override public void exitSliceMeta(@NotNull Xml2AsParser.SliceMetaContext ctx) { }
-
-	/**
-	 * {@inheritDoc}
-	 * <p/>
-	 * The default implementation does nothing.
-	 */
 	@Override public void enterInputDef(@NotNull Xml2AsParser.InputDefContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -108,58 +173,6 @@ public class Xml2AsBaseListener implements Xml2AsListener {
 	 * <p/>
 	 * The default implementation does nothing.
 	 */
-	@Override public void enterType(@NotNull Xml2AsParser.TypeContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 * <p/>
-	 * The default implementation does nothing.
-	 */
-	@Override public void exitType(@NotNull Xml2AsParser.TypeContext ctx) { }
-
-	/**
-	 * {@inheritDoc}
-	 * <p/>
-	 * The default implementation does nothing.
-	 */
-	@Override public void enterPackDef(@NotNull Xml2AsParser.PackDefContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 * <p/>
-	 * The default implementation does nothing.
-	 */
-	@Override public void exitPackDef(@NotNull Xml2AsParser.PackDefContext ctx) { }
-
-	/**
-	 * {@inheritDoc}
-	 * <p/>
-	 * The default implementation does nothing.
-	 */
-	@Override public void enterEnumField(@NotNull Xml2AsParser.EnumFieldContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 * <p/>
-	 * The default implementation does nothing.
-	 */
-	@Override public void exitEnumField(@NotNull Xml2AsParser.EnumFieldContext ctx) { }
-
-	/**
-	 * {@inheritDoc}
-	 * <p/>
-	 * The default implementation does nothing.
-	 */
-	@Override public void enterListMeta(@NotNull Xml2AsParser.ListMetaContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 * <p/>
-	 * The default implementation does nothing.
-	 */
-	@Override public void exitListMeta(@NotNull Xml2AsParser.ListMetaContext ctx) { }
-
-	/**
-	 * {@inheritDoc}
-	 * <p/>
-	 * The default implementation does nothing.
-	 */
 	@Override public void enterFieldMeta(@NotNull Xml2AsParser.FieldMetaContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -173,13 +186,13 @@ public class Xml2AsBaseListener implements Xml2AsListener {
 	 * <p/>
 	 * The default implementation does nothing.
 	 */
-	@Override public void enterXml2(@NotNull Xml2AsParser.Xml2Context ctx) { }
+	@Override public void enterListMeta(@NotNull Xml2AsParser.ListMetaContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 * <p/>
 	 * The default implementation does nothing.
 	 */
-	@Override public void exitXml2(@NotNull Xml2AsParser.Xml2Context ctx) { }
+	@Override public void exitListMeta(@NotNull Xml2AsParser.ListMetaContext ctx) { }
 
 	/**
 	 * {@inheritDoc}

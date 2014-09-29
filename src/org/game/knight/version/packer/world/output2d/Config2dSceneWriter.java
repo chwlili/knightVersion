@@ -2,6 +2,7 @@ package org.game.knight.version.packer.world.output2d;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -38,7 +39,9 @@ public class Config2dSceneWriter extends BaseWriter
 {
 	private AttireSwfWriter attireSWFWriter;
 
+	private String worldCfgKey;
 	private String worldCfgURL;
+
 	private HashMap<Scene, String> scene_url;
 	private HashMap<Scene, String> scene_files;
 	private HashMap<Scene, Integer> scene_size;
@@ -55,6 +58,16 @@ public class Config2dSceneWriter extends BaseWriter
 	{
 		super(root, "2dScene");
 		this.attireSWFWriter = attireSWFWriter;
+	}
+
+	/**
+	 * 获取世界配置Key
+	 * 
+	 * @return
+	 */
+	public String getWorldCfgKey()
+	{
+		return worldCfgKey;
 	}
 
 	/**
@@ -309,7 +322,7 @@ public class Config2dSceneWriter extends BaseWriter
 			sb.append(String.format("\t\t<city id=\"%s\" name=\"%s\">\n", city.id, city.name));
 			for (Scene scene : city.scenes)
 			{
-				sb.append(String.format("\t\t\t<scene id=\"%s\" name=\"%s\" type=\"%s\" group=\"%s\" level=\"%s\" achieve=\"%s\" finishQuest=\"%s\" acceptQuest=\"%s\" />\n", scene.sceneID, scene.sceneName, scene.sceneType, scene.sceneGroup, 0, "-", "-", "-"));
+				sb.append(String.format("\t\t\t<scene id=\"%s\" name=\"%s\" type=\"%s\" group=\"%s\" cityID=\"%s\"/>\n", scene.sceneID, scene.sceneName, scene.sceneType, scene.sceneGroup, city.id));
 			}
 			sb.append("\t\t</city>\n");
 		}
@@ -318,7 +331,13 @@ public class Config2dSceneWriter extends BaseWriter
 
 		// 存储文件
 		byte[] bytes = sb.toString().getBytes("UTF-8");
-		if (root.hasZIP())
+
+		byte[] cfgBytes = root.convertXmlToAs(new ByteArrayInputStream(bytes), "world.xml2");
+		if (cfgBytes != null)
+		{
+			bytes = cfgBytes;
+		}
+		else if (root.hasZIP())
 		{
 			bytes = ZlibUtil.compress(bytes);
 		}
@@ -337,6 +356,7 @@ public class Config2dSceneWriter extends BaseWriter
 
 		newTable.put(md5, url);
 
+		worldCfgKey = cfgBytes != null ? "world.xml" : "world";
 		worldCfgURL = url;
 	}
 

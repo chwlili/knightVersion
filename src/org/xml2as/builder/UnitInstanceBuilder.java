@@ -66,7 +66,7 @@ public class UnitInstanceBuilder
 
 		SAXParserFactory.newInstance().newSAXParser().parse(stream, new MyHandler());
 
-		if(instanceField.value==null)
+		if (instanceField.value == null)
 		{
 			return new Instance(mainClass);
 		}
@@ -262,7 +262,6 @@ public class UnitInstanceBuilder
 		 * @param attributeName
 		 * @param attributeValue
 		 */
-		@SuppressWarnings("unchecked")
 		private void onAttribute(String xpath, String attributeName, String attributeValue)
 		{
 			// System.out.println(" " + xpath + "@" + attributeName + " = " +
@@ -298,7 +297,6 @@ public class UnitInstanceBuilder
 		 * @param xpath
 		 * @param text
 		 */
-		@SuppressWarnings("unchecked")
 		private void onText(String xpath, String text)
 		{
 			// System.out.println(" " + xpath + " = " + text);
@@ -333,34 +331,35 @@ public class UnitInstanceBuilder
 		 */
 		private void setFieldValue(InstanceField field, String text)
 		{
-			if (text != null)
+			if (text == null)
 			{
-				if (field.meta.repeted)
+				return;
+			}
+			if (field.meta.repeted)
+			{
+				if (field.value == null)
 				{
-					if (field.value == null)
-					{
-						field.value = new ArrayList<Object>();
-					}
+					field.value = new ArrayList<Object>();
+				}
 
-					((List<Object>) field.value).add(parseFieldValue(field, text));
+				((List<Object>) field.value).add(parseFieldValue(field, text));
+			}
+			else
+			{
+				if (field.meta.slice && !field.meta.isExtendType())
+				{
+					@SuppressWarnings("rawtypes")
+					ArrayList list = new ArrayList();
+					String[] parts = text.split(field.meta.sliceChar);
+					for (String part : parts)
+					{
+						list.add(parseFieldValue(field, part));
+					}
+					field.value = list;
 				}
 				else
 				{
-					if (field.meta.slice && !field.meta.isExtendType())
-					{
-						@SuppressWarnings("rawtypes")
-						ArrayList list = new ArrayList();
-						String[] parts = text.split(field.meta.sliceChar);
-						for (String part : parts)
-						{
-							list.add(parseFieldValue(field, part));
-						}
-						field.value = list;
-					}
-					else
-					{
-						field.value = parseFieldValue(field, text);
-					}
+					field.value = parseFieldValue(field, text);
 				}
 			}
 		}
