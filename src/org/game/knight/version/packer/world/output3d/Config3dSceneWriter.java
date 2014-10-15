@@ -337,7 +337,7 @@ public class Config3dSceneWriter extends BaseWriter
 		// ´æ´¢ÎÄ¼þ
 		byte[] bytes = sb.toString().getBytes("UTF-8");
 
-		byte[] cfgBytes = root.convertXmlToAs(new ByteArrayInputStream(bytes), "world.xml2");
+		byte[] cfgBytes = root.convertXmlToAs(new ByteArrayInputStream(bytes), "$World.xml2");
 		if (cfgBytes != null)
 		{
 			bytes = cfgBytes;
@@ -361,7 +361,7 @@ public class Config3dSceneWriter extends BaseWriter
 
 		newTable.put(md5, url);
 
-		worldCfgKey = cfgBytes != null ? "world.xml" : "world";
+		worldCfgKey = cfgBytes != null ? "$World.xml" : "world";
 		worldCfgURL = url;
 	}
 

@@ -1,6 +1,5 @@
 package org.game.knight.version.packer.world;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;

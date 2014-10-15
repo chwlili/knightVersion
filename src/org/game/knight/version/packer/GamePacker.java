@@ -982,6 +982,8 @@ public class GamePacker extends Composite
 			{
 				execing = true;
 
+				GamePackerHelper helper = new GamePackerHelper(new File(cfgPath), new File(xml2Path), new File(filePath), new File(iconPath));
+
 				if (cfgSelected)
 				{
 					ConfigExporter configs = new ConfigExporter(new File(cfgPath), new File(xml2Path), new File(cdnPath + File.separatorChar + "configs"), zip);
@@ -990,13 +992,13 @@ public class GamePacker extends Composite
 
 				if (fileSelected)
 				{
-					FilesExporter files = new FilesExporter(new File(filePath), new File(cdnPath + File.separatorChar + "files"), zip);
+					FilesExporter files = new FilesExporter(helper, new File(cdnPath + File.separatorChar + "files"), zip);
 					files.publish();
 				}
 
 				if (iconSelected)
 				{
-					IconExporter icons = new IconExporter(new File(iconPath), new File(cdnPath + File.separatorChar + "icons"), zip, new File(cfgPath));
+					IconExporter icons = new IconExporter(helper, new File(cdnPath + File.separatorChar + "icons"), zip);
 					icons.publish();
 				}
 

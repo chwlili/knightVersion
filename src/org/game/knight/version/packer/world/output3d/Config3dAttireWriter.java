@@ -4,19 +4,15 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 
-import javax.xml.parsers.ParserConfigurationException;
-
 import org.chw.util.FileUtil;
 import org.chw.util.MD5Util;
 import org.chw.util.ZlibUtil;
-import org.eclipse.core.runtime.CoreException;
 import org.game.knight.version.packer.GamePacker;
 import org.game.knight.version.packer.world.BaseWriter;
 import org.game.knight.version.packer.world.WorldWriter;
@@ -25,9 +21,6 @@ import org.game.knight.version.packer.world.model.AttireAction;
 import org.game.knight.version.packer.world.model.AttireAnim;
 import org.game.knight.version.packer.world.model.AttireAudio;
 import org.game.knight.version.packer.world.model.ImageFrame;
-import org.xml.sax.SAXException;
-import org.xml2as.builder.ClassTable;
-import org.xml2as.builder.UnitConfigBuilder;
 
 public class Config3dAttireWriter extends BaseWriter
 {
@@ -197,7 +190,7 @@ public class Config3dAttireWriter extends BaseWriter
 			return;
 		}
 
-		byte[] cfgBytes = root.convertXmlToAs(new ByteArrayInputStream(bytes), "attire.xml2");
+		byte[] cfgBytes = root.convertXmlToAs(new ByteArrayInputStream(bytes), "$Attire.xml2");
 		if (cfgBytes != null)
 		{
 			bytes = cfgBytes;
@@ -207,7 +200,7 @@ public class Config3dAttireWriter extends BaseWriter
 			bytes = ZlibUtil.compress(bytes);
 		}
 
-		String key = cfgBytes != null ? "attire.xml" : "attire";
+		String key = cfgBytes != null ? "$Attire.xml" : "attire";
 		String md5 = MD5Util.md5Bytes(bytes);
 		String url = oldTable.get(md5);
 

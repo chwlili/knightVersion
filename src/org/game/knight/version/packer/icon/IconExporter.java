@@ -1,6 +1,7 @@
 package org.game.knight.version.packer.icon;
 
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,14 +15,16 @@ import org.chw.util.FileUtil;
 import org.chw.util.MD5Util;
 import org.chw.util.ZlibUtil;
 import org.game.knight.version.packer.GamePacker;
+import org.game.knight.version.packer.GamePackerHelper;
 import org.game.knight.version.packer.base.AbsExporter;
 
 public class IconExporter extends AbsExporter
 {
 	private Hashtable<String, File> files;
 	private IconSizeTable sizeTable;
-	private File cfgDir;
-	
+
+	private GamePackerHelper helper;
+
 	private boolean zip;
 
 	/**
@@ -30,12 +33,12 @@ public class IconExporter extends AbsExporter
 	 * @param src
 	 * @param dst
 	 */
-	public IconExporter(File src, File dst, boolean zip,File cfgDir)
+	public IconExporter(GamePackerHelper helper, File dst, boolean zip)
 	{
-		super("导出图标", src, dst);
+		super("导出图标", helper.getIconFolder(), dst);
 
 		this.zip = zip;
-		this.cfgDir=cfgDir;
+		this.helper = helper;
 	}
 
 	@Override
@@ -87,7 +90,8 @@ public class IconExporter extends AbsExporter
 		for (String url : urls)
 		{
 			GamePacker.progress("输出文件", url);
-			//exportFile(getChecksumTable().getChecksumID(url), files.get(url));
+			// exportFile(getChecksumTable().getChecksumID(url),
+			// files.get(url));
 			exportFile(getChecksumTable().getGID(url), MD5Util.addSuffix(FileUtil.getFileBytes(files.get(url))), getFileExtName(files.get(url)));
 
 			if (isCancel())
@@ -149,13 +153,24 @@ public class IconExporter extends AbsExporter
 			String iconW = sizeTable.getWidth(key);
 			String iconH = sizeTable.getHeight(key);
 
-			txt.append(String.format("\t<icon dir=\"%s\" name=\"%s\" url=\"%s\" w=\"%s\" h=\"%s\"/>\n", type, name, path, iconW, iconH));
+			txt.append(String.format("\t<icon path=\"%s/%s\" url=\"%s\" w=\"%s\" h=\"%s\"/>\n", type, name, path, iconW, iconH));
 		}
 		txt.append("</iconSet>");
 		GamePacker.log("保存配置信息");
+
 		byte[] bytes = txt.toString().getBytes("UTF-8");
+		byte[] cfgBytes = helper.convertXmlToAs(new ByteArrayInputStream(bytes), "$IconSet.xml2");
+		if (cfgBytes != null)
+		{
+			bytes = cfgBytes;
+		}
+		else if (zip)
+		{
+			bytes = ZlibUtil.compress(bytes);
+		}
+
 		String checksum = (zip ? "zlib_md5" : "md5") + MD5Util.md5Bytes(bytes);
-		exportFile(checksum, MD5Util.addSuffix((zip ? ZlibUtil.compress(bytes) : bytes)), "cfg");
+		exportFile(checksum, MD5Util.addSuffix(bytes), "cfg");
 		GamePacker.endLogSet();
 
 		if (isCancel())
@@ -164,22 +179,23 @@ public class IconExporter extends AbsExporter
 		}
 
 		// 生成qpurl.cvs
-		if(cfgDir!=null && cfgDir.exists() && cfgDir.isDirectory())
+		File cfgDir = helper.getCfgFolder();
+		if (cfgDir != null && cfgDir.exists() && cfgDir.isDirectory())
 		{
 			ItemConfigHandler itemHandler = new ItemConfigHandler(cfgDir);
 			itemHandler.build();
-			
-			ArrayList<ItemID> items=itemHandler.getItems();
+
+			ArrayList<ItemID> items = itemHandler.getItems();
 			Collections.sort(items, new Comparator<ItemID>()
 			{
 				@Override
 				public int compare(ItemID o1, ItemID o2)
 				{
-					if(o1.id<o2.id)
+					if (o1.id < o2.id)
 					{
 						return -1;
 					}
-					else if(o1.id>o2.id)
+					else if (o1.id > o2.id)
 					{
 						return 1;
 					}
@@ -187,39 +203,39 @@ public class IconExporter extends AbsExporter
 				}
 			});
 
-			StringBuilder qpurl=new StringBuilder();
-			Hashtable<Integer, Boolean> idTable=new Hashtable<Integer, Boolean>();
+			StringBuilder qpurl = new StringBuilder();
+			Hashtable<Integer, Boolean> idTable = new Hashtable<Integer, Boolean>();
 			for (ItemID item : items)
 			{
-				if(idTable.containsKey(item.id))
+				if (idTable.containsKey(item.id))
 				{
 					continue;
 				}
-				
+
 				idTable.put(item.id, true);
-				
+
 				String[] paths = new String[] { "/bagIcon/" + item.iconID + ".png", "/bagIcon/" + item.iconID + ".jpg", "/bagIcon/" + item.id + ".png", "/bagIcon/" + item.id + ".jpg", "/bagIcon/0.png" };
 				for (String path : paths)
 				{
-					if(getChecksumTable().getMD5(path)!=null)
+					if (getChecksumTable().getMD5(path) != null)
 					{
 						String key = getChecksumTable().getGID(path);
-						if(hasExportedFile(key))
+						if (hasExportedFile(key))
 						{
-							int itemID=item.id;
+							int itemID = item.id;
 							String saveURL = getExportedFileUrl(key);
-							if(saveURL.charAt(0)!='/')
+							if (saveURL.charAt(0) != '/')
 							{
-								saveURL="/"+saveURL;
+								saveURL = "/" + saveURL;
 							}
-							qpurl.append(itemID+","+saveURL+"\r\n");
+							qpurl.append(itemID + "," + saveURL + "\r\n");
 							break;
 						}
 					}
 				}
 			}
-			
-			FileUtil.writeFile(new File(getDestDir().getPath()+File.separator+"qpurl.cvs"), qpurl.toString().getBytes("UTF-8"));
+
+			FileUtil.writeFile(new File(getDestDir().getPath() + File.separator + "qpurl.cvs"), qpurl.toString().getBytes("UTF-8"));
 		}
 
 		// 导出项目配置
@@ -228,7 +244,7 @@ public class IconExporter extends AbsExporter
 		StringBuilder sb = new StringBuilder();
 		sb.append("<project>\n");
 		sb.append("\t<configs>\n");
-		sb.append(String.format("\t\t<config name=\"iconSet\" path=\"%s\" size=\"%s\" />\n", getExportedFileUrl(checksum), getExportedFileSize(checksum)));
+		sb.append(String.format("\t\t<config name=\"%s\" path=\"%s\" size=\"%s\" />\n", cfgBytes != null ? "$IconSet.xml" : "iconSet", getExportedFileUrl(checksum), getExportedFileSize(checksum)));
 		sb.append("\t</configs>\n");
 		sb.append("</project>");
 		GamePacker.log("保存汇总信息");
@@ -281,8 +297,8 @@ public class IconExporter extends AbsExporter
 				String ext = getFileExtName(file.getPath());
 				if (ext != null && !ext.isEmpty())
 				{
-					ext=ext.toLowerCase();
-					
+					ext = ext.toLowerCase();
+
 					if (ext.equals("png") || ext.equals("jpg") || ext.equals("jpeg"))
 					{
 						String innerPath = file.getPath().substring(getSourceDir().getPath().length()).replaceAll("\\\\", "/");

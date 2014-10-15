@@ -1,5 +1,6 @@
 package org.game.knight.version.packer.files;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.util.Hashtable;
 
@@ -7,117 +8,134 @@ import org.chw.util.FileUtil;
 import org.chw.util.MD5Util;
 import org.chw.util.ZlibUtil;
 import org.game.knight.version.packer.GamePacker;
+import org.game.knight.version.packer.GamePackerHelper;
 import org.game.knight.version.packer.base.AbsExporter;
-
 
 public class FilesExporter extends AbsExporter
 {
 	private Hashtable<String, File> files;
+
+	private GamePackerHelper helper;
+
 	private boolean zip;
-	
+
 	/**
 	 * 构造函数
 	 * 
 	 * @param src
 	 * @param dst
 	 */
-	public FilesExporter(File src, File dst,boolean zip)
+	public FilesExporter(GamePackerHelper helper, File dst, boolean zip)
 	{
-		super("导出文件",src,dst);
-		
-		this.zip=zip;
+		super("导出文件", helper.getFileFolder(), dst);
+
+		this.helper = helper;
+
+		this.zip = zip;
 	}
-	
+
 	/**
 	 * 导出内容
-	 * @throws Exception 
+	 * 
+	 * @throws Exception
 	 */
 	@Override
 	protected void exportContent() throws Exception
 	{
-		files=new Hashtable<String, File>();
+		files = new Hashtable<String, File>();
 
-		if(isCancel())
+		if (isCancel())
 		{
 			return;
 		}
-		
-		//遍历文件
+
+		// 遍历文件
 		GamePacker.beginLogSet("读取文件");
 		readDir(getSourceDir());
 		GamePacker.endLogSet();
-		
-		//排序文件
+
+		// 排序文件
 		GamePacker.beginLogSet("排序文件");
-		String[] urls=new String[files.keySet().size()];
-		urls=files.keySet().toArray(urls);
+		String[] urls = new String[files.keySet().size()];
+		urls = files.keySet().toArray(urls);
 		GamePacker.endLogSet();
 
-		if(isCancel())
+		if (isCancel())
 		{
 			return;
 		}
-		
-		//导出文件
+
+		// 导出文件
 		GamePacker.beginLogSet("输出文件");
-		for(String url : urls)
+		for (String url : urls)
 		{
-			GamePacker.progress("输出文件",url);
-			//exportFile(getChecksumTable().getChecksumID(url),files.get(url));
+			GamePacker.progress("输出文件", url);
+			// exportFile(getChecksumTable().getChecksumID(url),files.get(url));
 			exportFile(getChecksumTable().getGID(url), MD5Util.addSuffix(FileUtil.getFileBytes(files.get(url))), getFileExtName(files.get(url)));
-			if(isCancel())
+			if (isCancel())
 			{
 				return;
 			}
 		}
 		GamePacker.endLogSet();
 
-		if(isCancel())
+		if (isCancel())
 		{
 			return;
 		}
-		
-		//生成配置
+
+		// 生成配置
 		GamePacker.beginLogSet("输出配置信息");
 		GamePacker.log("生成配置信息");
 		StringBuilder txt = new StringBuilder();
 		txt.append("<fileSet>\n");
-		for(String innerPath : urls)
+		for (String innerPath : urls)
 		{
-			String exportKey=getChecksumTable().getGID(innerPath);
-			
-			txt.append(String.format("\t<file name=\"%s\" url=\"%s\" size=\"%s\"/>\n",innerPath,getExportedFileUrl(exportKey),getExportedFileSize(exportKey)));
+			String exportKey = getChecksumTable().getGID(innerPath);
+
+			txt.append(String.format("\t<file path=\"%s\" url=\"%s\" size=\"%s\"/>\n", innerPath, getExportedFileUrl(exportKey), getExportedFileSize(exportKey)));
 		}
 		txt.append("</fileSet>");
 		GamePacker.log("保存配置信息");
-		byte[] bytes=txt.toString().getBytes("UTF-8");
-		String checksum=(zip ? "zlib_md5":"md5")+MD5Util.md5Bytes(bytes);
-		exportFile(checksum,MD5Util.addSuffix((zip ? ZlibUtil.compress(bytes):bytes)),"cfg");
+
+		byte[] bytes = txt.toString().getBytes("UTF-8");
+		byte[] cfgBytes = helper.convertXmlToAs(new ByteArrayInputStream(bytes), "$FileSet.xml2");
+		if (cfgBytes != null)
+		{
+			bytes = cfgBytes;
+		}
+		else if (zip)
+		{
+			bytes = ZlibUtil.compress(bytes);
+		}
+
+		String checksum = (zip ? "zlib_md5" : "md5") + MD5Util.md5Bytes(bytes);
+		exportFile(checksum, MD5Util.addSuffix(bytes), "cfg");
 		GamePacker.endLogSet();
 
-		if(isCancel())
+		if (isCancel())
 		{
 			return;
 		}
-		
-		//导出项目配置
+
+		// 导出项目配置
 		GamePacker.beginLogSet("输出汇总信息");
 		GamePacker.log("生成汇总信息");
 		StringBuilder sb = new StringBuilder();
 		sb.append("<project>\n");
 		sb.append("\t<configs>\n");
-		sb.append(String.format("\t\t<config name=\"fileSet\" path=\"%s\" size=\"%s\" />\n", getExportedFileUrl(checksum), getExportedFileSize(checksum)));
+		sb.append(String.format("\t\t<config name=\"%s\" path=\"%s\" size=\"%s\" />\n", cfgBytes != null ? "$FileSet.xml" : "fileSet", getExportedFileUrl(checksum), getExportedFileSize(checksum)));
 		sb.append("\t</configs>\n");
 		sb.append("</project>");
 		GamePacker.log("保存汇总信息");
 		FileUtil.writeFile(new File(getDestDir().getPath() + "/db.xml"), sb.toString().getBytes("UTF-8"));
 		GamePacker.endLogSet();
 
-		//生成文件列表
+		// 生成文件列表
 		GamePacker.beginLogSet("输出文件汇总");
 		GamePacker.log("生成文件汇总");
 		StringBuilder filesSB = new StringBuilder();
-		String[] urlList=getExportedFileUrls();
+		String[] urlList = getExportedFileUrls();
 		for (String url : urlList)
 		{
 			filesSB.append(url + "\n");
@@ -126,7 +144,6 @@ public class FilesExporter extends AbsExporter
 		FileUtil.writeFile(new File(getDestDir().getPath() + "/db.ver"), filesSB.toString().getBytes("UTF-8"));
 		GamePacker.endLogSet();
 	}
-	
 
 	/**
 	 * 读取目录
@@ -137,7 +154,10 @@ public class FilesExporter extends AbsExporter
 	{
 		File[] files = dir.listFiles();
 
-		if (files == null) { return; }
+		if (files == null)
+		{
+			return;
+		}
 
 		for (int i = 0; i < files.length; i++)
 		{
@@ -156,11 +176,11 @@ public class FilesExporter extends AbsExporter
 			{
 				String innerPath = file.getPath().substring(getSourceDir().getPath().length()).replaceAll("\\\\", "/");
 
-				GamePacker.progress("读取文件",innerPath);
-				
+				GamePacker.progress("读取文件", innerPath);
+
 				this.files.put(innerPath, file);
 			}
 		}
 	}
-	
+
 }

@@ -124,7 +124,7 @@ public class Config2dAttireWriter extends BaseWriter
 		// ´æ´¢ÎÄ¼þ
 		byte[] bytes = attireText.toString().getBytes("UTF-8");
 
-		byte[] cfgBytes = root.convertXmlToAs(new ByteArrayInputStream(bytes), "attire.xml2");
+		byte[] cfgBytes = root.convertXmlToAs(new ByteArrayInputStream(bytes), "$Attire.xml2");
 		if (cfgBytes != null)
 		{
 			bytes = cfgBytes;
@@ -134,7 +134,7 @@ public class Config2dAttireWriter extends BaseWriter
 			bytes = ZlibUtil.compress(bytes);
 		}
 
-		String key = cfgBytes != null ? "attire.xml" : "attire";
+		String key = cfgBytes != null ? "$Attire.xml" : "attire";
 		String md5 = MD5Util.md5Bytes(bytes);
 		String url = oldTable.get(md5);
 

@@ -389,7 +389,7 @@ public class GameUIAttireWriter extends BaseWriter
 		content.append(String.format("</uiAttire>"));
 
 		byte[] bytes = content.toString().getBytes("utf8");
-		byte[] cfgBytes = root.convertXmlToAs(new ByteArrayInputStream(bytes), "uiAttire.xml2");
+		byte[] cfgBytes = root.convertXmlToAs(new ByteArrayInputStream(bytes), "$UiAttire.xml2");
 		if (cfgBytes != null)
 		{
 			bytes = cfgBytes;
@@ -410,7 +410,7 @@ public class GameUIAttireWriter extends BaseWriter
 			root.addFileSuffix(outputFile);
 		}
 
-		cfgFileKey = cfgBytes != null ? "uiAttire.xml" : "uiAttire";
+		cfgFileKey = cfgBytes != null ? "$UiAttire.xml" : "uiAttire";
 		cfgFileURL = newTable.get(md5);
 	}
 
