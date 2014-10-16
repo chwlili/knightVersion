@@ -182,6 +182,13 @@ public class UnitInstanceBuilder
 
 				if (!field.meta.isExtendType())
 				{
+					if (!path2Field.containsKey(xpath))
+					{
+						path2Field.put(xpath, new ArrayList<InstanceField>());
+					}
+					path2Field.get(xpath).add(field);
+
+					stackFields.lastElement().add(field);
 					continue;
 				}
 
