@@ -9,83 +9,6 @@ import org.antlr.v4.runtime.tree.ParseTreeListener;
  */
 public interface Xml2AsListener extends ParseTreeListener {
 	/**
-	 * Enter a parse tree produced by {@link Xml2AsParser#typeMeta}.
-	 * @param ctx the parse tree
-	 */
-	void enterTypeMeta(@NotNull Xml2AsParser.TypeMetaContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link Xml2AsParser#typeMeta}.
-	 * @param ctx the parse tree
-	 */
-	void exitTypeMeta(@NotNull Xml2AsParser.TypeMetaContext ctx);
-
-	/**
-	 * Enter a parse tree produced by {@link Xml2AsParser#sliceMeta}.
-	 * @param ctx the parse tree
-	 */
-	void enterSliceMeta(@NotNull Xml2AsParser.SliceMetaContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link Xml2AsParser#sliceMeta}.
-	 * @param ctx the parse tree
-	 */
-	void exitSliceMeta(@NotNull Xml2AsParser.SliceMetaContext ctx);
-
-	/**
-	 * Enter a parse tree produced by {@link Xml2AsParser#defaultMeta}.
-	 * @param ctx the parse tree
-	 */
-	void enterDefaultMeta(@NotNull Xml2AsParser.DefaultMetaContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link Xml2AsParser#defaultMeta}.
-	 * @param ctx the parse tree
-	 */
-	void exitDefaultMeta(@NotNull Xml2AsParser.DefaultMetaContext ctx);
-
-	/**
-	 * Enter a parse tree produced by {@link Xml2AsParser#packDef}.
-	 * @param ctx the parse tree
-	 */
-	void enterPackDef(@NotNull Xml2AsParser.PackDefContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link Xml2AsParser#packDef}.
-	 * @param ctx the parse tree
-	 */
-	void exitPackDef(@NotNull Xml2AsParser.PackDefContext ctx);
-
-	/**
-	 * Enter a parse tree produced by {@link Xml2AsParser#type}.
-	 * @param ctx the parse tree
-	 */
-	void enterType(@NotNull Xml2AsParser.TypeContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link Xml2AsParser#type}.
-	 * @param ctx the parse tree
-	 */
-	void exitType(@NotNull Xml2AsParser.TypeContext ctx);
-
-	/**
-	 * Enter a parse tree produced by {@link Xml2AsParser#enumField}.
-	 * @param ctx the parse tree
-	 */
-	void enterEnumField(@NotNull Xml2AsParser.EnumFieldContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link Xml2AsParser#enumField}.
-	 * @param ctx the parse tree
-	 */
-	void exitEnumField(@NotNull Xml2AsParser.EnumFieldContext ctx);
-
-	/**
-	 * Enter a parse tree produced by {@link Xml2AsParser#xml2}.
-	 * @param ctx the parse tree
-	 */
-	void enterXml2(@NotNull Xml2AsParser.Xml2Context ctx);
-	/**
-	 * Exit a parse tree produced by {@link Xml2AsParser#xml2}.
-	 * @param ctx the parse tree
-	 */
-	void exitXml2(@NotNull Xml2AsParser.Xml2Context ctx);
-
-	/**
 	 * Enter a parse tree produced by {@link Xml2AsParser#typeName}.
 	 * @param ctx the parse tree
 	 */
@@ -95,6 +18,17 @@ public interface Xml2AsListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitTypeName(@NotNull Xml2AsParser.TypeNameContext ctx);
+
+	/**
+	 * Enter a parse tree produced by {@link Xml2AsParser#metaParam}.
+	 * @param ctx the parse tree
+	 */
+	void enterMetaParam(@NotNull Xml2AsParser.MetaParamContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link Xml2AsParser#metaParam}.
+	 * @param ctx the parse tree
+	 */
+	void exitMetaParam(@NotNull Xml2AsParser.MetaParamContext ctx);
 
 	/**
 	 * Enter a parse tree produced by {@link Xml2AsParser#typeField}.
@@ -130,6 +64,17 @@ public interface Xml2AsListener extends ParseTreeListener {
 	void exitInputDef(@NotNull Xml2AsParser.InputDefContext ctx);
 
 	/**
+	 * Enter a parse tree produced by {@link Xml2AsParser#paramValue}.
+	 * @param ctx the parse tree
+	 */
+	void enterParamValue(@NotNull Xml2AsParser.ParamValueContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link Xml2AsParser#paramValue}.
+	 * @param ctx the parse tree
+	 */
+	void exitParamValue(@NotNull Xml2AsParser.ParamValueContext ctx);
+
+	/**
 	 * Enter a parse tree produced by {@link Xml2AsParser#packName}.
 	 * @param ctx the parse tree
 	 */
@@ -141,24 +86,57 @@ public interface Xml2AsListener extends ParseTreeListener {
 	void exitPackName(@NotNull Xml2AsParser.PackNameContext ctx);
 
 	/**
-	 * Enter a parse tree produced by {@link Xml2AsParser#fieldMeta}.
+	 * Enter a parse tree produced by {@link Xml2AsParser#type}.
 	 * @param ctx the parse tree
 	 */
-	void enterFieldMeta(@NotNull Xml2AsParser.FieldMetaContext ctx);
+	void enterType(@NotNull Xml2AsParser.TypeContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link Xml2AsParser#fieldMeta}.
+	 * Exit a parse tree produced by {@link Xml2AsParser#type}.
 	 * @param ctx the parse tree
 	 */
-	void exitFieldMeta(@NotNull Xml2AsParser.FieldMetaContext ctx);
+	void exitType(@NotNull Xml2AsParser.TypeContext ctx);
 
 	/**
-	 * Enter a parse tree produced by {@link Xml2AsParser#listMeta}.
+	 * Enter a parse tree produced by {@link Xml2AsParser#packDef}.
 	 * @param ctx the parse tree
 	 */
-	void enterListMeta(@NotNull Xml2AsParser.ListMetaContext ctx);
+	void enterPackDef(@NotNull Xml2AsParser.PackDefContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link Xml2AsParser#listMeta}.
+	 * Exit a parse tree produced by {@link Xml2AsParser#packDef}.
 	 * @param ctx the parse tree
 	 */
-	void exitListMeta(@NotNull Xml2AsParser.ListMetaContext ctx);
+	void exitPackDef(@NotNull Xml2AsParser.PackDefContext ctx);
+
+	/**
+	 * Enter a parse tree produced by {@link Xml2AsParser#enumField}.
+	 * @param ctx the parse tree
+	 */
+	void enterEnumField(@NotNull Xml2AsParser.EnumFieldContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link Xml2AsParser#enumField}.
+	 * @param ctx the parse tree
+	 */
+	void exitEnumField(@NotNull Xml2AsParser.EnumFieldContext ctx);
+
+	/**
+	 * Enter a parse tree produced by {@link Xml2AsParser#meta}.
+	 * @param ctx the parse tree
+	 */
+	void enterMeta(@NotNull Xml2AsParser.MetaContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link Xml2AsParser#meta}.
+	 * @param ctx the parse tree
+	 */
+	void exitMeta(@NotNull Xml2AsParser.MetaContext ctx);
+
+	/**
+	 * Enter a parse tree produced by {@link Xml2AsParser#xml2}.
+	 * @param ctx the parse tree
+	 */
+	void enterXml2(@NotNull Xml2AsParser.Xml2Context ctx);
+	/**
+	 * Exit a parse tree produced by {@link Xml2AsParser#xml2}.
+	 * @param ctx the parse tree
+	 */
+	void exitXml2(@NotNull Xml2AsParser.Xml2Context ctx);
 }

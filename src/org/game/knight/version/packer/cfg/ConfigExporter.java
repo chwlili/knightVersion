@@ -1,6 +1,5 @@
 package org.game.knight.version.packer.cfg;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -61,6 +60,21 @@ public class ConfigExporter extends AbsExporter
 		GamePacker.beginLogSet("读取文件");
 		readDir(getSourceDir());
 		readDir(xml2Folder);
+
+		File[] otherFolders = getDestDir().getParentFile().listFiles();
+		for (File otherFolder : otherFolders)
+		{
+			if (otherFolder.isDirectory() && otherFolder.isHidden() == false)
+			{
+				for (File file : otherFolder.listFiles())
+				{
+					if (file.getName().startsWith("$"))
+					{
+						this.files.put(file.getName(), file);
+					}
+				}
+			}
+		}
 		GamePacker.endLogSet();
 
 		// 排序文件
@@ -93,36 +107,76 @@ public class ConfigExporter extends AbsExporter
 			}
 		}
 
-		// 压缩并合并配置文件
-		ByteArrayOutputStream output = new ByteArrayOutputStream();
-		ArrayList<String> file_names = new ArrayList<String>();
-		ArrayList<Integer> file_sizes = new ArrayList<Integer>();
+		// 初始化Builder
+		HashMap<String, UnitConfigBuilder> builderMap = new HashMap<String, UnitConfigBuilder>();
 		for (int i = 0; i < urls.length; i++)
 		{
 			String url = urls[i];
-
 			File file = files.get(url);
-			byte[] fileByte = null;
-
-			if (url_classTable.containsKey(url) && url_classTable.get(url).getMainClass() != null)
+			if (url_classTable.containsKey(url))
 			{
-				GamePacker.progress("转换配置文件(" + (i + 1) + "/" + urls.length + "):", url);
+				GamePacker.progress("初始化构建器(" + (i + 1) + "/" + urls.length + "):", url);
 				UnitConfigBuilder builder = new UnitConfigBuilder(url_classTable.get(url));
-				fileByte = builder.build(new FileInputStream(file));
-
-				// FileUtil.writeFile(new File(getDestDir().getPath() + "/" +
-				// file.getName() + ".cfg"), fileByte);
+				builder.read(new FileInputStream(file));
+				builderMap.put(url, builder);
 			}
-			else
+		}
+
+		//
+		StringBuilder cfgData = new StringBuilder();
+
+		String[] langs = new String[] { "zh_CN", "tr_TR" };
+		for (String lang : langs)
+		{
+			XlsLangTable xlsFile = new XlsLangTable(new File("C:\\Users\\ds\\Desktop\\" + lang + ".xls"));
+
+			// 压缩并合并配置文件
+			ByteArrayOutputStream output = new ByteArrayOutputStream();
+			for (int i = 0; i < urls.length; i++)
 			{
-				GamePacker.progress("压缩配置文件(" + (i + 1) + "/" + urls.length + "):", url);
-				fileByte = ZlibUtil.compress(getFileContent(file));
+				String url = urls[i];
+
+				File file = files.get(url);
+				byte[] fileByte = null;
+
+				if (builderMap.containsKey(url))
+				{
+					GamePacker.progress("转换配置文件(" + (i + 1) + "/" + urls.length + "):", url);
+					xlsFile.setSheet(file.getName().replaceAll("\\.xml", ""));
+					fileByte = builderMap.get(url).toBytes(xlsFile);
+				}
+				else
+				{
+					GamePacker.progress("压缩配置文件(" + (i + 1) + "/" + urls.length + "):", url);
+					fileByte = ZlibUtil.compress(getFileContent(file));
+				}
+
+				String fileName = url_classTable.containsKey(url) ? file.getName() : getFileName(file);
+
+				ByteArrayOutputStream nameOutput = new ByteArrayOutputStream();
+				nameOutput.write(fileName.getBytes("utf8"));
+				byte[] nameBytes = nameOutput.toByteArray();
+
+				output.write(nameBytes.length);
+				output.write(nameBytes);
+				output.write(fileByte.length);
+				output.write(fileByte);
+
+				if (isCancel())
+				{
+					return;
+				}
 			}
+			xlsFile.save();
 
-			file_names.add(url_classTable.containsKey(url) ? file.getName() : getFileName(file));
-			file_sizes.add(fileByte.length);
+			// 拆分并输出文件
+			byte[] outputBytes = MD5Util.addSuffix(output.toByteArray());
+			String outputBytesMd5 = MD5Util.md5Bytes(outputBytes);
 
-			output.write(fileByte);
+			exportFile(outputBytesMd5, outputBytes, "cfg");
+
+			// 组织文件分布表
+			cfgData.append("\t<configs langs=\"" + lang + "\" file=\"" + getExportedFileUrl(outputBytesMd5) + "\" size=\"" + getExportedFileSize(outputBytesMd5) + "\"/>\n");
 
 			if (isCancel())
 			{
@@ -130,43 +184,8 @@ public class ConfigExporter extends AbsExporter
 			}
 		}
 
-		// 拆分并输出文件
-		ByteArrayInputStream input = new ByteArrayInputStream(output.toByteArray());
-		int partSize = 500 * 1024;
-		ArrayList<String> partMD5 = new ArrayList<String>();
-		while (input.available() > 0)
-		{
-			byte[] part = new byte[Math.min(input.available(), partSize)];
-
-			input.read(part);
-
-			part = MD5Util.addSuffix(part);
-
-			String md5 = MD5Util.md5Bytes(part);
-
-			partMD5.add(md5);
-
-			exportFile(md5, part, "cfg");
-		}
-
-		// 组织文件分布表
-		StringBuilder cfgData = new StringBuilder();
-		cfgData.append("\t<configs>\n");
-		for (int i = 0; i < file_names.size(); i++)
-		{
-			cfgData.append(String.format("\t\t<part name=\"%s\" size=\"%s\" />\n", file_names.get(i), file_sizes.get(i)));
-		}
-		for (int i = 0; i < partMD5.size(); i++)
-		{
-			String md5 = partMD5.get(i);
-			cfgData.append(String.format("\t\t<partFile path=\"%s\" size=\"%s\" />\n", getExportedFileUrl(md5), getExportedFileSize(md5)));
-		}
-		cfgData.append("\t</configs>\n");
-
-		if (isCancel())
-		{
-			return;
-		}
+		GamePacker.progress("摘取技能汇总");
+		Thread.sleep(1000);
 
 		SkillConfigHandler skillHandler = new SkillConfigHandler();
 		for (String url : urls)

@@ -200,7 +200,8 @@ public class WorldWriter
 		if (file != null)
 		{
 			UnitConfigBuilder builder = new UnitConfigBuilder(new ClassTable(file));
-			return builder.build(input);
+			builder.read(input);
+			return builder.toBytes(null);
 		}
 		return null;
 	}

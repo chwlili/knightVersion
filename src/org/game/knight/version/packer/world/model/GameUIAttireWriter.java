@@ -389,6 +389,7 @@ public class GameUIAttireWriter extends BaseWriter
 		content.append(String.format("</uiAttire>"));
 
 		byte[] bytes = content.toString().getBytes("utf8");
+		FileUtil.writeFile(new File(root.getOutputFolder().getPath() + "/$UiAttire.xml"), bytes);
 		byte[] cfgBytes = root.convertXmlToAs(new ByteArrayInputStream(bytes), "$UiAttire.xml2");
 		if (cfgBytes != null)
 		{

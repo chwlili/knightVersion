@@ -8,7 +8,6 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.zip.Deflater;
@@ -21,6 +20,9 @@ import org.xml.sax.SAXException;
 public class UnitConfigBuilder
 {
 	private ClassTable classTable;
+	private LangTable langTable;
+
+	private Instance root;
 
 	private int nextID = 1;
 
@@ -61,9 +63,80 @@ public class UnitConfigBuilder
 	 * @throws ParserConfigurationException
 	 * @throws SAXException
 	 */
-	public byte[] build(InputStream input) throws IOException, CoreException, SAXException, ParserConfigurationException
+	public void read(InputStream input) throws IOException, CoreException, SAXException, ParserConfigurationException
 	{
-		return build(UnitInstanceBuilder.build(classTable, input));
+		root = UnitInstanceBuilder.build(classTable, input);
+
+		// 遍历所有根节点
+		parseInstance(root);
+
+		// 按引用次数排序ID
+		for (String typeName : typeName_ids.keySet())
+		{
+			HashSet<Integer> ids = typeName_ids.get(typeName);
+			Integer[] idArray = ids.toArray(new Integer[ids.size()]);
+			Arrays.sort(idArray, new Comparator<Integer>()
+			{
+				public int compare(Integer o1, Integer o2)
+				{
+					o1 = id_refCount.get(o1);
+					o2 = id_refCount.get(o2);
+					if (o1 > o2)
+					{
+						return -1;
+					}
+					else if (o1 < o2)
+					{
+						return 1;
+					}
+					return 0;
+				}
+			});
+
+			for (int i = 0; i < idArray.length; i++)
+			{
+				int id = idArray[i];
+				id_order.put(id, i + 1);
+			}
+
+			typeName_idArray.put(typeName, idArray);
+		}
+	}
+
+	/**
+	 * 保存
+	 * 
+	 * @throws IOException
+	 * @throws CoreException
+	 * @throws ParserConfigurationException
+	 * @throws SAXException
+	 */
+	public byte[] toBytes(LangTable langs) throws IOException, SAXException, ParserConfigurationException, CoreException
+	{
+		langTable = langs;
+
+		// debugs
+		// System.out.println(toDebugString(allInstance));
+
+		// 排序类名列表
+		String[] allTypeName = typeName_idArray.keySet().toArray(new String[typeName_idArray.size()]);
+		Arrays.sort(allTypeName);
+
+		// 转换到字节流
+		ByteArrayOutputStream byteArrayOutput = new ByteArrayOutputStream();
+		CfgOutputStream dataOutput = new CfgOutputStream(byteArrayOutput);
+
+		dataOutput.writeVarInt(allTypeName.length);
+		for (String typeName : allTypeName)
+		{
+			dataOutput.writeVarInt(classTable.getClassID(typeName));
+			dataOutput.write(getBytes(typeName_idArray.get(typeName)));
+		}
+
+		dataOutput.writeVarInt(classTable.getClassID(root.type.name));
+		dataOutput.write(getBytes(root));
+
+		return compress(byteArrayOutput.toByteArray());
 	}
 
 	/**
@@ -121,10 +194,6 @@ public class UnitConfigBuilder
 	 */
 	private void parseInstance(Instance instance)
 	{
-		if(instance==null)
-		{
-			System.out.println("..");
-		}
 		for (InstanceField field : instance.fields)
 		{
 			// 忽略空值
@@ -542,75 +611,6 @@ public class UnitConfigBuilder
 	// ------------------------------------------------------------------------------------------------------
 
 	/**
-	 * 保存
-	 * 
-	 * @throws IOException
-	 * @throws CoreException
-	 * @throws ParserConfigurationException
-	 * @throws SAXException
-	 */
-	private byte[] build(Instance instance) throws IOException, SAXException, ParserConfigurationException, CoreException
-	{
-		// 遍历所有根节点
-		parseInstance(instance);
-
-		// 按引用次数排序ID
-		for (String typeName : typeName_ids.keySet())
-		{
-			HashSet<Integer> ids = typeName_ids.get(typeName);
-			Integer[] idArray = ids.toArray(new Integer[ids.size()]);
-			Arrays.sort(idArray, new Comparator<Integer>()
-			{
-				public int compare(Integer o1, Integer o2)
-				{
-					o1 = id_refCount.get(o1);
-					o2 = id_refCount.get(o2);
-					if (o1 > o2)
-					{
-						return -1;
-					}
-					else if (o1 < o2)
-					{
-						return 1;
-					}
-					return 0;
-				}
-			});
-
-			for (int i = 0; i < idArray.length; i++)
-			{
-				int id = idArray[i];
-				id_order.put(id, i + 1);
-			}
-
-			typeName_idArray.put(typeName, idArray);
-		}
-
-		// debugs
-		// System.out.println(toDebugString(allInstance));
-
-		// 排序类名列表
-		String[] allTypeName = typeName_idArray.keySet().toArray(new String[typeName_idArray.size()]);
-		Arrays.sort(allTypeName);
-
-		// 转换到字节流
-		ByteArrayOutputStream byteArrayOutput = new ByteArrayOutputStream();
-		CfgOutputStream dataOutput = new CfgOutputStream(byteArrayOutput);
-
-		dataOutput.writeVarInt(allTypeName.length);
-		for (String typeName : allTypeName)
-		{
-			dataOutput.writeVarInt(classTable.getClassID(typeName));
-			dataOutput.write(getBytes(typeName_idArray.get(typeName)));
-		}
-
-		dataOutput.writeVarInt(classTable.getClassID(instance.type.name));
-		dataOutput.write(getBytes(instance));
-
-		return compress(byteArrayOutput.toByteArray());
-	}
-
-	/**
 	 * 获取字符串的字节数组
 	 * 
 	 * @param txt
@@ -619,6 +619,15 @@ public class UnitConfigBuilder
 	 */
 	private byte[] getBytes(String txt) throws IOException
 	{
+		if (langTable != null)
+		{
+			txt = langTable.getText(txt);
+			if (txt == null)
+			{
+				txt = "";
+			}
+		}
+
 		ByteArrayOutputStream byteArray = new ByteArrayOutputStream();
 		CfgOutputStream output = new CfgOutputStream(byteArray);
 
@@ -899,8 +908,8 @@ public class UnitConfigBuilder
 
 		public void writeVarInt(int value) throws IOException
 		{
-			value=encodeZigZag32(value);
-			
+			value = encodeZigZag32(value);
+
 			while (true)
 			{
 				if ((value & ~0x7F) == 0)
@@ -916,9 +925,9 @@ public class UnitConfigBuilder
 			}
 		}
 
-        private int encodeZigZag32(int n)
-        {
-            return (n<<1)^(n>>31);
-        }
+		private int encodeZigZag32(int n)
+		{
+			return (n << 1) ^ (n >> 31);
+		}
 	}
 }

@@ -182,6 +182,7 @@ public class Config3dAttireWriter extends BaseWriter
 		try
 		{
 			bytes = attireText.toString().getBytes("UTF-8");
+			FileUtil.writeFile(new File(root.getOutputFolder().getPath() + "/$Attire.xml"), bytes);
 		}
 		catch (UnsupportedEncodingException e)
 		{

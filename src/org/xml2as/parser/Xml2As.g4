@@ -27,55 +27,22 @@ packDef
 
 type
 :
-	typeMeta? C_TYPE typeName C_BRACE_L
+	metas = meta* C_TYPE typeName C_BRACE_L
 	(
 		typeField
 		| COMMENT
 	)* C_BRACE_R
 ;
 
-typeMeta
-:
-	C_BRACKET_L C_MAIN C_PAREN_L xpath = STRING C_PAREN_R C_BRACKET_R
-;
-
 typeField
 :
-	fieldMeta fieldType = typeName fieldName = typeName C_EQUALS fieldXPath =
+	metas = meta* fieldType = typeName fieldName = typeName C_EQUALS fieldXPath =
 	STRING C_SEMICOLON?
-;
-
-fieldMeta
-:
-	(
-		listMeta
-		| sliceMeta
-	)*
-;
-
-listMeta
-:
-	C_BRACKET_L C_LIST
-	(
-		C_PAREN_L
-		(
-			key += typeName
-			(
-				C_COMMA key += typeName
-			)*
-		)? C_PAREN_R
-	)? C_BRACKET_R
-;
-
-sliceMeta
-:
-	C_BRACKET_L prefix = C_SLICE C_PAREN_L sliceChar = STRING C_PAREN_R
-	C_BRACKET_R
 ;
 
 enumType
 :
-	C_ENUM typeName C_BRACE_L
+	metas = meta* C_ENUM typeName C_BRACE_L
 	(
 		enumField
 		| COMMENT
@@ -84,15 +51,26 @@ enumType
 
 enumField
 :
-	meta=defaultMeta? fieldName = typeName C_EQUALS fieldValue = STRING C_SEMICOLON?
+	metas = meta* fieldName = typeName C_EQUALS fieldValue = STRING C_SEMICOLON?
 ;
 
-defaultMeta
+meta
 :
-	C_BRACKET_L prefix = C_DEFAULT
+	C_BRACKET_L prefix = typeName
 	(
-		C_PAREN_L C_PAREN_R
+		C_PAREN_L
+		(
+			params += metaParam
+			(
+				C_COMMA params += metaParam
+			)*
+		)? C_PAREN_R
 	)? C_BRACKET_R
+;
+
+metaParam
+:
+	value = paramValue
 ;
 
 packName
@@ -106,8 +84,6 @@ packName
 typeName
 :
 	C_INPUT
-	| C_MAIN
-	| C_DEFAULT
 	| C_TYPE
 	| C_ENUM
 	| C_INT
@@ -115,8 +91,21 @@ typeName
 	| C_BOOL
 	| C_NUMBER
 	| C_STRING
-	| C_LIST
 	| NAME
+;
+
+paramValue
+:
+	C_INPUT
+	| C_TYPE
+	| C_ENUM
+	| C_INT
+	| C_UINT
+	| C_BOOL
+	| C_NUMBER
+	| C_STRING
+	| NAME
+	| STRING
 ;
 
 C_BRACKET_L
@@ -182,26 +171,6 @@ C_INPUT
 C_PACKAGE
 :
 	'package'
-;
-
-C_MAIN
-:
-	'Main'
-;
-
-C_LIST
-:
-	'List'
-;
-
-C_SLICE
-:
-	'Slice'
-;
-
-C_DEFAULT
-:
-	'Default'
 ;
 
 C_TYPE

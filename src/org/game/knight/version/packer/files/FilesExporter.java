@@ -99,6 +99,7 @@ public class FilesExporter extends AbsExporter
 		GamePacker.log("±£¥Ê≈‰÷√–≈œ¢");
 
 		byte[] bytes = txt.toString().getBytes("UTF-8");
+		FileUtil.writeFile(new File(getDestDir().getPath() + "/$FileSet.xml"), bytes);
 		byte[] cfgBytes = helper.convertXmlToAs(new ByteArrayInputStream(bytes), "$FileSet.xml2");
 		if (cfgBytes != null)
 		{

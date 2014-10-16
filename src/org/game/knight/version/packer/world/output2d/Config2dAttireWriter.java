@@ -123,6 +123,7 @@ public class Config2dAttireWriter extends BaseWriter
 
 		// ´æ´¢ÎÄ¼þ
 		byte[] bytes = attireText.toString().getBytes("UTF-8");
+		FileUtil.writeFile(new File(root.getOutputFolder().getPath() + "/$Attire.2d.xml"), bytes);
 
 		byte[] cfgBytes = root.convertXmlToAs(new ByteArrayInputStream(bytes), "$Attire.xml2");
 		if (cfgBytes != null)

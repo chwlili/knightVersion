@@ -128,27 +128,6 @@ public class GamePacker extends Composite
 		inputs.setLayout(gl_inputs);
 		inputs.setText(" ‰»Î");
 
-		cfgSelection = new Button(inputs, SWT.CHECK);
-
-		cfgLabel = new Link(inputs, SWT.NONE);
-		cfgLabel.setText("<a>≈‰÷√</a>£∫");
-
-		cfgInput = new Text(inputs, SWT.BORDER);
-		cfgInput.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
-
-		cfgButton = new Button(inputs, SWT.NONE);
-		cfgButton.setText("    ...    ");
-		new Label(inputs, SWT.NONE);
-
-		xml2Label = new Link(inputs, SWT.NONE);
-		xml2Label.setText("<a>\u8F6C\u6362</a>\uFF1A");
-
-		xml2Input = new Text(inputs, SWT.BORDER);
-		xml2Input.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
-
-		xml2Button = new Button(inputs, SWT.NONE);
-		xml2Button.setText("    ...    ");
-
 		fileSelection = new Button(inputs, SWT.CHECK);
 
 		fileLabel = new Link(inputs, SWT.NONE);
@@ -203,6 +182,27 @@ public class GamePacker extends Composite
 
 		codeButton = new Button(inputs, SWT.NONE);
 		codeButton.setText("    ...    ");
+
+		cfgSelection = new Button(inputs, SWT.CHECK);
+
+		cfgLabel = new Link(inputs, SWT.NONE);
+		cfgLabel.setText("<a>≈‰÷√</a>£∫");
+
+		cfgInput = new Text(inputs, SWT.BORDER);
+		cfgInput.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
+
+		cfgButton = new Button(inputs, SWT.NONE);
+		cfgButton.setText("    ...    ");
+		new Label(inputs, SWT.NONE);
+
+		xml2Label = new Link(inputs, SWT.NONE);
+		xml2Label.setText("<a>\u8F6C\u6362</a>\uFF1A");
+
+		xml2Input = new Text(inputs, SWT.BORDER);
+		xml2Input.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
+
+		xml2Button = new Button(inputs, SWT.NONE);
+		xml2Button.setText("    ...    ");
 
 		Group outputs = new Group(composite, SWT.NONE);
 		outputs.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
@@ -984,12 +984,6 @@ public class GamePacker extends Composite
 
 				GamePackerHelper helper = new GamePackerHelper(new File(cfgPath), new File(xml2Path), new File(filePath), new File(iconPath));
 
-				if (cfgSelected)
-				{
-					ConfigExporter configs = new ConfigExporter(new File(cfgPath), new File(xml2Path), new File(cdnPath + File.separatorChar + "configs"), zip);
-					configs.publish();
-				}
-
 				if (fileSelected)
 				{
 					FilesExporter files = new FilesExporter(helper, new File(cdnPath + File.separatorChar + "files"), zip);
@@ -1018,6 +1012,12 @@ public class GamePacker extends Composite
 				{
 					GameExporter code = new GameExporter(new File(codePath), new File(cdnPath + File.separatorChar + "games"), new File(startupPath), cdnPath, ver, startupParam);
 					code.publish();
+				}
+
+				if (cfgSelected)
+				{
+					ConfigExporter configs = new ConfigExporter(new File(cfgPath), new File(xml2Path), new File(cdnPath + File.separatorChar + "configs"), zip);
+					configs.publish();
 				}
 
 				if (!GamePacker.isCancel())

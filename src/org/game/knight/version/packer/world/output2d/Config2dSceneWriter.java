@@ -331,6 +331,7 @@ public class Config2dSceneWriter extends BaseWriter
 
 		// ´æ´¢ÎÄ¼þ
 		byte[] bytes = sb.toString().getBytes("UTF-8");
+		FileUtil.writeFile(new File(root.getOutputFolder().getPath() + "/$World.2d.xml"), bytes);
 
 		byte[] cfgBytes = root.convertXmlToAs(new ByteArrayInputStream(bytes), "$World.xml2");
 		if (cfgBytes != null)
