@@ -55,7 +55,7 @@ public class UnitInstanceBuilder
 		this.stackFields = new Stack<ArrayList<InstanceField>>();
 
 		Class mainClass = classTable.getMainClass();
-		ClassField mainField = new ClassField(mainClass.xpath, mainClass.name, mainClass.comment, mainClass.name, 3, false, null, false, null);
+		ClassField mainField = new ClassField(mainClass.xpath, mainClass.name, mainClass.comment, mainClass.name, 3, false, null, false, null, false);
 
 		InstanceField instanceField = new InstanceField(mainField, "");
 		if (!path2Field.containsKey(instanceField.meta.xpath))

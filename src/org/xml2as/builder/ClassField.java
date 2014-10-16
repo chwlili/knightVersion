@@ -48,6 +48,11 @@ public class ClassField
 	public final String sliceChar;
 
 	/**
+	 * 需要多语言支持
+	 */
+	public final boolean NLS;
+
+	/**
 	 * 构造函数
 	 * 
 	 * @param xpath
@@ -59,7 +64,7 @@ public class ClassField
 	 */
 	public ClassField(String xpath, String name, String comment, String type, int typeKind, boolean repeted, String[] indexKeys)
 	{
-		this(xpath, name, comment, type, typeKind, repeted, indexKeys, false, null);
+		this(xpath, name, comment, type, typeKind, repeted, indexKeys, false, null, false);
 	}
 
 	/**
@@ -74,7 +79,7 @@ public class ClassField
 	 */
 	public ClassField(String xpath, String name, String comment, String type, int typeKind, boolean slice, String sliceChar)
 	{
-		this(xpath, name, comment, type, typeKind, false, null, slice, sliceChar);
+		this(xpath, name, comment, type, typeKind, false, null, slice, sliceChar, false);
 	}
 
 	/**
@@ -87,7 +92,7 @@ public class ClassField
 	 * @param repeted
 	 * @param indexKeys
 	 */
-	public ClassField(String xpath, String name, String comment, String type, int typeKind, boolean repeted, String[] indexKeys, boolean slice, String sliceChar)
+	public ClassField(String xpath, String name, String comment, String type, int typeKind, boolean repeted, String[] indexKeys, boolean slice, String sliceChar, boolean NLS)
 	{
 		this.xpath = xpath;
 		this.name = name;
@@ -98,6 +103,7 @@ public class ClassField
 		this.indexKeys = indexKeys;
 		this.slice = slice;
 		this.sliceChar = sliceChar;
+		this.NLS = NLS;
 	}
 
 	/**
@@ -182,6 +188,7 @@ public class ClassField
 
 	/**
 	 * 是否有索引
+	 * 
 	 * @return
 	 */
 	public boolean hasIndex()

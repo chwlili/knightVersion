@@ -12,13 +12,10 @@ import org.xml2as.parser.Xml2AsLexer;
 import org.xml2as.parser.Xml2AsParser;
 import org.xml2as.parser.Xml2AsParser.EnumFieldContext;
 import org.xml2as.parser.Xml2AsParser.EnumTypeContext;
-import org.xml2as.parser.Xml2AsParser.FieldMetaContext;
-import org.xml2as.parser.Xml2AsParser.ListMetaContext;
-import org.xml2as.parser.Xml2AsParser.SliceMetaContext;
+import org.xml2as.parser.Xml2AsParser.MetaContext;
+import org.xml2as.parser.Xml2AsParser.MetaParamContext;
 import org.xml2as.parser.Xml2AsParser.TypeContext;
 import org.xml2as.parser.Xml2AsParser.TypeFieldContext;
-import org.xml2as.parser.Xml2AsParser.TypeMetaContext;
-import org.xml2as.parser.Xml2AsParser.TypeNameContext;
 import org.xml2as.parser.Xml2AsParser.Xml2Context;
 
 public class ClassTable
@@ -247,11 +244,32 @@ public class ClassTable
 		{
 			String typeName = type.typeName().getText();
 
-			TypeMetaContext typeMeta = type.typeMeta();
-			String typeXPath = typeMeta != null && typeMeta.xpath != null ? typeMeta.xpath.getText() : null;
-			if (typeXPath != null && typeXPath.charAt(0) == '"')
+			String typeXPath = "/";
+			if (type.meta().size() > 0)
 			{
-				typeXPath = typeXPath.substring(1, typeXPath.length() - 1);
+				for (MetaContext meta : type.meta())
+				{
+					if (meta.prefix.getText().equals("Main") && meta.params.size() > 0)
+					{
+						String value = meta.params.get(0).value.getText().trim();
+						if (value != null && !value.isEmpty())
+						{
+							if (value.charAt(0) == '"')
+							{
+								value = value.substring(1);
+							}
+							if (value.charAt(value.length() - 1) == '"')
+							{
+								value = value.substring(0, value.length() - 1);
+							}
+							value = value.trim();
+							if (!value.isEmpty())
+							{
+								typeXPath = value;
+							}
+						}
+					}
+				}
 			}
 
 			if (typeNames.contains(typeName))
@@ -295,40 +313,49 @@ public class ClassTable
 					fieldTypeKind = 2;
 				}
 
-				ListMetaContext listMeta = null;
-				SliceMetaContext sliceMeta = null;
-
-				FieldMetaContext metaList = field.fieldMeta();
-				if (metaList != null && metaList.getChildCount() > 0)
+				MetaContext listMeta = null;
+				MetaContext langMeta = null;
+				if (field.meta().size() > 0)
 				{
-					for (int i = metaList.getChildCount() - 1; i >= 0; i--)
+					for (MetaContext meta : field.meta())
 					{
-						if (metaList.getChild(i) instanceof ListMetaContext)
+						String name = meta.prefix.getText().trim();
+						if (name.equals("List") || name.equals("Slice"))
 						{
-							listMeta = (ListMetaContext) metaList.getChild(i);
-							break;
+							listMeta = meta;
 						}
-						else if (metaList.getChild(i) instanceof SliceMetaContext)
+						else if (name.equals("NLS"))
 						{
-							sliceMeta = (SliceMetaContext) metaList.getChild(i);
-							break;
+							langMeta = meta;
 						}
 					}
 				}
 
-				if (listMeta != null)
+				if (listMeta != null && listMeta.prefix.getText().trim().equals("List"))
 				{
 					fieldList = true;
 
 					if (!isBase && !isEnum)
 					{
 						ArrayList<String> indexs = new ArrayList<String>();
-						for (TypeNameContext key : listMeta.key)
+						for (MetaParamContext key : listMeta.params)
 						{
-							String name = key.getText().trim();
+							String name = key.value.getText().trim();
 							if (name != null && name.isEmpty() == false)
 							{
-								indexs.add(name);
+								if (name.charAt(0) == '"')
+								{
+									name = name.substring(1);
+								}
+								if (name.charAt(name.length() - 1) == '"')
+								{
+									name = name.substring(0, name.length() - 1);
+								}
+								name = name.trim();
+								if (name.isEmpty() == false)
+								{
+									indexs.add(name);
+								}
 							}
 						}
 
@@ -338,20 +365,27 @@ public class ClassTable
 						}
 					}
 				}
-				else if (sliceMeta != null)
+				else if (listMeta != null && listMeta.prefix.getText().trim().equals("Slice"))
 				{
 					if (isBase || isEnum)
 					{
 						sliceList = true;
-						sliceChar = sliceMeta.sliceChar.getText();
-						if (sliceChar.charAt(0) == '"')
+						sliceChar = listMeta.params.size() > 0 ? listMeta.params.get(0).value.getText().trim() : ",";
+						if (sliceChar != null && sliceChar.isEmpty() == false)
 						{
-							sliceChar = sliceChar.substring(1, sliceChar.length() - 1);
+							if (sliceChar.charAt(0) == '"')
+							{
+								sliceChar = sliceChar.substring(1);
+							}
+							if (sliceChar.charAt(sliceChar.length() - 1) == '"')
+							{
+								sliceChar = sliceChar.substring(0, sliceChar.length() - 1);
+							}
 						}
 					}
 				}
 
-				typeFields.add(new ClassField(fieldXPath, fieldName, "", fieldType, fieldTypeKind, fieldList, indexList, sliceList, sliceChar));
+				typeFields.add(new ClassField(fieldXPath, fieldName, "", fieldType, fieldTypeKind, fieldList, indexList, sliceList, sliceChar, langMeta != null));
 
 				fieldNames.add(fieldType);
 			}
