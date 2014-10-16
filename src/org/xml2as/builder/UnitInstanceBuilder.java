@@ -90,8 +90,11 @@ public class UnitInstanceBuilder
 				return;
 			}
 
-			for (InstanceField field : fields)
+			int size=fields.size();
+			for (int i = 0; i < size; i++)
 			{
+				InstanceField field = fields.get(i);
+				
 				if (!field.meta.isExtendType())
 				{
 					continue;
@@ -133,17 +136,15 @@ public class UnitInstanceBuilder
 
 					fieldValue.fields.add(childField);
 
-					if (!isSelf)
+					if (!path2Field.containsKey(path))
 					{
-						if (!path2Field.containsKey(path))
-						{
-							path2Field.put(path, new ArrayList<InstanceField>());
-						}
-						path2Field.get(path).add(childField);
-
-						stackFields.lastElement().add(childField);
+						path2Field.put(path, new ArrayList<InstanceField>());
 					}
-					else
+					path2Field.get(path).add(childField);
+
+					stackFields.lastElement().add(childField);
+
+					if (isSelf && field.meta.isExtendType())
 					{
 						selfFields.add(childField);
 					}
@@ -182,13 +183,6 @@ public class UnitInstanceBuilder
 
 				if (!field.meta.isExtendType())
 				{
-					if (!path2Field.containsKey(xpath))
-					{
-						path2Field.put(xpath, new ArrayList<InstanceField>());
-					}
-					path2Field.get(xpath).add(field);
-
-					stackFields.lastElement().add(field);
 					continue;
 				}
 
@@ -228,17 +222,15 @@ public class UnitInstanceBuilder
 
 					fieldValue.fields.add(childField);
 
-					if (!isSelf)
+					if (!path2Field.containsKey(path))
 					{
-						if (!path2Field.containsKey(path))
-						{
-							path2Field.put(path, new ArrayList<InstanceField>());
-						}
-						path2Field.get(path).add(childField);
-
-						stackFields.lastElement().add(childField);
+						path2Field.put(path, new ArrayList<InstanceField>());
 					}
-					else
+					path2Field.get(path).add(childField);
+
+					stackFields.lastElement().add(childField);
+
+					if (isSelf && field.meta.isExtendType())
 					{
 						childs.add(childField);
 					}
