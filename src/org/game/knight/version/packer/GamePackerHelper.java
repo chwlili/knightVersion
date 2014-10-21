@@ -14,37 +14,163 @@ import org.xml2as.builder.UnitConfigBuilder;
 
 public class GamePackerHelper
 {
-	private File cfgFolder;
-	private File xml2Folder;
-	private File fileFolder;
-	private File iconFolder;
+	public final boolean cfgChecked;
+	public final File cfgFolder;
+	public final boolean iconChecked;
+	public final File iconFolder;
+	public final boolean fileChecked;
+	public final File fileFolder;
+	public final boolean codeChecked;
+	public final File codeFolder;
 
-	public GamePackerHelper(File cfgFolder, File xml2Folder, File fileFolder, File iconFolder)
+	public final File outputFolder;
+
+	public final File xml2Folder;
+	public final File nlsFolder;
+
+	public GamePackerHelper(boolean cfg, String cfgFolder, boolean icon, String iconFolder, boolean file, String fileFolder, boolean code, String codeFolder, String outputFolder, String xml2Folder, String nlsFolder)
 	{
-		this.cfgFolder = cfgFolder;
-		this.xml2Folder = xml2Folder;
-		this.fileFolder = fileFolder;
-		this.iconFolder = iconFolder;
+		this.cfgChecked = cfg;
+		this.cfgFolder = new File(cfgFolder);
+		this.iconChecked = icon;
+		this.iconFolder = new File(iconFolder);
+		this.fileChecked = file;
+		this.fileFolder = new File(fileFolder);
+		this.codeChecked = code;
+		this.codeFolder = new File(codeFolder);
+
+		this.outputFolder = new File(outputFolder);
+
+		this.xml2Folder = new File(xml2Folder);
+		this.nlsFolder = new File(nlsFolder);
 	}
 
-	public File getCfgFolder()
+	/**
+	 * 按扩展名列出指定目录下所有文件
+	 * 
+	 * @param folder
+	 * @param ext
+	 * @return
+	 */
+	public File[] listFiles(File folder, String ext)
 	{
-		return cfgFolder;
+		ArrayList<File> xmlFiles = new ArrayList<File>();
+
+		ArrayList<File> folders = new ArrayList<File>();
+		if (folder.exists() && folder.isDirectory())
+		{
+			folders.add(folder);
+		}
+
+		while (folders.size() > 0)
+		{
+			File[] files = folders.remove(0).listFiles();
+			for (File file : files)
+			{
+				if (file.isHidden())
+				{
+					continue;
+				}
+
+				if (file.isDirectory())
+				{
+					folders.add(file);
+					continue;
+				}
+
+				if (file.isFile())
+				{
+					if (ext.equals("*") || file.getName().toLowerCase().endsWith("." + ext))
+					{
+						xmlFiles.add(file);
+					}
+				}
+			}
+		}
+
+		return xmlFiles.toArray(new File[] {});
 	}
 
-	public File getXml2Folder()
+	/**
+	 * 获取文件名
+	 * 
+	 * @param path
+	 * @return
+	 */
+	public String getFileName(String path)
 	{
-		return xml2Folder;
+		String name = "";
+
+		int index = path.lastIndexOf("/");
+		if (index == -1)
+		{
+			index = path.lastIndexOf("\\");
+		}
+
+		if (index != -1)
+		{
+			name = path.substring(index + 1);
+
+			index = name.lastIndexOf(".");
+			if (index != -1)
+			{
+				name = name.substring(0, index);
+			}
+		}
+
+		return name;
 	}
 
-	public File getFileFolder()
+	/**
+	 * 获取文件名
+	 * 
+	 * @param file
+	 * @return
+	 */
+	public String getFileName(File file)
 	{
-		return fileFolder;
+		return getFileName(file.getPath());
 	}
 
-	public File getIconFolder()
+	/**
+	 * 获取文件扩展名
+	 * 
+	 * @param file
+	 * @return
+	 */
+	public String getFileExtName(File file)
 	{
-		return iconFolder;
+		return getFileExtName(file.getPath());
+	}
+
+	/**
+	 * 获取文件扩展名
+	 * 
+	 * @param path
+	 * @return
+	 */
+	public String getFileExtName(String path)
+	{
+		String ext = "";
+
+		int index = path.lastIndexOf("/");
+		if (index == -1)
+		{
+			index = path.lastIndexOf("\\");
+		}
+
+		if (index != -1)
+		{
+			String name = path.substring(index + 1);
+
+			index = name.lastIndexOf(".");
+			if (index != -1)
+			{
+				ext = name.substring(index + 1);
+			}
+		}
+
+		return ext;
 	}
 
 	/**

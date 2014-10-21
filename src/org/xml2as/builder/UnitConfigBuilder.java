@@ -617,14 +617,14 @@ public class UnitConfigBuilder
 	 * @return
 	 * @throws IOException
 	 */
-	private byte[] getBytes(String txt) throws IOException
+	private byte[] getBytes(String txt, boolean NLS) throws IOException
 	{
-		if (langTable != null)
+		if (NLS && langTable != null)
 		{
-			txt = langTable.getText(txt);
-			if (txt == null)
+			String val = langTable.getText(txt);
+			if (val != null)
 			{
-				txt = "";
+				txt = val;
 			}
 		}
 
@@ -685,7 +685,7 @@ public class UnitConfigBuilder
 				}
 				else if (field.isString())
 				{
-					partOutputStream.write(getBytes((String) value));
+					partOutputStream.write(getBytes((String) value, field.NLS));
 				}
 				else if (field.isExtendType())
 				{

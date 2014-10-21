@@ -2,7 +2,6 @@ package org.game.knight.version.packer.game;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.util.Arrays;
 import java.util.Hashtable;
 
 import org.chw.util.FileUtil;
@@ -12,11 +11,17 @@ import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.game.knight.version.packer.GamePacker;
-import org.game.knight.version.packer.base.AbsExporter;
+import org.game.knight.version.packer.GamePackerHelper;
+import org.game.knight.version.packer.base.ZipConfig;
 
-
-public class GameExporter extends AbsExporter
+public class GameExporter
 {
+	private GamePackerHelper helper;
+	private File outputFolder;
+
+	private ZipConfig oldZip;
+	private ZipConfig newZip;
+
 	private File appDir;
 
 	private String clientUrl;
@@ -35,11 +40,15 @@ public class GameExporter extends AbsExporter
 	 * @param src
 	 * @param dst
 	 */
-	public GameExporter(File src, File dst, File appDir, String clientUrl, String clientVer, String params)
+	public GameExporter(GamePackerHelper helper, File dst, File appDir, String clientUrl, String clientVer, String params)
 	{
-		super("导出程序", src, dst);
-
 		this.appDir = appDir;
+
+		this.helper = helper;
+		this.outputFolder = dst;
+
+		this.oldZip = new ZipConfig(new File(dst + File.separator + "ver.zip"));
+		this.newZip = new ZipConfig();
 
 		this.clientUrl = clientUrl;
 		this.clientVer = clientVer;
@@ -78,129 +87,78 @@ public class GameExporter extends AbsExporter
 		}
 	}
 
-	@Override
-	protected void exportContent() throws Exception
+	public boolean pub()
 	{
-		files = new Hashtable<String, File>();
-
-		if (isCancel()) { return; }
-
-		// 遍历文件
-		GamePacker.beginLogSet("读取文件");
-		readDir(getSourceDir());
-		GamePacker.endLogSet();
-
-		// 排序文件
-		GamePacker.beginLogSet("排序文件");
-		String[] urls = new String[files.keySet().size()];
-		urls = files.keySet().toArray(urls);
-		Arrays.sort(urls);
-		GamePacker.endLogSet();
-
-		if (isCancel()) { return; }
-		
-		//导出GameHead、GameBody
-		StringBuilder codeSB=new StringBuilder();
-		codeSB.append("\t<codes>\n");
-		for(String url : urls)
+		try
 		{
-			File file=files.get(url);
-			if(file.getName().equals("Index.swf") || file.getName().equals("GameHead.swf") || file.getName().equals("GameBody.swf") || file.getName().equals("Game.swf"))
+			GamePacker.beginTask("处理代码");
+
+			StringBuilder sb = new StringBuilder();
+			sb.append("<project>\n");
+			sb.append("\t<codes>\n");
+			File[] files = helper.listFiles(helper.codeFolder, "swf");
+			for (int i = 0; i < files.length; i++)
 			{
-				codeSB.append(String.format("\t\t<code name=\"%s\">\n",getFileName(file)));
-				
-				// 拆分并输出文件
-				ByteArrayInputStream input = new ByteArrayInputStream(FileUtil.getFileBytes(file));
-				
-				int partSize = 500 * 1024;
-				while (input.available() > 0)
+				File file = files[i];
+
+				String url = file.getPath().substring(helper.codeFolder.getPath().length()).replaceAll("\\\\", "/");
+				if (file.getName().equals("Index.swf") || file.getName().equals("Game.swf") || file.getName().equals("GameHead.swf") || file.getName().equals("GameBody.swf"))
 				{
-					byte[] part = new byte[Math.min(input.available(), partSize)];
-					
-					input.read(part);
-					
-					part=MD5Util.addSuffix(part);
-					
-					String md5 = MD5Util.md5Bytes(part);
+					GamePacker.progress(String.format("处理代码(%s/%s)：%s", i + 1, files.length, url));
 
-					exportFile(md5, part, "part");
-					
-					codeSB.append(String.format("\t\t\t<part path=\"%s\" size=\"%s\"/>\n",getExportedFileUrl(md5),getExportedFileSize(md5)));
-				}
-				
-				codeSB.append("\t\t</code>\n");
-			}
-		}
-		codeSB.append("\t</codes>\n");
-		
+					ByteArrayInputStream input = new ByteArrayInputStream(FileUtil.getFileBytes(file));
+					int partSize = 500 * 1024;
+					sb.append(String.format("\t\t<code name=\"%s\">\n", helper.getFileName(file)));
+					while (input.available() > 0)
+					{
+						byte[] part = new byte[Math.min(input.available(), partSize)];
 
-		// 导出文件
-		/*
-		GamePacker.beginLogSet("输出文件");
-		for (String url : urls)
-		{
-			GamePacker.progress("输出文件", url);
-			if (files.get(url).getParentFile().getPath().equals(getSourceDir().getPath()))
-			{
-				exportFile(getChecksumTable().getChecksumID(url), files.get(url));
-			}
+						input.read(part);
 
-			if (isCancel()) { return; }
-		}
-		GamePacker.endLogSet();
-		*/
+						part = MD5Util.addSuffix(part);
 
-		if (isCancel()) { return; }
+						String pairMD5 = MD5Util.md5Bytes(part);
+						String pairURL = oldZip.getGameFiles().get(pairMD5);
+						if (pairURL == null)
+						{
+							pairURL = oldZip.getVersionNextGameFileURL("part");
 
-		// 生成配置
-		GamePacker.beginLogSet("输出汇总信息");
-		GamePacker.log("生成汇总信息");
-		/*StringBuilder txt1 = new StringBuilder();
-		StringBuilder txt2 = new StringBuilder();
-		txt1.append("\t<configs>\n");
-		txt2.append("\t<games>\n");
-		for (String url : urls)
-		{
-			File file = files.get(url);
-			if (file.getParentFile().getPath().equals(getSourceDir().getPath()))
-			{
-				String name = getFileName(file);
-				String checksum = getChecksumTable().getChecksumID(url);
+							FileUtil.writeFile(new File(outputFolder.getPath() + pairURL), part);
+						}
 
-				// 存入统计表
-				String ext = getFileExtName(file);
-				if (!ext.equals("swf"))
-				{
-					txt1.append(String.format("\t\t<config name=\"%s\" path=\"%s\" size=\"%s\"/>\n", name, getExportedFileUrl(checksum), getExportedFileSize(checksum)));
-				}
-				else
-				{
-					txt2.append(String.format("\t\t<game name=\"%s\" path=\"%s\" size=\"%s\"/>\n", name, getExportedFileUrl(checksum), getExportedFileSize(checksum)));
+						newZip.getGameFiles().put(pairMD5, pairURL);
+						newZip.getVersionFiles().add("/" + outputFolder.getName() + pairURL);
+
+						sb.append(String.format("\t\t\t<part path=\"%s\" size=\"%s\"/>\n", "/" + outputFolder.getName() + pairURL, part.length));
+					}
+
+					sb.append("\t\t</code>\n");
 				}
 			}
-		}
-		txt1.append("\t</configs>\n");
-		txt2.append("\t</games>\n");
-		GamePacker.log("保存汇总信息");
-		String text = "<project>\n"+codeSB.toString() + txt1.toString() + txt2.toString() + "</project>";*/
-		String text = "<project>\n"+codeSB.toString() + "</project>";
-		FileUtil.writeFile(new File(getDestDir().getPath() + "/db.xml"), text.toString().getBytes("UTF-8"));
-		GamePacker.endLogSet();
+			sb.append("\t</codes>\n");
+			sb.append("</project>");
 
-		//生成文件列表
-		GamePacker.beginLogSet("输出文件汇总");
-		GamePacker.log("生成文件汇总");
-		StringBuilder filesSB = new StringBuilder();
-		String[] urlList=getExportedFileUrls();
-		for (String url : urlList)
-		{
-			filesSB.append(url + "\n");
+			newZip.setVersion(sb.toString());
+			newZip.setVersionProps(oldZip.getVersionProps());
+			newZip.getVersionFiles().add("/" + oldZip.getFile().getName());
+			newZip.saveTo(oldZip.getFile());
+
+			writeStartupFiles();
+
+			GamePacker.log("完成");
+
+			return true;
 		}
-		GamePacker.log("保存文件汇总");
-		FileUtil.writeFile(new File(getDestDir().getPath() + "/db.ver"), filesSB.toString().getBytes("UTF-8"));
-		GamePacker.endLogSet();
-		
-		writeStartupFiles();
+		catch (Exception e)
+		{
+			GamePacker.error(e);
+		}
+		finally
+		{
+			GamePacker.endTask();
+		}
+
+		return false;
 	}
 
 	/**
@@ -210,24 +168,27 @@ public class GameExporter extends AbsExporter
 	 */
 	private void writeStartupFiles() throws Exception
 	{
-		if (appDir == null || (appDir.exists() && appDir.isFile())) { return; }
-		if(appDir.getPath().isEmpty())
+		if (appDir == null || (appDir.exists() && appDir.isFile()))
+		{
+			return;
+		}
+		if (appDir.getPath().isEmpty())
 		{
 			return;
 		}
 		GamePacker.beginLogSet("输出启动文件");
-		
-		if(!appDir.exists())
+
+		if (!appDir.exists())
 		{
 			appDir.mkdirs();
 		}
-		
+
 		for (String url : files.keySet())
 		{
-			File from = new File(this.getSourceDir().getPath() + url);
+			File from = new File(helper.codeFolder.getPath() + url);
 			File dest = new File(this.appDir.getPath() + url);
 
-			if (from.exists() && (from.getParentFile().getPath().equals(getSourceDir().getPath()) == false || (from.getParentFile().getPath().equals(getSourceDir().getPath()) && (from.getName().equals("Index.swf") || from.getName().equals("index.html")))))
+			if (from.exists() && (from.getParentFile().getPath().equals(helper.codeFolder.getPath()) == false || (from.getParentFile().getPath().equals(helper.codeFolder.getPath()) && (from.getName().equals("Index.swf") || from.getName().equals("index.html")))))
 			{
 				GamePacker.progress("复制文件", url);
 				FileUtil.copyTo(dest, from);
@@ -239,41 +200,6 @@ public class GameExporter extends AbsExporter
 		rebuildFlashPlayerTrust();
 
 		GamePacker.endLogSet();
-	}
-
-	/**
-	 * 读取目录
-	 * 
-	 * @param dir
-	 */
-	private void readDir(File dir)
-	{
-		File[] files = dir.listFiles();
-
-		if (files == null) { return; }
-
-		for (int i = 0; i < files.length; i++)
-		{
-			File file = files[i];
-
-			if (file.isHidden())
-			{
-				continue;
-			}
-
-			if (file.isDirectory())
-			{
-				readDir(file);
-			}
-			else
-			{
-				String innerPath = file.getPath().substring(getSourceDir().getPath().length()).replaceAll("\\\\", "/");
-
-				GamePacker.progress("读取文件", innerPath);
-
-				this.files.put(innerPath, file);
-			}
-		}
 	}
 
 	private void rebuildFlashPlayerTrust() throws Exception

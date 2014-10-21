@@ -2,6 +2,7 @@ package org.game.knight.version.packer.view;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -340,6 +341,7 @@ public class ViewExport extends AbsExporter
 		});
 
 		// 合并语言文件
+		writeLangXML(list);
 		mergerLangs(list);
 		mergerLanguages(list);
 
@@ -581,6 +583,53 @@ public class ViewExport extends AbsExporter
 		GamePacker.endLogSet();
 	}
 
+	/**
+	 * 输出语言包XML文件
+	 * 
+	 * @param list
+	 * @throws UnsupportedEncodingException
+	 */
+	private void writeLangXML(ViewFile[] list) throws UnsupportedEncodingException
+	{
+		StringBuilder sb = new StringBuilder();
+		sb.append("<uitext>\n");
+
+		// 统计语言项
+		for (ViewFile file : list)
+		{
+			if (file.isCfg())
+			{
+				Element dom = file.getTextsNode();
+				if (dom != null)
+				{
+					String url = file.getInnerPath();
+
+					sb.append("\t<bag url=\"" + url + "\">\n");
+
+					@SuppressWarnings("rawtypes")
+					List nodes = dom.selectNodes("text");
+					for (int i = 0; i < nodes.size(); i++)
+					{
+						Element node = (Element) nodes.get(i);
+
+						String key = node.attributeValue("id");
+						String val = node.getText();
+
+						sb.append("\t\t<item id=\"" + key + "\">");
+						sb.append("<![CDATA[");
+						sb.append(val.replaceAll("\\]]>", "&&&;"));
+						sb.append("]]>");
+						sb.append("</item>\n");
+					}
+
+					sb.append("\t</bag>\n");
+				}
+			}
+		}
+		sb.append("</uitext>");
+		FileUtil.writeFile(new File(getDestDir().getPath() + "/$UIText.xml"), sb.toString().getBytes("UTF-8"));
+	}
+
 	private static class LangItem
 	{
 		public String url;
@@ -598,12 +647,12 @@ public class ViewExport extends AbsExporter
 	private void mergerLangs(ViewFile[] list) throws Exception
 	{
 		MergerViewText.mergerLangFiles(list, new File(getSourceDir().getPath() + File.separatorChar + "langs"));
-		if("tt".length()>0)
+		if ("tt".length() > 0)
 		{
 			return;
 		}
-		ArrayList<LangItem> items=new ArrayList<ViewExport.LangItem>();
-		
+		ArrayList<LangItem> items = new ArrayList<ViewExport.LangItem>();
+
 		// 统计语言项
 		for (ViewFile file : list)
 		{
@@ -622,83 +671,83 @@ public class ViewExport extends AbsExporter
 						String url = file.getInnerPath();
 						String key = node.attributeValue("id");
 						String val = node.getText();
-						
+
 						items.add(new LangItem(url, key, val));
 					}
 				}
 			}
 		}
-		
-		//排序语言项
-		//生成excel
-		HSSFWorkbook book=new HSSFWorkbook();
-		HSSFSheet sheet=book.createSheet("cn");
+
+		// 排序语言项
+		// 生成excel
+		HSSFWorkbook book = new HSSFWorkbook();
+		HSSFSheet sheet = book.createSheet("cn");
 		sheet.setColumnWidth(0, 1000);
 		sheet.setColumnWidth(1, 5000);
 		sheet.setColumnWidth(2, 5000);
 		sheet.setColumnWidth(3, 20000);
 		sheet.setColumnWidth(4, 20000);
-		HSSFRow header=sheet.createRow(0);
-		header.setHeight((short)500);
-		HSSFCellStyle headerStyle=book.createCellStyle();
+		HSSFRow header = sheet.createRow(0);
+		header.setHeight((short) 500);
+		HSSFCellStyle headerStyle = book.createCellStyle();
 		headerStyle.setAlignment(HSSFCellStyle.ALIGN_CENTER);
 		headerStyle.setVerticalAlignment(HSSFCellStyle.VERTICAL_CENTER);
-		HSSFFont font=book.createFont();
+		HSSFFont font = book.createFont();
 		font.setColor(HSSFColor.WHITE.index);
 		headerStyle.setFont(font);
 		headerStyle.setFillForegroundColor(HSSFColor.DARK_TEAL.index);
-		headerStyle.setFillPattern(HSSFCellStyle.SOLID_FOREGROUND); 
-		HSSFCell headerCell=null;
-		headerCell=header.createCell(0);
+		headerStyle.setFillPattern(HSSFCellStyle.SOLID_FOREGROUND);
+		HSSFCell headerCell = null;
+		headerCell = header.createCell(0);
 		headerCell.setCellValue("状态");
 		headerCell.setCellStyle(headerStyle);
-		headerCell=header.createCell(1);
+		headerCell = header.createCell(1);
 		headerCell.setCellValue("包/包ID");
 		headerCell.setCellStyle(headerStyle);
-		headerCell=header.createCell(2);
+		headerCell = header.createCell(2);
 		headerCell.setCellValue("引用ID");
 		headerCell.setCellStyle(headerStyle);
-		headerCell=header.createCell(3);
+		headerCell = header.createCell(3);
 		headerCell.setCellValue("原文");
 		headerCell.setCellStyle(headerStyle);
-		headerCell=header.createCell(4);
+		headerCell = header.createCell(4);
 		headerCell.setCellValue("译文");
 		headerCell.setCellStyle(headerStyle);
-		
-		HSSFCellStyle lineStyle=book.createCellStyle();
-		lineStyle.setBorderLeft((short)1);
-		lineStyle.setTopBorderColor((short)1);
-		lineStyle.setRightBorderColor((short)1);
-		lineStyle.setBorderBottom((short)2);
+
+		HSSFCellStyle lineStyle = book.createCellStyle();
+		lineStyle.setBorderLeft((short) 1);
+		lineStyle.setTopBorderColor((short) 1);
+		lineStyle.setRightBorderColor((short) 1);
+		lineStyle.setBorderBottom((short) 2);
 		lineStyle.setLeftBorderColor(HSSFColor.GREY_25_PERCENT.index);
 		lineStyle.setTopBorderColor(HSSFColor.GREY_25_PERCENT.index);
 		lineStyle.setRightBorderColor(HSSFColor.GREY_25_PERCENT.index);
 		lineStyle.setBottomBorderColor(HSSFColor.RED.index);
 
-		HSSFCellStyle lineStyle2=book.createCellStyle();
+		HSSFCellStyle lineStyle2 = book.createCellStyle();
 		lineStyle2.setLeftBorderColor(HSSFColor.GREY_25_PERCENT.index);
 		lineStyle2.setTopBorderColor(HSSFColor.GREY_25_PERCENT.index);
 		lineStyle2.setRightBorderColor(HSSFColor.GREY_25_PERCENT.index);
 		lineStyle2.setBottomBorderColor(HSSFColor.GREY_25_PERCENT.index);
-		lineStyle2.setBorderLeft((short)1);
-		lineStyle2.setTopBorderColor((short)1);
-		lineStyle2.setRightBorderColor((short)1);
-		lineStyle2.setBorderBottom((short)1);
-		
-		String url="";
-		HSSFCell prevCell0=null;
-		HSSFCell prevCell1=null;
-		HSSFCell prevCell2=null;
-		HSSFCell prevCell3=null;
-		HSSFCell prevCell4=null;
-		for(int i=0;i<items.size();i++)
+		lineStyle2.setBorderLeft((short) 1);
+		lineStyle2.setTopBorderColor((short) 1);
+		lineStyle2.setRightBorderColor((short) 1);
+		lineStyle2.setBorderBottom((short) 1);
+
+		String url = "";
+		HSSFCell prevCell0 = null;
+		HSSFCell prevCell1 = null;
+		HSSFCell prevCell2 = null;
+		HSSFCell prevCell3 = null;
+		HSSFCell prevCell4 = null;
+		for (int i = 0; i < items.size(); i++)
 		{
-			LangItem item=items.get(i);
-			
-			if(!item.url.equals(url))
+			LangItem item = items.get(i);
+
+			if (!item.url.equals(url))
 			{
-				url=item.url;
-				if(prevCell1!=null)
+				url = item.url;
+				if (prevCell1 != null)
 				{
 					prevCell0.setCellStyle(lineStyle);
 					prevCell1.setCellStyle(lineStyle);
@@ -707,59 +756,61 @@ public class ViewExport extends AbsExporter
 					prevCell4.setCellStyle(lineStyle);
 				}
 			}
-			
-			HSSFRow row=sheet.createRow(i+1);
-			
-			HSSFCell cell0=row.createCell(0);
+
+			HSSFRow row = sheet.createRow(i + 1);
+
+			HSSFCell cell0 = row.createCell(0);
 			cell0.setCellValue("x");
 			cell0.setCellStyle(lineStyle2);
-			
-			HSSFCell cell1=row.createCell(1);
+
+			HSSFCell cell1 = row.createCell(1);
 			cell1.setCellValue(item.url);
 			cell1.setCellStyle(lineStyle2);
-			
-			HSSFCell cell2=row.createCell(2);
+
+			HSSFCell cell2 = row.createCell(2);
 			cell2.setCellValue(item.key);
 			cell2.setCellStyle(lineStyle2);
-			
-			HSSFCell cell3=row.createCell(3);
+
+			HSSFCell cell3 = row.createCell(3);
 			cell3.setCellValue(item.value);
 			cell3.setCellType(HSSFCell.CELL_TYPE_STRING);
 			cell3.setCellStyle(lineStyle2);
-			
-			HSSFCell cell4=row.createCell(4);
+
+			HSSFCell cell4 = row.createCell(4);
 			cell4.setCellValue(item.value);
 			cell4.setCellType(HSSFCell.CELL_TYPE_STRING);
 			cell4.setCellStyle(lineStyle2);
 
-			prevCell0=cell0;
-			prevCell1=cell1;
-			prevCell2=cell2;
-			prevCell3=cell3;
-			prevCell4=cell4;
+			prevCell0 = cell0;
+			prevCell1 = cell1;
+			prevCell2 = cell2;
+			prevCell3 = cell3;
+			prevCell4 = cell4;
 		}
-		
-		ByteArrayOutputStream output=new ByteArrayOutputStream();
+
+		ByteArrayOutputStream output = new ByteArrayOutputStream();
 		book.write(output);
 		output.close();
-		
+
 		System.out.print(output.toByteArray().toString());
-		
-		FileUtil.writeFile(new File(getSourceDir().getPath() + File.separatorChar + "langs" + File.separatorChar+"test.xls"), output.toByteArray());
-		
-//		int index=5;
-//		while(true)
-//		{
-//			File file=new File("E:/students"+index+".xls");
-//			if(!file.exists())
-//			{
-//				FileOutputStream output=new FileOutputStream(file.getPath());//getSourceDir().getPath() + File.separatorChar + "langs" + File.separatorChar+"lang45.xls");
-//				book.write(output);
-//				output.close();
-//				break;
-//			}
-//			index++;
-//		}
+
+		FileUtil.writeFile(new File(getSourceDir().getPath() + File.separatorChar + "langs" + File.separatorChar + "test.xls"), output.toByteArray());
+
+		// int index=5;
+		// while(true)
+		// {
+		// File file=new File("E:/students"+index+".xls");
+		// if(!file.exists())
+		// {
+		// FileOutputStream output=new
+		// FileOutputStream(file.getPath());//getSourceDir().getPath() +
+		// File.separatorChar + "langs" + File.separatorChar+"lang45.xls");
+		// book.write(output);
+		// output.close();
+		// break;
+		// }
+		// index++;
+		// }
 	}
 
 	/**

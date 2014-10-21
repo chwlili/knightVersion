@@ -44,6 +44,7 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 import org.game.knight.version.AppSetting;
+import org.game.knight.version.packer.base.ZipConfig;
 import org.game.knight.version.packer.cfg.ConfigExporter;
 import org.game.knight.version.packer.files.FilesExporter;
 import org.game.knight.version.packer.game.GameExporter;
@@ -203,6 +204,16 @@ public class GamePacker extends Composite
 
 		xml2Button = new Button(inputs, SWT.NONE);
 		xml2Button.setText("    ...    ");
+		new Label(inputs, SWT.NONE);
+
+		nlsLabel = new Link(inputs, SWT.NONE);
+		nlsLabel.setText("<a>\u7FFB\u8BD1</a>\uFF1A");
+
+		nlsInput = new Text(inputs, SWT.BORDER);
+		nlsInput.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
+
+		nlsButton = new Button(inputs, SWT.NONE);
+		nlsButton.setText("    ...    ");
 
 		Group outputs = new Group(composite, SWT.NONE);
 		outputs.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
@@ -352,6 +363,7 @@ public class GamePacker extends Composite
 		// 输入标签
 		cfgLabel.addSelectionListener(new DirOpenHandler(cfgInput));
 		xml2Label.addSelectionListener(new DirOpenHandler(xml2Input));
+		nlsLabel.addSelectionListener(new DirOpenHandler(nlsInput));
 		fileLabel.addSelectionListener(new DirOpenHandler(fileInput));
 		iconLabel.addSelectionListener(new DirOpenHandler(iconInput));
 		viewLabel.addSelectionListener(new DirOpenHandler(viewInput));
@@ -361,6 +373,7 @@ public class GamePacker extends Composite
 		// 输入按钮
 		cfgButton.addSelectionListener(new DirSelectionHandler(cfgInput));
 		xml2Button.addSelectionListener(new DirSelectionHandler(xml2Input));
+		nlsButton.addSelectionListener(new DirSelectionHandler(nlsInput));
 		fileButton.addSelectionListener(new DirSelectionHandler(fileInput));
 		iconButton.addSelectionListener(new DirSelectionHandler(iconInput));
 		viewButton.addSelectionListener(new DirSelectionHandler(viewInput));
@@ -523,6 +536,7 @@ public class GamePacker extends Composite
 		cfgSelection.setSelection(section.getBoolean("cfgSelection"));
 		cfgInput.setText(section.get("cfgInput") != null ? section.get("cfgInput") : "");
 		xml2Input.setText(section.get("xml2Input") != null ? section.get("xml2Input") : "");
+		nlsInput.setText(section.get("nlsInput") != null ? section.get("nlsInput") : "");
 
 		fileSelection.setSelection(section.getBoolean("fileSelection"));
 		fileInput.setText(section.get("fileInput") != null ? section.get("fileInput") : "");
@@ -563,6 +577,7 @@ public class GamePacker extends Composite
 		section.put("cfgSelection", cfgSelection.getSelection());
 		section.put("xml2Input", xml2Input.getText());
 		section.put("cfgInput", cfgInput.getText());
+		section.put("nlsInput", nlsInput.getText());
 
 		section.put("fileSelection", fileSelection.getSelection());
 		section.put("fileInput", fileInput.getText());
@@ -936,6 +951,9 @@ public class GamePacker extends Composite
 	private Text xml2Input;
 	private Button xml2Button;
 	private Link xml2Label;
+	private Link nlsLabel;
+	private Text nlsInput;
+	private Button nlsButton;
 
 	/**
 	 * 执行导出
@@ -954,6 +972,7 @@ public class GamePacker extends Composite
 
 		final String cfgPath = cfgInput.getText();
 		final String xml2Path = xml2Input.getText();
+		final String nls2Path = nlsInput.getText();
 		final String filePath = fileInput.getText();
 		final String iconPath = iconInput.getText();
 		final String viewPath = viewInput.getText();
@@ -982,18 +1001,26 @@ public class GamePacker extends Composite
 			{
 				execing = true;
 
-				GamePackerHelper helper = new GamePackerHelper(new File(cfgPath), new File(xml2Path), new File(filePath), new File(iconPath));
+				GamePackerHelper helper = new GamePackerHelper(cfgSelected, cfgPath, iconSelected, iconPath, fileSelected, filePath, codeSelected, codePath, cdnPath, xml2Path, nls2Path);
 
 				if (fileSelected)
 				{
-					FilesExporter files = new FilesExporter(helper, new File(cdnPath + File.separatorChar + "files"), zip);
-					files.publish();
+					FilesExporter files = new FilesExporter(helper, new File(cdnPath + File.separatorChar + "files"));
+					if (!files.publish())
+					{
+						execing = false;
+						return;
+					}
 				}
 
 				if (iconSelected)
 				{
-					IconExporter icons = new IconExporter(helper, new File(cdnPath + File.separatorChar + "icons"), zip);
-					icons.publish();
+					IconExporter icons = new IconExporter(helper, new File(cdnPath + File.separatorChar + "icons"));
+					if (!icons.pub())
+					{
+						execing = false;
+						return;
+					}
 				}
 
 				if (viewSelected)
@@ -1010,14 +1037,19 @@ public class GamePacker extends Composite
 
 				if (codeSelected)
 				{
-					GameExporter code = new GameExporter(new File(codePath), new File(cdnPath + File.separatorChar + "games"), new File(startupPath), cdnPath, ver, startupParam);
-					code.publish();
+					GameExporter code = new GameExporter(helper, new File(cdnPath + File.separatorChar + "games"), new File(startupPath), cdnPath, ver, startupParam);
+					if (!code.pub())
+					{
+						execing = false;
+						return;
+					}
 				}
 
-				if (cfgSelected)
+				ConfigExporter configs = new ConfigExporter(helper, new File(cdnPath + File.separatorChar + "configs"));
+				if (!configs.publish())
 				{
-					ConfigExporter configs = new ConfigExporter(new File(cfgPath), new File(xml2Path), new File(cdnPath + File.separatorChar + "configs"), zip);
-					configs.publish();
+					execing = false;
+					return;
 				}
 
 				if (!GamePacker.isCancel())
@@ -1184,14 +1216,35 @@ public class GamePacker extends Composite
 		// 合并所有模块的文件地址
 		for (File module : modules)
 		{
-			File dbFile = new File(module.getPath() + File.separatorChar + "db.xml");
+			Document document = null;
 
-			Document document = (new SAXReader()).read(dbFile);
-			for (Object node : document.getRootElement().elements())
+			File zipFile = new File(module.getPath() + File.separator + "ver.zip");
+			if (zipFile.exists())
 			{
-				Element element = (Element) node;
-				element.detach();
-				root.add(element);
+				ZipConfig cfg = new ZipConfig(zipFile);
+				String txt = cfg.getVersion();
+				if (txt != null && txt.isEmpty() == false)
+				{
+					document = DocumentHelper.parseText(txt);
+				}
+			}
+			else
+			{
+				File dbFile = new File(module.getPath() + File.separatorChar + "db.xml");
+				if (dbFile.exists())
+				{
+					document = (new SAXReader()).read(dbFile);
+				}
+			}
+
+			if (document != null)
+			{
+				for (Object node : document.getRootElement().elements())
+				{
+					Element element = (Element) node;
+					element.detach();
+					root.add(element);
+				}
 			}
 
 			SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
@@ -1238,18 +1291,40 @@ public class GamePacker extends Composite
 		// 合并所有模块的文件地址
 		for (File module : modules)
 		{
-			File dbFile = new File(module.getPath() + File.separatorChar + "db1.xml");
-			if (!dbFile.exists())
+			Document document = null;
+
+			File zipFile = new File(module.getPath() + File.separator + "ver.zip");
+			if (zipFile.exists())
 			{
-				dbFile = new File(module.getPath() + File.separatorChar + "db.xml");
+				ZipConfig cfg = new ZipConfig(zipFile);
+				String txt = cfg.getVersion();
+				if (txt != null && txt.isEmpty() == false)
+				{
+					document = DocumentHelper.parseText(txt);
+				}
+			}
+			else
+			{
+				File dbFile = new File(module.getPath() + File.separatorChar + "db1.xml");
+				if (dbFile.exists())
+				{
+					dbFile = new File(module.getPath() + File.separatorChar + "db.xml");
+				}
+
+				if (dbFile.exists())
+				{
+					document = (new SAXReader()).read(dbFile);
+				}
 			}
 
-			Document document = (new SAXReader()).read(dbFile);
-			for (Object node : document.getRootElement().elements())
+			if (document != null)
 			{
-				Element element = (Element) node;
-				element.detach();
-				root.add(element);
+				for (Object node : document.getRootElement().elements())
+				{
+					Element element = (Element) node;
+					element.detach();
+					root.add(element);
+				}
 			}
 
 			SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
@@ -1291,9 +1366,25 @@ public class GamePacker extends Composite
 
 		for (File module : modules)
 		{
-			File dbFile = new File(module.getPath() + File.separatorChar + "db.ver");
-			String dbText = new String(FileUtil.getFileBytes(dbFile), "UTF-8");
-			urls.append(dbText);
+			File zipFile = new File(module.getPath() + File.separator + "ver.zip");
+			if (zipFile.exists())
+			{
+				ZipConfig cfg = new ZipConfig(zipFile);
+				ArrayList<String> lines = cfg.getVersionFiles();
+				if (lines != null && lines.size() > 0)
+				{
+					for (String line : lines)
+					{
+						urls.append(line + "\n");
+					}
+				}
+			}
+			else
+			{
+				File dbFile = new File(module.getPath() + File.separatorChar + "db.ver");
+				String dbText = new String(FileUtil.getFileBytes(dbFile), "UTF-8");
+				urls.append(dbText);
+			}
 		}
 
 		byte[] content = urls.toString().getBytes("UTF-8");

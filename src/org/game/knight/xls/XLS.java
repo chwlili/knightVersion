@@ -22,7 +22,7 @@ public class XLS
 
 	public void run() throws FileNotFoundException, IOException
 	{
-		String[] one = new String[] { "data_building", "data_military_rank", "data_monster", "data_partner", "data_quest", "data_quest_active", "data_talk", "data_title" };
+		String[] one = new String[] { "data_building", "data_military_rank", "data_monster", "data_partner", "data_quest", "data_quest_active", "data_talk", "data_title" ,"$UIText"};
 		String[] two = new String[] { "data_chapter", "data_aura", "data_item", "data_quest_aim", "data_quest_daily" };
 		String[] three = new String[] { "data_equipment", "data_npc" };
 		String[] four = new String[] { "data_package" };

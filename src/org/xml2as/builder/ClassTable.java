@@ -159,6 +159,7 @@ public class ClassTable
 	 * @param name
 	 * @return
 	 */
+	@SuppressWarnings("unused")
 	private boolean isExtendType(String name)
 	{
 		return name2Class.containsKey(name);

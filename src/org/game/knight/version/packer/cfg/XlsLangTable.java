@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -21,7 +22,10 @@ import org.xml2as.builder.LangTable;
 
 public class XlsLangTable extends LangTable
 {
-	private File xls;
+	private HSSFWorkbook xls;
+	private File xlsFile;
+	private ArrayList<String> sheetNameList = new ArrayList<String>();
+
 	private String sheetName;
 
 	private HashMap<String, HashMap<String, String>> oldRows = new HashMap<String, HashMap<String, String>>();
@@ -31,10 +35,24 @@ public class XlsLangTable extends LangTable
 	 * ¹¹Ôìº¯Êý
 	 * 
 	 * @param xls
+	 * @throws IOException
+	 * @throws FileNotFoundException
 	 */
-	public XlsLangTable(File xls)
+	public XlsLangTable(File xlsFile) throws FileNotFoundException, IOException
 	{
-		this.xls = xls;
+		this.xlsFile = xlsFile;
+		if (xlsFile != null && xlsFile.exists() && xlsFile.length() > 0)
+		{
+			this.xls = new HSSFWorkbook(new FileInputStream(xlsFile));
+			for (int i = 0; i < xls.getNumberOfSheets(); i++)
+			{
+				sheetNameList.add(xls.getSheetName(i));
+			}
+		}
+		else
+		{
+			this.xls = new HSSFWorkbook();
+		}
 	}
 
 	/**
@@ -79,19 +97,12 @@ public class XlsLangTable extends LangTable
 		oldRows.put(name, new HashMap<String, String>());
 		newRows.put(name, new HashMap<String, String>());
 
-		if (!xls.exists())
-		{
-			return;
-		}
-
 		HashMap<String, String> map = oldRows.get(name);
 
-		HSSFWorkbook inputBook = new HSSFWorkbook(new FileInputStream(xls));
-
-		for (int i = 0; i < inputBook.getNumberOfSheets(); i++)
+		for (int i = 0; i < xls.getNumberOfSheets(); i++)
 		{
-			HSSFSheet sheet = inputBook.getSheetAt(i);
-			if (inputBook.getSheetName(i).trim().equals(sheetName))
+			HSSFSheet sheet = xls.getSheetAt(i);
+			if (xls.getSheetName(i).equals(sheetName))
 			{
 				for (int j = 1; j < sheet.getLastRowNum() + 1; j++)
 				{
@@ -104,11 +115,6 @@ public class XlsLangTable extends LangTable
 					{
 						String key = keyCell.getStringCellValue();
 						String val = valCell != null ? valCell.getStringCellValue() : "";
-
-						if (key.equals(val))
-						{
-							continue;
-						}
 
 						key = key.trim();
 						val = val.trim();
@@ -123,7 +129,6 @@ public class XlsLangTable extends LangTable
 						}
 					}
 				}
-				break;
 			}
 		}
 	}
@@ -136,7 +141,12 @@ public class XlsLangTable extends LangTable
 	 */
 	public void save() throws FileNotFoundException, IOException
 	{
-		HSSFWorkbook book = new HSSFWorkbook();
+		if (xls == null)
+		{
+			return;
+		}
+
+		HSSFWorkbook book = xls;
 
 		HSSFFont font = book.createFont();
 		font.setColor(HSSFColor.WHITE.index);
@@ -176,10 +186,15 @@ public class XlsLangTable extends LangTable
 		Arrays.sort(sheetNames);
 		for (String sheetName : sheetNames)
 		{
+			if (sheetNameList.contains(sheetName))
+			{
+				xls.removeSheetAt(xls.getSheetIndex(sheetName));
+			}
+
 			final HashMap<String, String> oldMap = oldRows.get(sheetName);
 			final HashMap<String, String> newMap = newRows.get(sheetName);
 
-			if (newMap.size() == 0 && oldMap.size() == 0)
+			if (newMap.size() == 0 && oldMap.size() == 0 && !sheetNameList.contains(sheetName))
 			{
 				continue;
 			}
@@ -232,8 +247,8 @@ public class XlsLangTable extends LangTable
 				@Override
 				public int compare(String o1, String o2)
 				{
-					int added1 = (newMap.containsKey(o1) && !oldMap.containsKey(o1)) ? 0 : newMap.containsKey(o1) ? 1 : 2;
-					int added2 = (newMap.containsKey(o2) && !oldMap.containsKey(o2)) ? 0 : newMap.containsKey(o2) ? 1 : 2;
+					int added1 = (newMap.containsKey(o1) && (!oldMap.containsKey(o1) || o1.equals(oldMap.get(o1)))) ? 0 : newMap.containsKey(o1) ? 1 : 2;
+					int added2 = (newMap.containsKey(o2) && (!oldMap.containsKey(o2) || o2.equals(oldMap.get(o2)))) ? 0 : newMap.containsKey(o2) ? 1 : 2;
 					if (added1 == added2)
 					{
 						return o1.compareTo(o2);
@@ -247,13 +262,13 @@ public class XlsLangTable extends LangTable
 
 			for (String key : keys)
 			{
-				boolean isAdd = !oldMap.containsKey(key);
+				boolean isAdd = !oldMap.containsKey(key) || key.equals(oldMap.get(key));
 				boolean isDel = !newMap.containsKey(key);
 
 				row = sheet.createRow(rowIndex);
 
 				cell = row.createCell(0);
-				cell.setCellValue(!oldMap.containsKey(key) ? "+" : !newMap.containsKey(key) ? "-" : "");
+				cell.setCellValue(isAdd ? "+" : isDel ? "-" : "");
 				cell.setCellStyle(style1);
 
 				cell = row.createCell(1);
@@ -327,7 +342,12 @@ public class XlsLangTable extends LangTable
 			cell.setCellStyle(style2);
 		}
 
-		FileOutputStream output = new FileOutputStream(xls);
+		for (int i = 0; i < sheetNameList.size(); i++)
+		{
+			xls.setSheetOrder(sheetNameList.get(i), i);
+		}
+
+		FileOutputStream output = new FileOutputStream(xlsFile);
 		book.write(output);
 		output.close();
 	}

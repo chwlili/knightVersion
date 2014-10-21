@@ -53,7 +53,7 @@ public class Version
 	 */
 	public static void main(String[] args)
 	{
-//		XLS xls=new XLS(new File("C:\\Users\\ds\\Desktop\\街机战士-v100-字符178029-20140805-TR-中译土耳其语-20140922.xls"), new File("C:\\Users\\ds\\Desktop\\tr_TR.xls"));
+//		XLS xls=new XLS(new File("C:\\Users\\ds\\Desktop\\街机战士-v100-字符178029-20140805-TR-中译土耳其语-20140922.xls"), new File("E:\\projects\\knight\\codes\\client\\nls\\tr.xls"));
 //		try
 //		{
 //			xls.run();
@@ -87,7 +87,7 @@ public class Version
 
 		shlxx = new Shell();
 		shlxx.setImage(SWTResourceManager.getImage(Version.class, "/icons/appIcon.png"));
-		shlxx.setSize(545, 706);
+		shlxx.setSize(545, 735);
 		shlxx.setText("\u6E38\u620F\u6253\u5305(N)");
 		shlxx.setLayout(new FillLayout());
 
