@@ -44,12 +44,12 @@ public class FilesExporter
 
 			StringBuilder sb = new StringBuilder();
 			sb.append("<fileSet>\n");
-			File[] files = helper.listFiles(helper.fileFolder, "*");
+			File[] files = helper.listFiles(helper.fileInputFolder, "*");
 			for (int i = 0; i < files.length; i++)
 			{
 				File file = files[i];
 				String ext = helper.getFileExtName(file);
-				String url = file.getPath().substring(helper.fileFolder.getPath().length()).replaceAll("\\\\", "/");
+				String url = file.getPath().substring(helper.fileInputFolder.getPath().length()).replaceAll("\\\\", "/");
 
 				GamePacker.progress(String.format("处理文件(%s/%s)：%s", i + 1, files.length, url));
 

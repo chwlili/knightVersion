@@ -1001,7 +1001,14 @@ public class GamePacker extends Composite
 			{
 				execing = true;
 
-				GamePackerHelper helper = new GamePackerHelper(cfgSelected, cfgPath, iconSelected, iconPath, fileSelected, filePath, codeSelected, codePath, cdnPath, xml2Path, nls2Path);
+				String cfgOutput = cdnPath + File.separatorChar + "configs";
+				String iconOutput = cdnPath + File.separatorChar + "icons";
+				String fileOutput = cdnPath + File.separatorChar + "files";
+				String gameOutput = cdnPath + File.separatorChar + "games";
+				String viewOutput = cdnPath + File.separatorChar + "views";
+				String worldOutput = cdnPath + File.separatorChar + "world";
+
+				GamePackerHelper helper = new GamePackerHelper(cfgSelected, cfgPath, cfgOutput, iconSelected, iconPath, iconOutput, fileSelected, filePath, fileOutput, codeSelected, codePath, gameOutput, viewSelected, viewPath, viewOutput, worldSelected, worldPath, worldOutput, cdnPath, xml2Path, nls2Path);
 
 				if (fileSelected)
 				{
@@ -1306,7 +1313,7 @@ public class GamePacker extends Composite
 			else
 			{
 				File dbFile = new File(module.getPath() + File.separatorChar + "db1.xml");
-				if (dbFile.exists())
+				if (!dbFile.exists())
 				{
 					dbFile = new File(module.getPath() + File.separatorChar + "db.xml");
 				}

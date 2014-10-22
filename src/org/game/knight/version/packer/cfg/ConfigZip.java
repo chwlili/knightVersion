@@ -24,6 +24,7 @@ public class ConfigZip extends ZipConfig
 	@Override
 	protected void save() throws IOException
 	{
+		saveXmlInfoMap();
 		saveConfigFile();
 		saveSkillContent();
 
@@ -112,6 +113,8 @@ public class ConfigZip extends ZipConfig
 
 	// ==================================================================================
 
+	// ==================================================================================
+
 	/**
 	 * 配置文件目录
 	 */
@@ -123,9 +126,19 @@ public class ConfigZip extends ZipConfig
 	private static final String CONFIG_MD5_FILE = "tmp/config/md5.txt";
 
 	/**
+	 * 配置汇总文件
+	 */
+	private static final String CONFIG_NAME_FILE = "tmp/config/name.txt";
+
+	/**
 	 * 配置列表
 	 */
 	private HashMap<String, String> urlMap = null;
+
+	/**
+	 * 名称列表
+	 */
+	private HashMap<String, String[]> xmlInfoMap = null;
 
 	/**
 	 * 获取配置数据
@@ -177,6 +190,83 @@ public class ConfigZip extends ZipConfig
 
 		urlMap.put(key, url);
 		setEntry(url, data);
+	}
+
+	public String[] getXmlInfo(String lang, String mode, String name)
+	{
+		openXmlInfoMap();
+
+		return xmlInfoMap.get(lang + "_" + mode + "_" + name);
+	}
+
+	public void setXmlInfo(String lang, String mode, String name, String xmlMD5, String xml2MD5, String xlsMD5)
+	{
+		openXmlInfoMap();
+
+		xmlInfoMap.put(lang + "_" + mode + "_" + name, new String[] { xmlMD5, xml2MD5, xlsMD5 });
+	}
+
+	private void openXmlInfoMap()
+	{
+		if (xmlInfoMap != null)
+		{
+			return;
+		}
+
+		xmlInfoMap = new HashMap<String, String[]>();
+		String text = getEntryContent(CONFIG_NAME_FILE);
+		if (text != null)
+		{
+			String[] lines = text.split("\\n");
+			for (String line : lines)
+			{
+				line = line.trim();
+
+				if (line.length() > 0)
+				{
+					String[] pairs = line.split("=");
+					if (pairs.length == 2)
+					{
+						String key = pairs[0].trim();
+
+						String[] vals = pairs[1].trim().split("\\+");
+						if (vals.length == 3)
+						{
+							String xmlMD5 = vals[0].trim();
+							String xml2MD5 = vals[1].trim();
+							String xlsMD5 = vals[2].trim();
+
+							xmlInfoMap.put(key, new String[] { xmlMD5, xml2MD5, xlsMD5 });
+						}
+					}
+				}
+			}
+		}
+	}
+
+	private void saveXmlInfoMap()
+	{
+		StringBuilder sb = new StringBuilder();
+		if (xmlInfoMap != null)
+		{
+			String[] keys = xmlInfoMap.keySet().toArray(new String[] {});
+			Arrays.sort(keys);
+
+			for (String key : keys)
+			{
+				String[] values = xmlInfoMap.get(key);
+				sb.append(key + " = " + values[0] + "+" + values[1] + "+" + values[2] + "\n");
+			}
+		}
+
+		try
+		{
+			setEntry(CONFIG_NAME_FILE, sb.toString().getBytes("UTF-8"));
+		}
+		catch (UnsupportedEncodingException e)
+		{
+			e.printStackTrace();
+		}
 	}
 
 	/**

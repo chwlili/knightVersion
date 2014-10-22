@@ -15,29 +15,49 @@ import org.xml2as.builder.UnitConfigBuilder;
 public class GamePackerHelper
 {
 	public final boolean cfgChecked;
-	public final File cfgFolder;
+	public final File cfgInputFolder;
+	public final File cfgOutputFolder;
 	public final boolean iconChecked;
-	public final File iconFolder;
+	public final File iconInputFolder;
+	public final File iconOutputFolder;
 	public final boolean fileChecked;
-	public final File fileFolder;
+	public final File fileInputFolder;
+	public final File fileOutputFolder;
 	public final boolean codeChecked;
-	public final File codeFolder;
+	public final File codeInputFolder;
+	public final File codeOutputFolder;
+	public final boolean viewChecked;
+	public final File viewInputFolder;
+	public final File viewOutputFolder;
+	public final boolean worldChecked;
+	public final File worldInputFolder;
+	public final File worldOutputFolder;
 
 	public final File outputFolder;
 
 	public final File xml2Folder;
 	public final File nlsFolder;
 
-	public GamePackerHelper(boolean cfg, String cfgFolder, boolean icon, String iconFolder, boolean file, String fileFolder, boolean code, String codeFolder, String outputFolder, String xml2Folder, String nlsFolder)
+	public GamePackerHelper(boolean cfg, String cfgFolder, String cfgOutput, boolean icon, String iconFolder, String iconOutput, boolean file, String fileFolder, String fileOutput, boolean code, String codeFolder, String codeOutput, boolean view, String viewFolder, String viewOutput, boolean world, String worldFolder, String worldOutput, String outputFolder, String xml2Folder, String nlsFolder)
 	{
 		this.cfgChecked = cfg;
-		this.cfgFolder = new File(cfgFolder);
+		this.cfgInputFolder = new File(cfgFolder);
+		this.cfgOutputFolder = new File(cfgOutput);
 		this.iconChecked = icon;
-		this.iconFolder = new File(iconFolder);
+		this.iconInputFolder = new File(iconFolder);
+		this.iconOutputFolder = new File(iconOutput);
 		this.fileChecked = file;
-		this.fileFolder = new File(fileFolder);
+		this.fileInputFolder = new File(fileFolder);
+		this.fileOutputFolder = new File(fileOutput);
 		this.codeChecked = code;
-		this.codeFolder = new File(codeFolder);
+		this.codeInputFolder = new File(codeFolder);
+		this.codeOutputFolder = new File(codeOutput);
+		this.viewChecked = view;
+		this.viewInputFolder = new File(viewFolder);
+		this.viewOutputFolder = new File(viewOutput);
+		this.worldChecked = world;
+		this.worldInputFolder = new File(worldFolder);
+		this.worldOutputFolder = new File(worldOutput);
 
 		this.outputFolder = new File(outputFolder);
 

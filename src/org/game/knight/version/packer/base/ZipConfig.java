@@ -15,6 +15,7 @@ import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
+import org.chw.util.MD5Util;
 import org.game.knight.version.packer.GamePackerConst;
 
 public class ZipConfig
@@ -368,9 +369,10 @@ public class ZipConfig
 			return;
 		}
 
+		ZipFile zipFile = null;
 		try
 		{
-			ZipFile zipFile = new ZipFile(file);
+			zipFile = new ZipFile(file);
 
 			Enumeration<? extends ZipEntry> entrys = zipFile.entries();
 			while (entrys.hasMoreElements())
@@ -398,9 +400,23 @@ public class ZipConfig
 				map.put(entry.getName(), bytes);
 			}
 		}
-		catch (IOException err)
+		catch (IOException e)
 		{
-			err.printStackTrace(System.err);
+			e.printStackTrace();
+		}
+		finally
+		{
+			if (zipFile != null)
+			{
+				try
+				{
+					zipFile.close();
+				}
+				catch (IOException e)
+				{
+					e.printStackTrace();
+				}
+			}
 		}
 	}
 
@@ -416,30 +432,60 @@ public class ZipConfig
 			return;
 		}
 
-		if (file.getParentFile().exists())
+		// 计算目标文件内容的MD5码
+		String oldContent = null;
+		if (file.exists() && file.length() > 0)
 		{
-			file.getParentFile().mkdir();
+			ZipConfig oldZip = new ZipConfig(file);
+			oldZip.open();
+
+			String[] oldKeys = oldZip.map.keySet().toArray(new String[] {});
+			Arrays.sort(oldKeys);
+
+			StringBuilder text = new StringBuilder();
+			for (String key : oldKeys)
+			{
+				text.append(key + "\n");
+				text.append(oldZip.getEntryContent(key) + "\n");
+			}
+			oldContent = text.toString();
 		}
 
+		// 计算当前内容的MD5码
 		String[] keys = map.keySet().toArray(new String[map.size()]);
 		Arrays.sort(keys);
-
-		ZipOutputStream stream = null;
-
-		try
+		StringBuilder text = new StringBuilder();
+		for (String key : keys)
 		{
-			stream = new ZipOutputStream(new FileOutputStream(file));
-			for (String key : keys)
-			{
-				stream.putNextEntry(new ZipEntry(key));
-				stream.write(map.get(key));
-				stream.flush();
-			}
-			stream.finish();
+			text.append(key + "\n");
+			text.append(getEntryContent(key) + "\n");
 		}
-		finally
+		String newContent = text.toString();
+
+		// 如果内容有变化，则重新写入。
+		if (oldContent == null || !newContent.equals(oldContent))
 		{
-			stream.close();
+			if (!file.getParentFile().exists())
+			{
+				file.getParentFile().mkdir();
+			}
+
+			ZipOutputStream stream = null;
+			try
+			{
+				stream = new ZipOutputStream(new FileOutputStream(file));
+				for (String key : keys)
+				{
+					stream.putNextEntry(new ZipEntry(key));
+					stream.write(map.get(key));
+					stream.flush();
+				}
+				stream.finish();
+			}
+			finally
+			{
+				stream.close();
+			}
 		}
 	}
 

@@ -48,7 +48,7 @@ public class FileTable
 	/**
 	 * ªÒ»°µÿ÷∑
 	 * 
-	 * @param path
+	 * @param xmlPath
 	 * @return
 	 */
 	public String getUrl(String checksum)

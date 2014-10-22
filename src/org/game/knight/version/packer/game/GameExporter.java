@@ -96,12 +96,12 @@ public class GameExporter
 			StringBuilder sb = new StringBuilder();
 			sb.append("<project>\n");
 			sb.append("\t<codes>\n");
-			File[] files = helper.listFiles(helper.codeFolder, "swf");
+			File[] files = helper.listFiles(helper.codeInputFolder, "swf");
 			for (int i = 0; i < files.length; i++)
 			{
 				File file = files[i];
 
-				String url = file.getPath().substring(helper.codeFolder.getPath().length()).replaceAll("\\\\", "/");
+				String url = file.getPath().substring(helper.codeInputFolder.getPath().length()).replaceAll("\\\\", "/");
 				if (file.getName().equals("Index.swf") || file.getName().equals("Game.swf") || file.getName().equals("GameHead.swf") || file.getName().equals("GameBody.swf"))
 				{
 					GamePacker.progress(String.format("处理代码(%s/%s)：%s", i + 1, files.length, url));
@@ -185,10 +185,10 @@ public class GameExporter
 
 		for (String url : files.keySet())
 		{
-			File from = new File(helper.codeFolder.getPath() + url);
+			File from = new File(helper.codeInputFolder.getPath() + url);
 			File dest = new File(this.appDir.getPath() + url);
 
-			if (from.exists() && (from.getParentFile().getPath().equals(helper.codeFolder.getPath()) == false || (from.getParentFile().getPath().equals(helper.codeFolder.getPath()) && (from.getName().equals("Index.swf") || from.getName().equals("index.html")))))
+			if (from.exists() && (from.getParentFile().getPath().equals(helper.codeInputFolder.getPath()) == false || (from.getParentFile().getPath().equals(helper.codeInputFolder.getPath()) && (from.getName().equals("Index.swf") || from.getName().equals("index.html")))))
 			{
 				GamePacker.progress("复制文件", url);
 				FileUtil.copyTo(dest, from);

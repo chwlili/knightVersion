@@ -1,5 +1,6 @@
 package org.game.knight.version.packer.cfg;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -119,66 +120,51 @@ public class ConfigExporter
 
 	// ===============================================================================================================================================
 
-	protected static class XmlFile extends File
+	protected class XmlFile
 	{
-		public XmlFile(String path)
-		{
-			super(path);
-		}
+		public final File root;
+		public final String name;
+		public final String path;
+		public final byte[] bytes;
 
-		public boolean isIconDir()
+		public XmlFile(File root, String name, String path, byte[] bytes)
 		{
-			return getParentFile().getName().equals("icons");
-		}
-
-		public boolean isFileDir()
-		{
-			return getParentFile().getName().equals("files");
-		}
-
-		public boolean isCodeDir()
-		{
-			return getParentFile().getName().equals("games");
-		}
-
-		public boolean isViewDir()
-		{
-			return getParentFile().getName().equals("views");
-		}
-
-		public boolean isWorldDir()
-		{
-			return getParentFile().getName().equals("world");
-		}
-
-		public boolean isConfigsDir()
-		{
-			return getParentFile().getName().equals("configs");
+			this.root = root;
+			this.name = name;
+			this.path = path;
+			this.bytes = bytes;
 		}
 	}
 
 	protected static class BuildItem
 	{
-		public final String name;
-		public final String path;
 		public final String lang;
+		public final String mode;
+		public final String name;
+		public final String xmlPath;
+		public final String buildPath;
 
-		public final File xmlFile;
-		public final File xml2File;
-		public final File xlsFile;
-
+		public final byte[] xmlBytes;
 		public final String xmlMD5;
+
+		public final File xml2File;
 		public final String xml2MD5;
+
+		public final File xlsFile;
 		public final String xlsMD5;
 
 		public byte[] bytes;
 
-		public BuildItem(String name, String xmlPath, String langName, File xmlFile, String xmlMD5, File xml2File, String xml2MD5, File xlsFile, String xlsMD5, byte[] bytes)
+		public BuildItem(String langName, String mode, String name, String xmlPath, String buildPath, byte[] xmlBytes, String xmlMD5, File xml2File, String xml2MD5, File xlsFile, String xlsMD5, byte[] bytes)
 		{
-			this.name = name;
-			this.path = xmlPath;
 			this.lang = langName;
-			this.xmlFile = xmlFile;
+			this.mode = mode;
+
+			this.name = name;
+			this.xmlPath = xmlPath;
+			this.buildPath = buildPath;
+
+			this.xmlBytes = xmlBytes;
 			this.xmlMD5 = xmlMD5;
 			this.xml2File = xml2File;
 			this.xml2MD5 = xml2MD5;
@@ -190,44 +176,39 @@ public class ConfigExporter
 
 	protected String mergeConfigs(ConfigZip oldZip, ConfigZip newZip) throws Exception
 	{
-		File[] $xmlFiles = listAll$XmlFiles();
-		File[] xmlFiles = listAllXmlFiles();
+		XmlFile[] xmlFiles = listAllXmlFiles();
 		File[] xml2Files = listAllXml2Files();
 		File[] xlsFiles = listAllXlsFiles();
 
 		// 确定文件MD5码
-		HashMap<File, String> file_md5 = new HashMap<File, String>();
-		ArrayList<File> allFiles = new ArrayList<File>();
-		for (File file : $xmlFiles)
+		HashMap<Object, String> file_md5 = new HashMap<Object, String>();
+		int fileStep = 0;
+		int fileCount = xmlFiles.length + xml2Files.length + xlsFiles.length;
+		for (XmlFile file : xmlFiles)
 		{
-			allFiles.add(file);
-		}
-		for (File file : xmlFiles)
-		{
-			allFiles.add(file);
+			GamePacker.progress(String.format("检测文件变化(%s/%s)：%s。", fileStep + 1, fileCount, file.name));
+			file_md5.put(file, MD5Util.md5Bytes(file.bytes));
+			fileStep++;
+			if (GamePacker.isCancel())
+			{
+				return null;
+			}
 		}
 		for (File file : xml2Files)
 		{
-			allFiles.add(file);
+			GamePacker.progress(String.format("检测文件变化(%s/%s)：%s。", fileStep + 1, fileCount, file.getName()));
+			file_md5.put(file, MD5Util.md5(file));
+			fileStep++;
+			if (GamePacker.isCancel())
+			{
+				return null;
+			}
 		}
 		for (File file : xlsFiles)
 		{
-			allFiles.add(file);
-		}
-		for (int i = 0; i < allFiles.size(); i++)
-		{
-			File file = allFiles.get(i);
-			GamePacker.progress(String.format("检测文件变化(%s/%s)：%s。", i + 1, allFiles.size(), allFiles.get(i).getName()));
-
-			if (file.getName().endsWith(".xls"))
-			{
-				file_md5.put(file, getXlsMD5(file));
-			}
-			else
-			{
-				file_md5.put(file, MD5Util.md5(file));
-			}
-
+			GamePacker.progress(String.format("检测文件变化(%s/%s)：%s。", fileStep + 1, fileCount, file.getName()));
+			file_md5.put(file, getXlsMD5(file));
+			fileStep++;
 			if (GamePacker.isCancel())
 			{
 				return null;
@@ -290,57 +271,38 @@ public class ConfigExporter
 			File xlsFile = langName_file.get(langName);
 			String xlsMD5 = xlsFile != null ? file_md5.get(xlsFile) : "";
 
-			for (File xmlFile : xmlFiles)
+			for (XmlFile xmlFile : xmlFiles)
 			{
-				String xmlName = xmlFile.getName().substring(0, xmlFile.getName().length() - 4);
-				String xmlPath = xmlFile.getPath().substring(helper.cfgFolder.getPath().length()).replaceAll("\\\\", "/");
+				String xmlMode = xmlFile.path.endsWith(".2d.xml") ? "2d" : "3d";
+				String xmlName = xmlFile.name.replaceAll("\\.2d\\.xml", "").replaceAll("\\.xml", "");
+				String xmlPath = xmlFile.path;
+				String buildPath = xmlPath.replaceAll("\\.2d\\.xml", ".xml");
 				String xmlMD5 = file_md5.get(xmlFile);
 
-				File xml2File = xmlURL_xml2File.get(xmlPath);
-				String xml2MD5 = "";
+				File xml2File = xmlURL_xml2File.get(buildPath);
+				String xml2MD5 = xml2File != null ? file_md5.get(xml2File) : "";
 
-				if (xml2File != null)
+				if (allowOutput(xmlFile))
 				{
-					xml2MD5 = file_md5.get(xml2File);
-				}
+					byte[] bytes = oldZip.getConfig(xmlMD5, xml2MD5, xlsMD5);
 
-				byte[] lastBytes = oldZip.getConfig(xmlMD5, xml2MD5, xlsMD5);
-
-				BuildItem item = new BuildItem(xmlName, xmlPath, langName, xmlFile, xmlMD5, xml2File, xml2MD5, xlsFile, xlsMD5, lastBytes);
-				allBuildItem.add(item);
-				if (lastBytes == null)
-				{
-					addedItems.add(item);
-					if (xml2File != null)
+					BuildItem item = new BuildItem(langName, xmlMode, xmlName, xmlPath, buildPath, xmlFile.bytes, xmlMD5, xml2File, xml2MD5, xlsFile, xlsMD5, bytes);
+					allBuildItem.add(item);
+					if (bytes == null)
 					{
-						addedBuilders.put(item.path, item);
+						addedItems.add(item);
+						if (xml2File != null)
+						{
+							addedBuilders.put(xmlPath, item);
+						}
 					}
 				}
-			}
-			for (File $xmlFile : $xmlFiles)
-			{
-				String xmlName = $xmlFile.getName().substring(0, $xmlFile.getName().length() - 4);
-				String xmlPath = $xmlFile.getName();
-				String xmlMD5 = file_md5.get($xmlFile);
-
-				File xml2File = xmlURL_xml2File.get($xmlFile.getName());
-				String xml2MD5 = "";
-
-				if (xml2File != null)
+				else
 				{
-					xml2MD5 = file_md5.get(xml2File);
-				}
-
-				byte[] lastBytes = oldZip.getConfig(xmlMD5, xml2MD5, xlsMD5);
-
-				BuildItem item = new BuildItem(xmlName, xmlPath, langName, $xmlFile, xmlMD5, xml2File, xml2MD5, xlsFile, xlsMD5, lastBytes);
-				allBuildItem.add(item);
-				if (lastBytes == null)
-				{
-					addedItems.add(item);
-					if (xml2File != null)
+					String[] infos = oldZip.getXmlInfo(langName, xmlMode, xmlName);
+					if (infos != null)
 					{
-						addedBuilders.put(item.path, item);
+						allBuildItem.add(new BuildItem(langName, xmlMode, xmlName, xmlPath, buildPath, xmlFile.bytes, xmlMD5, xml2File, xml2MD5, xlsFile, xlsMD5, oldZip.getConfig(infos[0], infos[1], infos[2])));
 					}
 				}
 			}
@@ -355,9 +317,9 @@ public class ConfigExporter
 
 			GamePacker.progress(String.format("解析xml文件(%s/%s)：%s", i + 1, builders.length, item.name));
 
-			UnitConfigBuilder builder = new UnitConfigBuilder(xmlURL_classTable.get(item.path));
-			builder.read(new FileInputStream(item.xmlFile));
-			builderMap.put(item.path, builder);
+			UnitConfigBuilder builder = new UnitConfigBuilder(xmlURL_classTable.get(item.buildPath));
+			builder.read(new ByteArrayInputStream(item.xmlBytes));
+			builderMap.put(item.xmlPath, builder);
 
 			if (GamePacker.isCancel())
 			{
@@ -383,18 +345,18 @@ public class ConfigExporter
 			XlsLangTable langTable = new XlsLangTable(list.get(0).xlsFile);
 			for (BuildItem item : list)
 			{
-				GamePacker.progress(String.format("生成配置文件(%s/%s)：[%s] %s", buildIndex + 1, buildCount, item.lang, item.name));
+				GamePacker.progress(String.format("生成配置文件(%s/%s)：[ %s %s ] %s", buildIndex + 1, buildCount, item.mode, item.lang, item.name));
 
-				UnitConfigBuilder builder = builderMap.get(item.path);
+				UnitConfigBuilder builder = builderMap.get(item.xmlPath);
 				if (builder != null)
 				{
-					langTable.setSheet(item.xmlFile.getName().substring(0, item.xmlFile.getName().length() - 4));
+					langTable.setSheet(item.name);
 
 					item.bytes = builder.toBytes(langTable);
 				}
 				else
 				{
-					item.bytes = ZlibUtil.compress(FileUtil.getFileBytes(item.xmlFile));
+					item.bytes = ZlibUtil.compress(item.xmlBytes);
 				}
 
 				buildIndex++;
@@ -409,14 +371,26 @@ public class ConfigExporter
 		GamePacker.log("生成配置文件：完成。");
 
 		// 输出所有配置
-		HashMap<String, ArrayList<BuildItem>> writeItems = new HashMap<String, ArrayList<BuildItem>>();
+		HashMap<String, HashMap<String, HashMap<String, BuildItem>>> writeItems = new HashMap<String, HashMap<String, HashMap<String, BuildItem>>>();
 		for (BuildItem item : allBuildItem)
 		{
 			if (!writeItems.containsKey(item.lang))
 			{
-				writeItems.put(item.lang, new ArrayList<BuildItem>());
+				writeItems.put(item.lang, new HashMap<String, HashMap<String, BuildItem>>());
+				writeItems.get(item.lang).put("3d", new HashMap<String, BuildItem>());
+				writeItems.get(item.lang).put("2d", new HashMap<String, BuildItem>());
 			}
-			writeItems.get(item.lang).add(item);
+			writeItems.get(item.lang).get(item.mode).put(item.name, item);
+		}
+		for (HashMap<String, HashMap<String, BuildItem>> modes : writeItems.values())
+		{
+			for (String key : modes.get("3d").keySet())
+			{
+				if (!modes.get("2d").containsKey(key))
+				{
+					modes.get("2d").put(key, modes.get("3d").get(key));
+				}
+			}
 		}
 		StringBuilder db_xml = new StringBuilder();
 		String[] writeKeys = writeItems.keySet().toArray(new String[] {});
@@ -425,137 +399,124 @@ public class ConfigExporter
 		int writeCount = allBuildItem.size();
 		for (String writeKey : writeKeys)
 		{
-			ArrayList<BuildItem> items = writeItems.get(writeKey);
-			Collections.sort(items, new Comparator<BuildItem>()
+			String[] modes = new String[] { "2d", "3d" };
+			for (String mode : modes)
 			{
-				@Override
-				public int compare(BuildItem o1, BuildItem o2)
+				BuildItem[] items = writeItems.get(writeKey).get(mode).values().toArray(new BuildItem[] {});
+				Arrays.sort(items, new Comparator<BuildItem>()
 				{
-					return o1.name.compareTo(o2.name);
+					@Override
+					public int compare(BuildItem o1, BuildItem o2)
+					{
+						return o1.name.compareTo(o2.name);
+					}
+				});
+
+				ByteArrayOutputStream output = new ByteArrayOutputStream();
+				for (BuildItem item : items)
+				{
+					GamePacker.progress("构建配置(" + (writeIndex + 1) + "/" + writeCount + "):", "[ " + mode + " " + writeKey + " ] " + item.name);
+
+					String name = item.name;
+					if (item.xml2File != null)
+					{
+						name = name + ".xml";
+					}
+
+					ByteArrayOutputStream nameOutput = new ByteArrayOutputStream();
+					nameOutput.write(name.getBytes("utf8"));
+					byte[] nameBytes = nameOutput.toByteArray();
+
+					byte[] fileBytes = item.bytes;
+
+					output.write(nameBytes.length & 0xFF);
+					output.write(nameBytes.length >>> 8 & 0xFF);
+					output.write(nameBytes.length >>> 16 & 0xFF);
+					output.write(nameBytes.length >>> 24 & 0xFF);
+					output.write(nameBytes);
+					output.write(fileBytes.length & 0xFF);
+					output.write(fileBytes.length >>> 8 & 0xFF);
+					output.write(fileBytes.length >>> 16 & 0xFF);
+					output.write(fileBytes.length >>> 24 & 0xFF);
+					output.write(fileBytes);
+					output.flush();
+
+					newZip.setConfig(item.xmlMD5, item.xml2MD5, item.xlsMD5, item.bytes);
+					newZip.setXmlInfo(item.lang, item.mode, item.name, item.xmlMD5, item.xml2MD5, item.xlsMD5);
+
+					writeIndex++;
 				}
-			});
 
-			ByteArrayOutputStream output = new ByteArrayOutputStream();
-			for (BuildItem item : items)
-			{
-				GamePacker.progress("构建配置(" + (writeIndex + 1) + "/" + writeCount + "):", item.lang + " : " + item.name);
+				byte[] writeBytes = MD5Util.addSuffix(output.toByteArray());
+				String writeMD5 = MD5Util.md5Bytes(writeBytes);
+				String writeURL = oldZip.getGameFiles().get(writeMD5);
 
-				ByteArrayOutputStream nameOutput = new ByteArrayOutputStream();
-				nameOutput.write((item.name + (item.xml2File != null ? ".xml" : "")).getBytes("utf8"));
-				byte[] nameBytes = nameOutput.toByteArray();
+				if (writeURL == null)
+				{
+					writeURL = oldZip.getVersionNextGameFileURL("cfg");
+					FileUtil.writeFile(new File(outputFolder.getPath() + writeURL), writeBytes);
+				}
 
-				byte[] fileBytes = item.bytes;
+				newZip.getGameFiles().put(writeMD5, writeURL);
+				newZip.getVersionFiles().add("/" + outputFolder.getName() + writeURL);
 
-				output.write(nameBytes.length & 0xFF);
-				output.write(nameBytes.length >>> 8 & 0xFF);
-				output.write(nameBytes.length >>> 16 & 0xFF);
-				output.write(nameBytes.length >>> 24 & 0xFF);
-				output.write(nameBytes);
-				output.write(fileBytes.length & 0xFF);
-				output.write(fileBytes.length >>> 8 & 0xFF);
-				output.write(fileBytes.length >>> 16 & 0xFF);
-				output.write(fileBytes.length >>> 24 & 0xFF);
-				output.write(fileBytes);
-				output.flush();
-
-				newZip.setConfig(item.xmlMD5, item.xml2MD5, item.xlsMD5, item.bytes);
-
-				writeIndex++;
+				db_xml.append("\t<configs langs=\"" + writeKey + "\" mode=\"" + mode + "\" file=\"/" + outputFolder.getName() + writeURL + "\" size=\"" + writeBytes.length + "\"/>\n");
 			}
-
-			byte[] writeBytes = MD5Util.addSuffix(output.toByteArray());
-			String writeMD5 = MD5Util.md5Bytes(writeBytes);
-			String writeURL = oldZip.getGameFiles().get(writeMD5);
-
-			if (writeURL == null)
-			{
-				writeURL = oldZip.getVersionNextGameFileURL("cfg");
-				FileUtil.writeFile(new File(outputFolder.getPath() + writeURL), writeBytes);
-			}
-
-			newZip.getGameFiles().put(writeMD5, writeURL);
-			newZip.getVersionFiles().add("/" + outputFolder.getName() + writeURL);
-
-			db_xml.append("\t<configs langs=\"" + writeKey + "\" file=\"/" + outputFolder.getName() + writeURL + "\" size=\"" + writeBytes.length + "\"/>\n");
 		}
 
 		return db_xml.toString();
 	}
 
 	/**
-	 * 列出所有的特殊XML文件
-	 * 
-	 * @return
-	 */
-	private File[] listAll$XmlFiles()
-	{
-		ArrayList<File> $XmlFiles = new ArrayList<File>();
-
-		File tmp = new File(outputFolder.getPath() + "/tmp");
-		if (tmp.exists())
-		{
-			tmp.delete();
-		}
-
-		File rootFolder = helper.outputFolder;
-		for (File folder : rootFolder.listFiles())
-		{
-			if (folder.isHidden())
-			{
-				continue;
-			}
-
-			if (folder.isDirectory())
-			{
-				File zipFile = new File(folder.getPath() + "/ver.zip");
-				if (zipFile.exists())
-				{
-					ZipConfig cfg = new ZipConfig(zipFile);
-
-					HashMap<String, byte[]> entrys = cfg.getCfgFiles();
-					for (String name : entrys.keySet())
-					{
-						File curr = new File(tmp.getPath() + "/" + folder.getName() + "/" + name);
-						FileUtil.writeFile(curr, entrys.get(name));
-
-						$XmlFiles.add(curr);
-					}
-				}
-				else
-				{
-					for (File file : folder.listFiles())
-					{
-						if (file.isHidden())
-						{
-							continue;
-						}
-
-						if (file.isFile() && file.getName().startsWith("$") && file.getName().endsWith(".xml"))
-						{
-							$XmlFiles.add(file);
-						}
-					}
-				}
-			}
-		}
-
-		return $XmlFiles.toArray(new File[] {});
-	}
-
-	/**
 	 * 列出所有xml文件
 	 * 
 	 * @return
+	 * @throws FileNotFoundException
 	 */
-	private File[] listAllXmlFiles()
+	private XmlFile[] listAllXmlFiles() throws FileNotFoundException
 	{
 		ArrayList<XmlFile> xmlFiles = new ArrayList<ConfigExporter.XmlFile>();
-		File[] files = helper.listFiles(helper.cfgFolder, "xml");
+
+		// 常规XML配置
+		File[] files = helper.listFiles(helper.cfgInputFolder, "xml");
 		for (File file : files)
 		{
-			xmlFiles.add(new XmlFile(file.getPath()));
+			xmlFiles.add(new XmlFile(helper.cfgOutputFolder, file.getName(), file.getPath().substring(helper.cfgInputFolder.getPath().length()).replaceAll("\\\\", "/"), FileUtil.getFileBytes(file)));
 		}
-		return xmlFiles.toArray(new File[] {});
+
+		// 特殊XML配置
+		File[] outputs = new File[] { helper.cfgOutputFolder, helper.iconOutputFolder, helper.fileOutputFolder, helper.codeOutputFolder, helper.viewOutputFolder, helper.worldOutputFolder };
+		for (File folder : outputs)
+		{
+			if (!folder.isHidden())
+			{
+				if (folder.isDirectory())
+				{
+					File zipFile = new File(folder.getPath() + "/ver.zip");
+					if (zipFile.exists())
+					{
+						ZipConfig cfg = new ZipConfig(zipFile);
+						HashMap<String, byte[]> entrys = cfg.getCfgFiles();
+						for (String name : entrys.keySet())
+						{
+							xmlFiles.add(new XmlFile(folder, name, name, entrys.get(name)));
+						}
+					}
+					else
+					{
+						for (File file : folder.listFiles())
+						{
+							if (!file.isHidden() && file.isFile() && file.getName().startsWith("$") && file.getName().endsWith(".xml"))
+							{
+								xmlFiles.add(new XmlFile(folder, file.getName(), file.getName(), FileUtil.getFileBytes(file)));
+							}
+						}
+					}
+				}
+			}
+		}
+
+		return xmlFiles.toArray(new XmlFile[] {});
 	}
 
 	/**
@@ -576,6 +537,27 @@ public class ConfigExporter
 	private File[] listAllXlsFiles()
 	{
 		return helper.listFiles(helper.nlsFolder, "xls");
+	}
+
+	/**
+	 * 是否允许输出些文件
+	 * 
+	 * @param file
+	 * @return
+	 */
+	private boolean allowOutput(XmlFile file)
+	{
+		File[] folders = new File[] { helper.iconOutputFolder, helper.fileOutputFolder, helper.codeOutputFolder, helper.viewOutputFolder, helper.worldOutputFolder, helper.cfgOutputFolder };
+		boolean[] checks = new boolean[] { helper.iconChecked, helper.fileChecked, helper.codeChecked, helper.viewChecked, helper.worldChecked, helper.cfgChecked };
+
+		for (int i = 0; i < folders.length; i++)
+		{
+			if (file.root.getPath().equals(folders[i].getPath()))
+			{
+				return checks[i];
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -662,7 +644,7 @@ public class ConfigExporter
 
 		// 查找技能文件
 		ArrayList<File> folders = new ArrayList<File>();
-		folders.add(helper.cfgFolder);
+		folders.add(helper.cfgInputFolder);
 		while (folders.size() > 0)
 		{
 			File folder = folders.remove(0);

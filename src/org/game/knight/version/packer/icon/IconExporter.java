@@ -60,12 +60,12 @@ public class IconExporter
 
 			StringBuilder sb = new StringBuilder();
 			sb.append("<iconSet>\n");
-			File[] files = helper.listFiles(helper.iconFolder, "*");
+			File[] files = helper.listFiles(helper.iconInputFolder, "*");
 			for (int i = 0; i < files.length; i++)
 			{
 				File file = files[i];
 				String ext = helper.getFileExtName(file).toLowerCase();
-				String url = file.getPath().substring(helper.iconFolder.getPath().length()).replaceAll("\\\\", "/");
+				String url = file.getPath().substring(helper.iconInputFolder.getPath().length()).replaceAll("\\\\", "/");
 
 				GamePacker.progress(String.format("´¦ÀíÍ¼±ê(%s/%s)£º%s", i + 1, files.length, url));
 
@@ -157,7 +157,7 @@ public class IconExporter
 	 */
 	private byte[] getIconURLBytes(HashMap<String, String> map) throws FileNotFoundException, ParserConfigurationException, SAXException, IOException
 	{
-		File cfgDir = helper.cfgFolder;
+		File cfgDir = helper.cfgInputFolder;
 		if (cfgDir != null && cfgDir.exists() && cfgDir.isDirectory())
 		{
 			ItemConfigHandler itemHandler = new ItemConfigHandler(cfgDir);
