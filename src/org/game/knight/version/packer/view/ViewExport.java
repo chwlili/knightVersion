@@ -616,9 +616,7 @@ public class ViewExport extends AbsExporter
 						String val = node.getText();
 
 						sb.append("\t\t<item id=\"" + key + "\">");
-						sb.append("<![CDATA[");
-						sb.append(val.replaceAll("\\]]>", "&&&;"));
-						sb.append("]]>");
+						sb.append("<![CDATA[" + val + "]]>");
 						sb.append("</item>\n");
 					}
 

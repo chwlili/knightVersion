@@ -4,11 +4,13 @@ Bundle-Name: Version
 Bundle-SymbolicName: org.game.knight.version
 Bundle-Version: 1.0.0.qualifier
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-Bundle-ClassPath: libs/dom4j-1.6.1.jar,
+Bundle-ClassPath: libs/compiler.jar,
+ libs/dom4j-1.6.1.jar,
  libs/jaxen-1.1-beta-6.jar,
  libs/transform-3.0.2.jar,
  libs/poi-3.6-20091214.jar,
  libs/antlr-4.2-complete.jar,
  .
 Require-Bundle: org.eclipse.ui;bundle-version="3.7.0",
- org.eclipse.core.runtime;bundle-version="3.7.0"
+ org.eclipse.core.runtime;bundle-version="3.7.0",
+ org.eclipse.ui.forms;bundle-version="3.5.101"

@@ -2,7 +2,8 @@ package org.game.knight.version.packer.game;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.util.Hashtable;
+import java.io.FileNotFoundException;
+import java.io.UnsupportedEncodingException;
 
 import org.chw.util.FileUtil;
 import org.chw.util.MD5Util;
@@ -31,8 +32,6 @@ public class GameExporter
 	private String serverID;
 	private String testList;
 	private String userList;
-
-	private Hashtable<String, File> files;
 
 	/**
 	 * ¹¹Ôìº¯Êý
@@ -140,8 +139,11 @@ public class GameExporter
 
 			newZip.setVersion(sb.toString());
 			newZip.setVersionProps(oldZip.getVersionProps());
+			newZip.getCfgFiles().put("$CodeText.xml", writeLangs().getBytes("UTF-8"));
 			newZip.getVersionFiles().add("/" + oldZip.getFile().getName());
 			newZip.saveTo(oldZip.getFile());
+
+			writeLangs();
 
 			writeStartupFiles();
 
@@ -159,6 +161,30 @@ public class GameExporter
 		}
 
 		return false;
+	}
+
+	private String writeLangs() throws FileNotFoundException, UnsupportedEncodingException
+	{
+		for (File swf : helper.listFiles(helper.codeInputFolder, "swf"))
+		{
+			if (swf.getName().equals("GameNLS.swf"))
+			{
+				String[] txts = TextFinder.find(swf);
+
+				StringBuilder sb = new StringBuilder();
+				sb.append("<codeTexts>\n");
+				for (String txt : txts)
+				{
+					sb.append("\t<text>\n");
+					sb.append("\t\t<key><![CDATA[#" + txt + "]]></key>\n");
+					sb.append("\t\t<val><![CDATA[" + txt + "]]></val>\n");
+					sb.append("\t</text>\n");
+				}
+				sb.append("</codeTexts>");
+				return sb.toString();
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -183,9 +209,9 @@ public class GameExporter
 			appDir.mkdirs();
 		}
 
-		for (String url : files.keySet())
+		for (File from : helper.listFiles(helper.codeInputFolder, "*"))
 		{
-			File from = new File(helper.codeInputFolder.getPath() + url);
+			String url = from.getPath().substring(helper.codeInputFolder.getPath().length()).replaceAll("\\\\", "/");
 			File dest = new File(this.appDir.getPath() + url);
 
 			if (from.exists() && (from.getParentFile().getPath().equals(helper.codeInputFolder.getPath()) == false || (from.getParentFile().getPath().equals(helper.codeInputFolder.getPath()) && (from.getName().equals("Index.swf") || from.getName().equals("index.html")))))
