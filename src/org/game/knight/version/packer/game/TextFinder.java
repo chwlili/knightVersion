@@ -144,7 +144,7 @@ public class TextFinder
 						@Override
 						public void visitPooledString(String txt)
 						{
-							if (txt.startsWith("#"))
+							if (txt.startsWith(">"))
 							{
 								txts.add(txt.substring(1));
 							}

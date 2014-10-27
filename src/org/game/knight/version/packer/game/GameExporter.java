@@ -176,7 +176,7 @@ public class GameExporter
 				for (String txt : txts)
 				{
 					sb.append("\t<text>\n");
-					sb.append("\t\t<key><![CDATA[#" + txt + "]]></key>\n");
+					sb.append("\t\t<key><![CDATA[>" + txt + "]]></key>\n");
 					sb.append("\t\t<val><![CDATA[" + txt + "]]></val>\n");
 					sb.append("\t</text>\n");
 				}
