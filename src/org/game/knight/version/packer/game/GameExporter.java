@@ -143,8 +143,6 @@ public class GameExporter
 			newZip.getVersionFiles().add("/" + oldZip.getFile().getName());
 			newZip.saveTo(oldZip.getFile());
 
-			writeLangs();
-
 			writeStartupFiles();
 
 			GamePacker.log("Íê³É");
@@ -165,14 +163,14 @@ public class GameExporter
 
 	private String writeLangs() throws FileNotFoundException, UnsupportedEncodingException
 	{
+		StringBuilder sb = new StringBuilder();
+		sb.append("<codeTexts>\n");
 		for (File swf : helper.listFiles(helper.codeInputFolder, "swf"))
 		{
 			if (swf.getName().equals("GameNLS.swf"))
 			{
 				String[] txts = TextFinder.find(swf);
 
-				StringBuilder sb = new StringBuilder();
-				sb.append("<codeTexts>\n");
 				for (String txt : txts)
 				{
 					sb.append("\t<text>\n");
@@ -180,11 +178,10 @@ public class GameExporter
 					sb.append("\t\t<val><![CDATA[" + txt + "]]></val>\n");
 					sb.append("\t</text>\n");
 				}
-				sb.append("</codeTexts>");
-				return sb.toString();
 			}
 		}
-		return null;
+		sb.append("</codeTexts>");
+		return sb.toString();
 	}
 
 	/**
