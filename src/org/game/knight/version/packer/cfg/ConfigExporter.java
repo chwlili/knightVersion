@@ -8,7 +8,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -63,23 +62,22 @@ public class ConfigExporter
 		{
 			GamePacker.beginTask("¥¶¿Ì”Ô—‘∞¸");
 
-			String cfgContents = mergeConfigs(oldZip, newZip);
-			if (GamePacker.isCancel())
-			{
-				return false;
-			}
-
 			String skillContents = cherryPickSkillData(oldZip, newZip);
 			if (GamePacker.isCancel())
 			{
 				return false;
 			}
 
+			String cfgContents = mergeConfigs(oldZip, newZip, skillContents);
+			if (GamePacker.isCancel())
+			{
+				return false;
+			}
+
 			StringBuilder dbContent = new StringBuilder();
-			dbContent.append("<project>\n");
+			dbContent.append("<projects>\n");
 			dbContent.append(cfgContents);
-			dbContent.append(skillContents);
-			dbContent.append("</project>");
+			dbContent.append("</projects>");
 
 			if (GamePacker.isCancel())
 			{
@@ -88,6 +86,7 @@ public class ConfigExporter
 
 			newZip.setVersion(dbContent.toString());
 			newZip.setVersionProps(oldZip.getVersionProps());
+			newZip.getVersionFiles().add("/" + outputFolder.getName() + oldZip.getFile().getName());
 			newZip.saveTo(oldZip.getFile());
 
 			File tmp = new File(outputFolder.getPath() + "/tmp");
@@ -174,7 +173,7 @@ public class ConfigExporter
 		}
 	}
 
-	protected String mergeConfigs(ConfigZip oldZip, ConfigZip newZip) throws Exception
+	protected String mergeConfigs(ConfigZip oldZip, ConfigZip newZip, String skills) throws Exception
 	{
 		XmlFile[] xmlFiles = listAllXmlFiles();
 		File[] xml2Files = listAllXml2Files();
@@ -460,7 +459,10 @@ public class ConfigExporter
 				newZip.getGameFiles().put(writeMD5, writeURL);
 				newZip.getVersionFiles().add("/" + outputFolder.getName() + writeURL);
 
-				db_xml.append("\t<configs langs=\"" + writeKey + "\" mode=\"" + mode + "\" file=\"/" + outputFolder.getName() + writeURL + "\" size=\"" + writeBytes.length + "\"/>\n");
+				db_xml.append(String.format("\t<project lang=\"%s\" mode=\"%s\">\n", writeKey, mode));
+				db_xml.append(String.format("\t\t<configs file=\"/%s\" size=\"%s\"/>\n", outputFolder.getName() + writeURL, writeBytes.length));
+				db_xml.append(String.format("%s", skills));
+				db_xml.append(String.format("\t</project>\n"));
 			}
 		}
 
@@ -680,7 +682,7 @@ public class ConfigExporter
 			SAXParserFactory.newInstance().newSAXParser().parse(new FileInputStream(skillFile), skillHandler);
 
 			StringBuilder sb = new StringBuilder();
-			sb.append("\t<skills>\n");
+			sb.append("\t\t<skills>\n");
 			for (String key : skillHandler.groupToActions.keySet())
 			{
 				String[] actions = skillHandler.groupToActions.get(key).toArray(new String[skillHandler.groupToActions.get(key).size()]);
@@ -696,7 +698,7 @@ public class ConfigExporter
 				{
 					Arrays.sort(actions);
 					Arrays.sort(effects);
-					sb.append(String.format("\t\t<skill id=\"%s\" actions=\"%s\" effects=\"%s\"/>\n", key, formatArray(actions), formatArray(effects)));
+					sb.append(String.format("\t\t\t<skill id=\"%s\" actions=\"%s\" effects=\"%s\"/>\n", key, formatArray(actions), formatArray(effects)));
 				}
 			}
 			for (String key : skillHandler.groupToEffects.keySet())
@@ -705,7 +707,7 @@ public class ConfigExporter
 				if (effects.length > 0)
 				{
 					Arrays.sort(effects);
-					sb.append(String.format("\t\t<skill id=\"%s\" actions=\"\" effects=\"%s\" />\n", key, formatArray(effects)));
+					sb.append(String.format("\t\t\t<skill id=\"%s\" actions=\"\" effects=\"%s\" />\n", key, formatArray(effects)));
 				}
 			}
 			for (String key : skillHandler.labelToEffects.keySet())
@@ -718,10 +720,10 @@ public class ConfigExporter
 						effects[i] = effects[i].replaceAll("^[\\d+_]+", "");
 					}
 					Arrays.sort(effects);
-					sb.append(String.format("\t\t<label id=\"%s\" effects=\"%s\" />\n", key, formatArray(effects)));
+					sb.append(String.format("\t\t\t<label id=\"%s\" effects=\"%s\" />\n", key, formatArray(effects)));
 				}
 			}
-			sb.append("\t</skills>\n");
+			sb.append("\t\t</skills>\n");
 
 			skillContent = sb.toString();
 		}

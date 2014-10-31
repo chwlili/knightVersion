@@ -141,7 +141,7 @@ public class XlsLangTable extends LangTable
 	 */
 	public void save() throws FileNotFoundException, IOException
 	{
-		if (xls == null)
+		if (xls == null || xlsFile == null)
 		{
 			return;
 		}

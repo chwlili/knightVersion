@@ -93,8 +93,9 @@ public class GameExporter
 			GamePacker.beginTask("´¦Àí´úÂë");
 
 			StringBuilder sb = new StringBuilder();
-			sb.append("<project>\n");
-			sb.append("\t<codes>\n");
+			sb.append("<projects>\n");
+			sb.append("\t<project lang=\"zh\" mode=\"3d\">\n");
+			sb.append("\t\t<codes>\n");
 			File[] files = helper.listFiles(helper.codeInputFolder, "swf");
 			for (int i = 0; i < files.length; i++)
 			{
@@ -107,7 +108,7 @@ public class GameExporter
 
 					ByteArrayInputStream input = new ByteArrayInputStream(FileUtil.getFileBytes(file));
 					int partSize = 500 * 1024;
-					sb.append(String.format("\t\t<code name=\"%s\">\n", helper.getFileName(file)));
+					sb.append(String.format("\t\t\t<code name=\"%s\">\n", helper.getFileName(file)));
 					while (input.available() > 0)
 					{
 						byte[] part = new byte[Math.min(input.available(), partSize)];
@@ -128,19 +129,20 @@ public class GameExporter
 						newZip.getGameFiles().put(pairMD5, pairURL);
 						newZip.getVersionFiles().add("/" + outputFolder.getName() + pairURL);
 
-						sb.append(String.format("\t\t\t<part path=\"%s\" size=\"%s\"/>\n", "/" + outputFolder.getName() + pairURL, part.length));
+						sb.append(String.format("\t\t\t\t<part path=\"%s\" size=\"%s\"/>\n", "/" + outputFolder.getName() + pairURL, part.length));
 					}
 
-					sb.append("\t\t</code>\n");
+					sb.append("\t\t\t</code>\n");
 				}
 			}
-			sb.append("\t</codes>\n");
-			sb.append("</project>");
+			sb.append("\t\t</codes>\n");
+			sb.append("\t</project>\n");
+			sb.append("</projects>");
 
 			newZip.setVersion(sb.toString());
 			newZip.setVersionProps(oldZip.getVersionProps());
 			newZip.getCfgFiles().put("$CodeText.xml", writeLangs().getBytes("UTF-8"));
-			newZip.getVersionFiles().add("/" + oldZip.getFile().getName());
+			newZip.getVersionFiles().add("/" + helper.codeOutputFolder.getName() + "/" + oldZip.getFile().getName());
 			newZip.saveTo(oldZip.getFile());
 
 			writeStartupFiles();

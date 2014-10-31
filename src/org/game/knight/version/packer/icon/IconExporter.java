@@ -125,7 +125,7 @@ public class IconExporter
 			//
 			newZip.setVersion("");
 			newZip.setVersionProps(oldZip.getVersionProps());
-			newZip.getVersionFiles().add("/" + oldZip.getFile().getName());
+			newZip.getVersionFiles().add("/" + helper.iconOutputFolder.getName() + "/" + oldZip.getFile().getName());
 			newZip.getCfgFiles().put("$IconSet.xml", sb.toString().getBytes("UTF-8"));
 			newZip.saveTo(oldZip.getFile());
 

@@ -1,14 +1,12 @@
 package org.game.knight.version.packer.world.output2d;
 
 import java.io.File;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 
-import org.chw.util.FileUtil;
 import org.game.knight.version.packer.GamePacker;
 import org.game.knight.version.packer.world.BaseWriter;
 import org.game.knight.version.packer.world.WorldWriter;
@@ -24,6 +22,8 @@ public class Config2d extends BaseWriter
 	public final Config2dAttireWriter attireWriter;
 	public final Config2dSceneWriter sceneWriter;
 
+	private String version;
+
 	/**
 	 * 构造函数
 	 * 
@@ -35,6 +35,11 @@ public class Config2d extends BaseWriter
 		this.attireSwfWriter = new AttireSwfWriter(root);
 		this.attireWriter = new Config2dAttireWriter(root, attireSwfWriter);
 		this.sceneWriter = new Config2dSceneWriter(root, attireSwfWriter);
+	}
+	
+	public String getVersionData()
+	{
+		return version;
 	}
 
 	@Override
@@ -88,24 +93,21 @@ public class Config2d extends BaseWriter
 		File worldFile = new File(root.getOutputFolder().getPath() + worldURL);
 
 		StringBuilder txt = new StringBuilder();
-		txt.append("<project>\n");
-		txt.append("\t<configs>\n");
-		txt.append(String.format("\t\t<config name=\"%s\" path=\"%s\" size=\"%s\"/>\n", uiAttireKey, root.localToCdnURL(uiAttireURL), uiAttireFile.length()));
-		txt.append(String.format("\t\t<config name=\"%s\" path=\"%s\" size=\"%s\"/>\n", attireKey, root.localToCdnURL(attireURL), attireFile.length()));
-		txt.append(String.format("\t\t<config name=\"%s\" path=\"%s\" size=\"%s\"/>\n", worldKey, root.localToCdnURL(worldURL), worldFile.length()));
-		txt.append("\t</configs>\n");
+		txt.append("\t<project lang=\"zh\" mode=\"2d\">\n");
+		// txt.append("\t\t<configs>\n");
+		// txt.append(String.format("\t\t<config name=\"%s\" path=\"%s\" size=\"%s\"/>\n",
+		// uiAttireKey, root.localToCdnURL(uiAttireURL),
+		// uiAttireFile.length()));
+		// txt.append(String.format("\t\t<config name=\"%s\" path=\"%s\" size=\"%s\"/>\n",
+		// attireKey, root.localToCdnURL(attireURL), attireFile.length()));
+		// txt.append(String.format("\t\t<config name=\"%s\" path=\"%s\" size=\"%s\"/>\n",
+		// worldKey, root.localToCdnURL(worldURL), worldFile.length()));
+		// txt.append("\t\t</configs>\n");
 		txt.append(getAttireSummay());
 		txt.append(getSceneSummay());
-		txt.append("</project>");
+		txt.append("\t</project>");
 
-		try
-		{
-			FileUtil.writeFile(new File(root.getOutputFolder().getPath() + "/db1.xml"), txt.toString().getBytes("UTF-8"));
-		}
-		catch (UnsupportedEncodingException e)
-		{
-			e.printStackTrace();
-		}
+		version = txt.toString();
 	}
 
 	/**
@@ -116,7 +118,7 @@ public class Config2d extends BaseWriter
 	private String getAttireSummay()
 	{
 		StringBuilder txt = new StringBuilder();
-		txt.append("\t<attires>\n");
+		txt.append("\t\t<attires>\n");
 
 		HashMap<String, Integer> url_size = new HashMap<String, Integer>();
 		HashMap<String, Integer> url_id = new HashMap<String, Integer>();
@@ -176,12 +178,12 @@ public class Config2d extends BaseWriter
 		}
 
 		// 输出URL列表
-		txt.append("\t\t<files>\n");
+		txt.append("\t\t\t<files>\n");
 		for (String key : keys)
 		{
-			txt.append(String.format("\t\t\t<file id=\"%s\" url=\"%s\" size=\"%s\" />\n", url_id.get(key), root.localToCdnURL(key), url_size.get(key)));
+			txt.append(String.format("\t\t\t\t<file id=\"%s\" url=\"%s\" size=\"%s\" />\n", url_id.get(key), root.localToCdnURL(key), url_size.get(key)));
 		}
-		txt.append("\t\t</files>\n");
+		txt.append("\t\t\t</files>\n");
 
 		// 排序动作的URL ID列表
 		for (AttireAction action : action_urls.keySet())
@@ -230,15 +232,15 @@ public class Config2d extends BaseWriter
 				// 装扮
 				if (params.length >= 3)
 				{
-					roles.append(String.format("\t\t<role faction=\"%s\" sectLv=\"%s\" name=\"%s\">\n", params[1], params[2], attire.name));
+					roles.append(String.format("\t\t\t<role faction=\"%s\" sectLv=\"%s\" name=\"%s\">\n", params[1], params[2], attire.name));
 					for (AttireAction action : attire.actions)
 					{
 						if (action.anims.length > 0)
 						{
-							roles.append(String.format("\t\t\t<action id=\"%s\" files=\"%s\"/>\n", action.id, action_urlIDs.get(action)));
+							roles.append(String.format("\t\t\t\t<action id=\"%s\" files=\"%s\"/>\n", action.id, action_urlIDs.get(action)));
 						}
 					}
-					roles.append(String.format("\t\t</role>\n"));
+					roles.append(String.format("\t\t\t</role>\n"));
 				}
 				else
 				{
@@ -250,15 +252,15 @@ public class Config2d extends BaseWriter
 				// 装备
 				if (params.length >= 4)
 				{
-					equips.append(String.format("\t\t<equip fromID=\"%s\" toID=\"%s\" faction=\"%s\" name=\"%s\">\n", params[1], params[2], params[3], attire.name));
+					equips.append(String.format("\t\t\t<equip fromID=\"%s\" toID=\"%s\" faction=\"%s\" name=\"%s\">\n", params[1], params[2], params[3], attire.name));
 					for (AttireAction action : attire.actions)
 					{
 						if (action.anims.length > 0)
 						{
-							equips.append(String.format("\t\t\t<action id=\"%s\" files=\"%s\"/>\n", action.id, action_urlIDs.get(action)));
+							equips.append(String.format("\t\t\t\t<action id=\"%s\" files=\"%s\"/>\n", action.id, action_urlIDs.get(action)));
 						}
 					}
-					equips.append(String.format("\t\t</equip>\n"));
+					equips.append(String.format("\t\t\t</equip>\n"));
 				}
 				else
 				{
@@ -268,15 +270,15 @@ public class Config2d extends BaseWriter
 			else if (params[0].equals("3"))
 			{
 				// 效果
-				effects.append(String.format("\t\t<effect effectID=\"%s\">\n", attire.name));
+				effects.append(String.format("\t\t\t<effect effectID=\"%s\">\n", attire.name));
 				for (AttireAction action : attire.actions)
 				{
 					if (action.anims.length > 0)
 					{
-						effects.append(String.format("\t\t\t<action id=\"0\" files=\"%s\"/>\n", action_urlIDs.get(action)));
+						effects.append(String.format("\t\t\t\t<action id=\"0\" files=\"%s\"/>\n", action_urlIDs.get(action)));
 					}
 				}
-				effects.append(String.format("\t\t</effect>\n"));
+				effects.append(String.format("\t\t\t</effect>\n"));
 			}
 			else if (params[0].equals("4"))
 			{
@@ -291,15 +293,15 @@ public class Config2d extends BaseWriter
 				// 刀光
 				if (params.length >= 3)
 				{
-					roles.append(String.format("\t\t<roleEffect faction=\"%s\" sectLv=\"%s\" name=\"%s\">\n", params[1], params[2], attire.name));
+					roles.append(String.format("\t\t\t<roleEffect faction=\"%s\" sectLv=\"%s\" name=\"%s\">\n", params[1], params[2], attire.name));
 					for (AttireAction action : attire.actions)
 					{
 						if (action.anims.length > 0)
 						{
-							roles.append(String.format("\t\t\t<action id=\"%s\" files=\"%s\"/>\n", action.id, action_urlIDs.get(action)));
+							roles.append(String.format("\t\t\t\t<action id=\"%s\" files=\"%s\"/>\n", action.id, action_urlIDs.get(action)));
 						}
 					}
-					roles.append(String.format("\t\t</roleEffect>\n"));
+					roles.append(String.format("\t\t\t</roleEffect>\n"));
 				}
 				else
 				{
@@ -314,15 +316,15 @@ public class Config2d extends BaseWriter
 				// 坐骑
 				if (params.length >= 2)
 				{
-					horses.append(String.format("\t\t<horse horseID=\"%s\" name=\"%s\">\n", params[1], attire.name));
+					horses.append(String.format("\t\t\t<horse horseID=\"%s\" name=\"%s\">\n", params[1], attire.name));
 					for (AttireAction action : attire.actions)
 					{
 						if (action.anims.length > 0)
 						{
-							horses.append(String.format("\t\t\t<action id=\"%s\" files=\"%s\"/>\n", action.id, action_urlIDs.get(action)));
+							horses.append(String.format("\t\t\t\t<action id=\"%s\" files=\"%s\"/>\n", action.id, action_urlIDs.get(action)));
 						}
 					}
-					horses.append(String.format("\t\t</horse>\n"));
+					horses.append(String.format("\t\t\t</horse>\n"));
 				}
 				else
 				{
@@ -336,7 +338,7 @@ public class Config2d extends BaseWriter
 		txt.append(effects);
 		txt.append(labels);
 		txt.append(horses);
-		txt.append("\t</attires>\n");
+		txt.append("\t\t</attires>\n");
 
 		return txt.toString();
 	}
@@ -411,12 +413,12 @@ public class Config2d extends BaseWriter
 		});
 
 		StringBuilder txt = new StringBuilder();
-		txt.append("\t<scenes>\n");
+		txt.append("\t\t<scenes>\n");
 		for (Scene scene : scenes)
 		{
-			txt.append(String.format("\t\t<scene id=\"%s\" type=\"%s\" size=\"%s\" files=\"%s\" />\n", scene.sceneID, scene.sceneType, sceneWriter.getSceneSize(scene), sceneWriter.getSceneURLs(scene)));
+			txt.append(String.format("\t\t\t<scene id=\"%s\" type=\"%s\" size=\"%s\" files=\"%s\" />\n", scene.sceneID, scene.sceneType, sceneWriter.getSceneSize(scene), sceneWriter.getSceneURLs(scene)));
 		}
-		txt.append("\t</scenes>\n");
+		txt.append("\t\t</scenes>\n");
 		return txt.toString();
 	}
 }

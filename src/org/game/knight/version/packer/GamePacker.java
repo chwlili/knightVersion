@@ -7,8 +7,12 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.List;
 
 import org.chw.util.FileUtil;
 import org.chw.util.MD5Util;
@@ -49,7 +53,7 @@ import org.game.knight.version.packer.cfg.ConfigExporter;
 import org.game.knight.version.packer.files.FilesExporter;
 import org.game.knight.version.packer.game.GameExporter;
 import org.game.knight.version.packer.icon.IconExporter;
-import org.game.knight.version.packer.view.ViewExport;
+import org.game.knight.version.packer.view.ViewEntityWriter;
 import org.game.knight.version.packer.world.WorldWriter;
 
 public class GamePacker extends Composite
@@ -1032,8 +1036,15 @@ public class GamePacker extends Composite
 
 				if (viewSelected)
 				{
-					ViewExport views = new ViewExport(new File(viewPath), new File(cdnPath + File.separatorChar + "views"));
-					views.publish();
+					// ViewExport views = new ViewExport(new File(viewPath), new
+					// File(cdnPath + File.separatorChar + "views"));
+					// views.publish();
+					ViewEntityWriter writer = new ViewEntityWriter(helper);
+					if (!writer.go())
+					{
+						execing = false;
+						return;
+					}
 				}
 
 				if (worldSelected)
@@ -1065,7 +1076,7 @@ public class GamePacker extends Composite
 					try
 					{
 						writeDB(new File(cdnPath), ver, zip);
-						writeDB1(new File(cdnPath), ver, zip);
+						// writeDB1(new File(cdnPath), ver, zip);
 						writeVerFile(new File(cdnPath), ver);
 						writePolicyFile(new File(cdnPath));
 
@@ -1210,17 +1221,14 @@ public class GamePacker extends Composite
 	 */
 	private void writeDB(File cdnDir, String ver, boolean zip) throws Exception
 	{
-		GamePacker.log("输出3d版本文件");
-
-		Document dom = DocumentHelper.createDocument();
-		dom.addElement("project");
-
-		Element root = dom.getRootElement();
+		GamePacker.log("输出版本文件");
 
 		// 获取所有模块目录
 		File[] modules = getModuleDirs(cdnDir);
 
 		// 合并所有模块的文件地址
+		HashSet<String> langs = new HashSet<String>();
+		HashMap<String, Element> versionMap = new HashMap<String, Element>();
 		for (File module : modules)
 		{
 			Document document = null;
@@ -1246,112 +1254,76 @@ public class GamePacker extends Composite
 
 			if (document != null)
 			{
-				for (Object node : document.getRootElement().elements())
+				@SuppressWarnings("rawtypes")
+				List list = document.getRootElement().selectNodes("project");
+				for (int i = 0; i < list.size(); i++)
 				{
-					Element element = (Element) node;
-					element.detach();
-					root.add(element);
+					Element node = (Element) list.get(i);
+
+					String name = module.getName();
+					String lang = XmlUtil.parseString(node.attributeValue("lang"), "zh");
+					String mode = XmlUtil.parseString(node.attributeValue("mode"), "3d");
+
+					langs.add(lang);
+					versionMap.put(name + "_" + lang + "_" + mode, node.createCopy());
 				}
 			}
-
-			SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
-			String time = df.format(new Date());
-
-			root.addAttribute("version", ver);
-			root.addAttribute("time", time);
 		}
 
-		// 配置内容
-		byte[] content = XmlUtil.formatXML(dom.asXML()).getBytes("UTF-8");
-		if (zip)
+		String[] langList = langs.toArray(new String[] {});
+		Arrays.sort(langList);
+		for (String lang : langList)
 		{
-			content = ZlibUtil.compress(content);
-		}
-		content = MD5Util.addSuffix(content);
-
-		// 输出到CDN
-		FileUtil.writeFile(new File(cdnDir.getPath() + File.separatorChar + ver + ".xml"), content);
-		FileUtil.writeFile(new File(cdnDir.getPath() + File.separatorChar + "final" + ".xml"), content);
-	}
-
-	/**
-	 * 合并db1.xml
-	 * 
-	 * @param cdnDir
-	 * @param idcDir
-	 * @param ver
-	 * @param zip
-	 * @throws Exception
-	 */
-	private void writeDB1(File cdnDir, String ver, boolean zip) throws Exception
-	{
-		GamePacker.log("输出2d版本文件");
-
-		Document dom = DocumentHelper.createDocument();
-		dom.addElement("project");
-
-		Element root = dom.getRootElement();
-
-		// 获取所有模块目录
-		File[] modules = getModuleDirs(cdnDir);
-
-		// 合并所有模块的文件地址
-		for (File module : modules)
-		{
-			Document document = null;
-
-			File zipFile = new File(module.getPath() + File.separator + "ver.zip");
-			if (zipFile.exists())
+			for (String mode : new String[] { "3d", "2d" })
 			{
-				ZipConfig cfg = new ZipConfig(zipFile);
-				String txt = cfg.getVersion();
-				if (txt != null && txt.isEmpty() == false)
+				Document dbDOM = DocumentHelper.createDocument();
+				dbDOM.addElement("project");
+
+				Element dbROOT = dbDOM.getRootElement();
+
+				for (File module : modules)
 				{
-					document = DocumentHelper.parseText(txt);
+					String key = module.getName() + "_" + lang + "_" + mode;
+					if (!versionMap.containsKey(key))
+					{
+						key = module.getName() + "_" + lang + "_3d";
+					}
+					if (!versionMap.containsKey(key))
+					{
+						key = module.getName() + "_zh_3d";
+					}
+					if (versionMap.containsKey(key))
+					{
+						Element node = versionMap.get(key);
+						@SuppressWarnings("rawtypes")
+						List childs = node.elements();
+						for (Object item : childs)
+						{
+							Element child = (Element) item;
+							dbROOT.add(child.createCopy());
+						}
+					}
 				}
+
+				SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+				String time = df.format(new Date());
+
+				dbROOT.addAttribute("version", ver);
+				dbROOT.addAttribute("time", time);
+
+				// 配置内容
+				byte[] content = XmlUtil.formatXML(dbDOM.asXML()).getBytes("UTF-8");
+				if (zip)
+				{
+					content = ZlibUtil.compress(content);
+				}
+				content = MD5Util.addSuffix(content);
+
+				// 输出到CDN
+				FileUtil.writeFile(new File(cdnDir.getPath() + File.separatorChar + ver + "." + lang + "." + mode + ".xml"), content);
+				FileUtil.writeFile(new File(cdnDir.getPath() + File.separatorChar + "final." + lang + "." + mode + ".xml"), content);
 			}
-			else
-			{
-				File dbFile = new File(module.getPath() + File.separatorChar + "db1.xml");
-				if (!dbFile.exists())
-				{
-					dbFile = new File(module.getPath() + File.separatorChar + "db.xml");
-				}
-
-				if (dbFile.exists())
-				{
-					document = (new SAXReader()).read(dbFile);
-				}
-			}
-
-			if (document != null)
-			{
-				for (Object node : document.getRootElement().elements())
-				{
-					Element element = (Element) node;
-					element.detach();
-					root.add(element);
-				}
-			}
-
-			SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
-			String time = df.format(new Date());
-
-			root.addAttribute("version", ver);
-			root.addAttribute("time", time);
 		}
-
-		// 配置内容
-		byte[] content = XmlUtil.formatXML(dom.asXML()).getBytes("UTF-8");
-		if (zip)
-		{
-			content = ZlibUtil.compress(content);
-		}
-		content = MD5Util.addSuffix(content);
-
-		// 输出到CDN
-		FileUtil.writeFile(new File(cdnDir.getPath() + File.separatorChar + ver + ".2d.xml"), content);
-		FileUtil.writeFile(new File(cdnDir.getPath() + File.separatorChar + "final" + ".2d.xml"), content);
 	}
 
 	/**
@@ -1374,6 +1346,7 @@ public class GamePacker extends Composite
 		for (File module : modules)
 		{
 			File zipFile = new File(module.getPath() + File.separator + "ver.zip");
+			File dbFile = new File(module.getPath() + File.separatorChar + "db.ver");
 			if (zipFile.exists())
 			{
 				ZipConfig cfg = new ZipConfig(zipFile);
@@ -1386,9 +1359,8 @@ public class GamePacker extends Composite
 					}
 				}
 			}
-			else
+			else if (dbFile.exists())
 			{
-				File dbFile = new File(module.getPath() + File.separatorChar + "db.ver");
 				String dbText = new String(FileUtil.getFileBytes(dbFile), "UTF-8");
 				urls.append(dbText);
 			}
@@ -1474,11 +1446,15 @@ public class GamePacker extends Composite
 			if (file.isFile() && !file.isHidden())
 			{
 				String fileName = file.getName();
-				if (fileName.equals("final.xml") || fileName.equals("final.2d.xml") || fileName.equals("final.ver"))
+				if (fileName.startsWith(ver + ".") && (fileName.endsWith(".2d.xml") || fileName.endsWith(".3d.xml")))
 				{
 					continue;
 				}
-				if (fileName.equals(ver + ".xml") || fileName.equals(ver + ".2d.xml") || fileName.equals(ver + ".ver"))
+				if (fileName.startsWith("final.") && (fileName.endsWith(".2d.xml") || fileName.endsWith(".3d.xml")))
+				{
+					continue;
+				}
+				if (fileName.equals(ver + ".ver") || fileName.equals("final.ver"))
 				{
 					continue;
 				}

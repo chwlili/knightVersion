@@ -193,6 +193,34 @@ public class GamePackerHelper
 		return ext;
 	}
 
+	public String format(int[] vals)
+	{
+		StringBuilder sb = new StringBuilder();
+		for (int val : vals)
+		{
+			if (sb.length() > 0)
+			{
+				sb.append(",");
+			}
+			sb.append(val);
+		}
+		return sb.toString();
+	}
+
+	public String format(String[] vals)
+	{
+		StringBuilder sb = new StringBuilder();
+		for (String val : vals)
+		{
+			if (sb.length() > 0)
+			{
+				sb.append(",");
+			}
+			sb.append(val);
+		}
+		return sb.toString();
+	}
+
 	/**
 	 * 获取XML2文件
 	 * 

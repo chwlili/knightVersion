@@ -37,6 +37,9 @@ public class ViewFile
 
 	private String fileKey;
 
+	public final String dir;
+	public final String url;
+
 	/**
 	 * ´ò¿ª
 	 * 
@@ -46,6 +49,9 @@ public class ViewFile
 	{
 		this.innerDir = innerDir;
 		this.innerPath = innerPath;
+
+		this.dir = innerDir;
+		this.url = innerPath;
 
 		this.isCfg = innerPath.toLowerCase().endsWith(".xml");
 		this.file = file;
@@ -274,11 +280,11 @@ public class ViewFile
 
 			String id = node.attributeValue("id");
 			Attribute att = node.attribute("src");
-			
+
 			if (id != null && att != null)
 			{
 				String ref = att.getStringValue();
-				
+
 				ViewFile file = manager.getViewBy(PathUtil.getAbsPath(innerDir, ref));
 				if (file == null)
 				{
@@ -289,12 +295,12 @@ public class ViewFile
 				imgs.put(id, file);
 				imgNodes.put(file, att);
 			}
-			
-			Attribute dependID=node.attribute("dependId");
-			if(dependID!=null)
+
+			Attribute dependID = node.attribute("dependId");
+			if (dependID != null)
 			{
-				String dependIDRef=dependID.getStringValue();
-				
+				String dependIDRef = dependID.getStringValue();
+
 				imgRefs.put(id, dependIDRef);
 			}
 		}
@@ -743,9 +749,9 @@ public class ViewFile
 				keys.add(manager.getChecksumTable().getGID(val.getInnerPath()));
 			}
 		}
-		if(imgRefs.size()>0)
+		if (imgRefs.size() > 0)
 		{
-			for(String key:imgRefs.keySet())
+			for (String key : imgRefs.keySet())
 			{
 				Element childNode = bitmapNode.addElement("bitmap");
 				childNode.addAttribute("id", key);

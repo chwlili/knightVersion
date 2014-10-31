@@ -15,7 +15,6 @@ import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
-import org.chw.util.MD5Util;
 import org.game.knight.version.packer.GamePackerConst;
 
 public class ZipConfig
@@ -131,6 +130,21 @@ public class ZipConfig
 		getVersionProps().put("$nextFileID", fileID + "");
 
 		return filePath;
+	}
+
+	/**
+	 * 获取下一个KEY的ID
+	 * 
+	 * @param key
+	 * @return
+	 */
+	public long getVersionNextTypeID()
+	{
+		long typeID = getVersionProps().containsKey("$nextTypeID") ? Long.parseLong(getVersionProps().get("$nextTypeID")) : 1;
+
+		getVersionProps().put("$nextTypeID", (typeID + 1) + "");
+
+		return typeID;
 	}
 
 	/**
@@ -265,22 +279,34 @@ public class ZipConfig
 		try
 		{
 			// version
-			setEntry("core/version.txt", version.getBytes("UTF-8"));
+			if (version != null)
+			{
+				setEntry("core/version.txt", version.getBytes("UTF-8"));
+			}
 
 			// versionProps
-			saveMap("core/versionProps.txt", versionProps);
+			if (versionProps != null)
+			{
+				saveMap("core/versionProps.txt", versionProps);
+			}
 
 			// versionFiles
-			Collections.sort(versionFiles);
-			StringBuilder sb = new StringBuilder();
-			for (String line : versionFiles)
+			if (versionFiles != null)
 			{
-				sb.append(line + "\n");
+				Collections.sort(versionFiles);
+				StringBuilder sb = new StringBuilder();
+				for (String line : versionFiles)
+				{
+					sb.append(line + "\n");
+				}
+				setEntry("core/versionFiles.txt", sb.toString().getBytes("UTF-8"));
 			}
-			setEntry("core/versionFiles.txt", sb.toString().getBytes("UTF-8"));
 
 			// gameFiles
-			saveMap("core/gameFiles.txt", gameFiles);
+			if (gameFiles != null)
+			{
+				saveMap("core/gameFiles.txt", gameFiles);
+			}
 
 			// cfgFiles
 			if (cfgFiles != null)

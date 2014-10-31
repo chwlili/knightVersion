@@ -78,7 +78,7 @@ public class FilesExporter
 			newZip.setVersion("");
 			newZip.setVersionProps(oldZip.getVersionProps());
 			newZip.getCfgFiles().put("$FileSet.xml", sb.toString().getBytes("UTF-8"));
-			newZip.getVersionFiles().add("/" + oldZip.getFile().getName());
+			newZip.getVersionFiles().add("/" + helper.fileOutputFolder.getName() + "/" + oldZip.getFile().getName());
 			newZip.saveTo(oldZip.getFile());
 
 			GamePacker.log("Íê³É");

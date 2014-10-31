@@ -287,10 +287,7 @@ public class WorldWriter
 			if (!isCancel())
 			{
 				saveVer();
-			}
-
-			if (!isCancel())
-			{
+				writeDB();
 				writerVer();
 			}
 		}
@@ -498,6 +495,28 @@ public class WorldWriter
 	public synchronized void addOutputFile(String url)
 	{
 		outputFiles.add("/" + getOutputFolder().getName() + url);
+	}
+
+	/**
+	 * Êä³ö /db.xml
+	 */
+	private void writeDB()
+	{
+		StringBuilder sb = new StringBuilder();
+
+		sb.append("<projects>\n");
+		sb.append(config2dWriter.getVersionData());
+		sb.append(config3dWriter.getVersionData());
+		sb.append("</projects>\n");
+
+		try
+		{
+			FileUtil.writeFile(new File(getOutputFolder().getPath() + "/db.xml"), sb.toString().getBytes("utf8"));
+		}
+		catch (UnsupportedEncodingException e)
+		{
+			e.printStackTrace();
+		}
 	}
 
 	/**
