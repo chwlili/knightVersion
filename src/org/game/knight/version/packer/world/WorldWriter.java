@@ -46,6 +46,7 @@ public class WorldWriter
 	private final File xml2Folder;
 	public final int maxThreadCount;
 	private final boolean zip;
+	public final boolean keepImg;
 
 	private HashMap<String, byte[]> oldHistoryMap = new HashMap<String, byte[]>();
 	private HashMap<String, byte[]> newHistoryMap = new HashMap<String, byte[]>();
@@ -99,13 +100,14 @@ public class WorldWriter
 	 * @param inputFolder
 	 * @param outputFolder
 	 */
-	public WorldWriter(File inputFolder, File outputFolder, File xml2Folder, int runCount, boolean zip)
+	public WorldWriter(File inputFolder, File outputFolder, File xml2Folder, int runCount, boolean zip,boolean keepImg)
 	{
 		this.inputFolder = inputFolder;
 		this.outputFolder = outputFolder;
 		this.xml2Folder = xml2Folder;
 		this.maxThreadCount = runCount;
 		this.zip = zip;
+		this.keepImg=keepImg;
 
 		this.optionTable = new OptionTable(this);
 		this.fileTable = new ProjectFileTable(this);

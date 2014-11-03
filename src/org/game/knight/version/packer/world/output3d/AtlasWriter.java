@@ -345,7 +345,19 @@ public class AtlasWriter extends BaseWriter
 
 		if (pngFile.exists())
 		{
-			pngFile.delete();
+			if (root.keepImg)
+			{
+				File file = new File(pngFile.getParentFile().getParentFile().getPath() + File.separator + "atlas" + File.separator + param.id);
+				if (!file.exists())
+				{
+					file.mkdirs();
+				}
+				pngFile.renameTo(new File(file.getPath() + File.separator + pngFile.getName()));
+			}
+			else
+			{
+				pngFile.delete();
+			}
 		}
 
 		return atfURL;

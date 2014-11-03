@@ -1049,7 +1049,7 @@ public class GamePacker extends Composite
 
 				if (worldSelected)
 				{
-					worldWriter = new WorldWriter(new File(worldPath), new File(cdnPath + File.separatorChar + "world"), new File(xml2Path), count, zip);
+					worldWriter = new WorldWriter(new File(worldPath), new File(cdnPath + File.separatorChar + "world"), new File(xml2Path), count, zip, writeRegionImg);
 					worldWriter.start();
 				}
 
@@ -1082,7 +1082,7 @@ public class GamePacker extends Composite
 
 						if (clearup)
 						{
-							cleaupCDN(new File(cdnPath), ver);
+							cleaupCDN(new File(cdnPath), ver, writeRegionImg ? new File(helper.worldOutputFolder.getPath() + File.separator + "atlas") : null);
 						}
 						syncToIDC(new File(cdnPath), new File(idcPath));
 					}
@@ -1394,7 +1394,7 @@ public class GamePacker extends Composite
 	 * @param cdnDir
 	 * @throws UnsupportedEncodingException
 	 */
-	private void cleaupCDN(File cdnDir, String ver) throws UnsupportedEncodingException
+	private void cleaupCDN(File cdnDir, String ver, File ignoreFolder) throws UnsupportedEncodingException
 	{
 		GamePacker.log("清理旧版本文件");
 
@@ -1411,7 +1411,7 @@ public class GamePacker extends Composite
 			File module = modules[i];
 			for (File dir : module.listFiles())
 			{
-				if (dir.isDirectory() && !dir.isHidden() && !dir.getName().equals(".ver"))
+				if (dir.isDirectory() && !dir.isHidden() && (ignoreFolder != null && !ignoreFolder.getPath().equals(dir.getPath())))
 				{
 					for (File file : dir.listFiles())
 					{
