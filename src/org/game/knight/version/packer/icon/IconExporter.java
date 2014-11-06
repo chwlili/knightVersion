@@ -202,7 +202,7 @@ public class IconExporter
 						{
 							saveURL = "/" + saveURL;
 						}
-						qpurl.append(String.format("%s,%s\r\n", item.id, (saveURL.charAt(0) != '/' ? '/' : "") + saveURL));
+						qpurl.append(String.format("%s,/icons%s\r\n", item.id, (saveURL.charAt(0) != '/' ? '/' : "") + saveURL));
 						break;
 					}
 				}
