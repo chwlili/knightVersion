@@ -86,7 +86,7 @@ public class Version
 
 		shlxx = new Shell();
 		shlxx.setImage(SWTResourceManager.getImage(Version.class, "/icons/appIcon.png"));
-		shlxx.setSize(545, 735);
+		shlxx.setSize(545, 797);
 		shlxx.setText("\u6E38\u620F\u6253\u5305(N)");
 		shlxx.setLayout(new FillLayout());
 

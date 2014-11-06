@@ -230,6 +230,13 @@ public class ViewEntityWriter
 					}
 				}
 
+				// 确定输出类名
+				for (int i = 0; i < views.length; i++)
+				{
+					ViewEntity view = views[i];
+					view.getOutputTypeName();
+				}
+
 				// 资源分组、资源分包
 				HashMap<String, ViewEntityGroup> group_views = new HashMap<String, ViewEntityGroup>();
 				for (int i = 0; i < views.length; i++)
@@ -301,13 +308,6 @@ public class ViewEntityWriter
 				//
 				versionSB.append(getVersionConfig(views, lang));
 				newZip.getCfgFiles().put("$UIText.xml", getLangConfig(views).getBytes("UTF-8"));
-				// newZip.getCfgFiles().put("core/version." + lang + ".xml",
-				// getVersionConfig(views, lang).getBytes("UTF-8"));
-
-				// if (lang.equals("zh"))
-				// {
-				// newZip.setVersion(getVersionConfig(views, lang));
-				// }
 			}
 			versionSB.append("</projects>");
 

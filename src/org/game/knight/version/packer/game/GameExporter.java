@@ -32,6 +32,8 @@ public class GameExporter
 	private String serverID;
 	private String testList;
 	private String userList;
+	private String runLang;
+	private String authURL;
 
 	/**
 	 * 构造函数
@@ -57,6 +59,8 @@ public class GameExporter
 		serverID = "";
 		testList = "";
 		userList = "";
+		runLang = "zh";
+		authURL = "http://192.168.1.127/qzone/auth.php";
 
 		if (params != null && params.trim() != "")
 		{
@@ -82,6 +86,14 @@ public class GameExporter
 			if (paramList.length > 4)
 			{
 				userList = paramList[4];
+			}
+			if (paramList.length > 5)
+			{
+				runLang = paramList[5];
+			}
+			if (paramList.length > 6)
+			{
+				authURL = paramList[6];
 			}
 		}
 	}
@@ -222,23 +234,8 @@ public class GameExporter
 
 		rebuildClientXML(new File(appDir.getPath() + "/GameConfigs/client.xml"));
 		rebuildServerXML(new File(appDir.getPath() + "/GameConfigs/server.xml"));
-		rebuildFlashPlayerTrust();
 
 		GamePacker.endLogSet();
-	}
-
-	private void rebuildFlashPlayerTrust() throws Exception
-	{
-		File redmin = new File(appDir.getPath() + File.separatorChar + "TrustGameDir.txt");
-
-		String text = "";
-		text += "# 32位系统，请把此文件复制到: C:\\WINDOWS\\system32\\Macromed\\Flash\\FlashPlayerTrust 目录下\r\n";
-		text += "# 64位系统，请把此文件复制到: C:\\Windows\\SysWOW64\\Macromed\\Flash\\FlashPlayerTrust 目录下\r\n";
-		text += appDir.getPath();
-
-		FileUtil.writeFile(redmin, text.getBytes("UTF-8"));
-
-		GamePacker.warning("可能需要设置FlashPlayer信任目录！", "设置方法见:" + redmin.getPath());
 	}
 
 	private void rebuildClientXML(File file) throws Exception
@@ -249,7 +246,8 @@ public class GameExporter
 		Element client = root.addElement("client");
 		client.addAttribute("ver", clientVer);
 		client.addAttribute("stand", "false");
-		client.addAttribute("authURL", "http://192.168.0.127/qzone/auth.php");
+		client.addAttribute("lang", runLang);
+		client.addAttribute("authURL", authURL);
 
 		Element url = client.addElement("url");
 		url.addAttribute("path", clientUrl);

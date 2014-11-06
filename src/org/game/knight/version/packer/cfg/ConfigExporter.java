@@ -490,28 +490,25 @@ public class ConfigExporter
 		File[] outputs = new File[] { helper.cfgOutputFolder, helper.iconOutputFolder, helper.fileOutputFolder, helper.codeOutputFolder, helper.viewOutputFolder, helper.worldOutputFolder };
 		for (File folder : outputs)
 		{
-			if (!folder.isHidden())
+			if (!folder.isHidden() && folder.isDirectory())
 			{
-				if (folder.isDirectory())
+				File zipFile = new File(folder.getPath() + "/ver.zip");
+				if (zipFile.exists())
 				{
-					File zipFile = new File(folder.getPath() + "/ver.zip");
-					if (zipFile.exists())
+					ZipConfig cfg = new ZipConfig(zipFile);
+					HashMap<String, byte[]> entrys = cfg.getCfgFiles();
+					for (String name : entrys.keySet())
 					{
-						ZipConfig cfg = new ZipConfig(zipFile);
-						HashMap<String, byte[]> entrys = cfg.getCfgFiles();
-						for (String name : entrys.keySet())
-						{
-							xmlFiles.add(new XmlFile(folder, name, name, entrys.get(name)));
-						}
+						xmlFiles.add(new XmlFile(folder, name, name, entrys.get(name)));
 					}
-					else
+				}
+				else
+				{
+					for (File file : folder.listFiles())
 					{
-						for (File file : folder.listFiles())
+						if (!file.isHidden() && file.isFile() && file.getName().startsWith("$") && file.getName().endsWith(".xml"))
 						{
-							if (!file.isHidden() && file.isFile() && file.getName().startsWith("$") && file.getName().endsWith(".xml"))
-							{
-								xmlFiles.add(new XmlFile(folder, file.getName(), file.getName(), FileUtil.getFileBytes(file)));
-							}
+							xmlFiles.add(new XmlFile(folder, file.getName(), file.getName(), FileUtil.getFileBytes(file)));
 						}
 					}
 				}

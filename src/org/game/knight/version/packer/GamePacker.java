@@ -401,7 +401,7 @@ public class GamePacker extends Composite
 				GamePackerStartupDialog dialog = new GamePackerStartupDialog(getShell());
 				if (dialog.open(paramInput.getText()) == 0)
 				{
-					paramInput.setText(dialog.getServerHost() + " " + dialog.getServerPort() + " " + dialog.getServerID() + " " + dialog.getTests() + " " + dialog.getUsers());
+					paramInput.setText(dialog.getServerHost() + " " + dialog.getServerPort() + " " + dialog.getServerID() + " " + dialog.getTests() + " " + dialog.getUsers() + " " + dialog.getRunLang() + " " + dialog.getAuthURL());
 				}
 			}
 		});

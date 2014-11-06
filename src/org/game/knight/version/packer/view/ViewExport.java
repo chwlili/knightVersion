@@ -408,7 +408,8 @@ public class ViewExport extends AbsExporter
 
 		// 准备输出缓存
 		StringBuilder descXML = new StringBuilder();
-		descXML.append("<project>\n");
+		descXML.append("<projects>");
+		descXML.append("<project lang=\"zh\" mode=\"3d\">\n");
 		descXML.append(langFileListXML.toString());
 		descXML.append("\t<views>\n");
 		descXML.append(viewFileListXML.toString());
@@ -564,6 +565,7 @@ public class ViewExport extends AbsExporter
 		}
 		descXML.append("\t</viewBags>\n");
 		descXML.append("</project>");
+		descXML.append("</projects>");
 
 		GamePacker.log("保存汇总信息");
 		FileUtil.writeFile(new File(getDestDir().getPath() + "/db.xml"), descXML.toString().getBytes("UTF-8"));

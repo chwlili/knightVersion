@@ -33,7 +33,8 @@ public class UnitConfigBuilder
 	private HashMap<Float, Integer> float_id = new HashMap<Float, Integer>();
 	private HashMap<String, Integer> string_id = new HashMap<String, Integer>();
 	private HashMap<String, Integer> instance_id = new HashMap<String, Integer>();
-	private HashMap<Instance, String> instance_txt = new HashMap<Instance, String>();
+	// private HashMap<Instance, String> instance_txt = new HashMap<Instance,
+	// String>();
 
 	private HashMap<Integer, Integer> id_refCount = new HashMap<Integer, Integer>();
 	private HashMap<Integer, Object> id_value = new HashMap<Integer, Object>();
@@ -529,9 +530,7 @@ public class UnitConfigBuilder
 		}
 		sb.append("}");
 
-		instance_txt.put(instance, sb.toString());
-
-		return instance_txt.get(instance);
+		return sb.toString();
 	}
 
 	/**
