@@ -179,7 +179,7 @@ public class Config2dSceneWriter extends BaseWriter
 				ImageFrame frame = root.frameTable.get(layer.img.imgFile.gid, 1, 1, 0);
 				String fileURL = root.localToCdnURL(attireSWFWriter.getFrameFileURL(frame));
 				String typeID = attireSWFWriter.getFrameClassID(frame);
-				sb.append("\t\t<layer x=\"" + layer.x + "\" y=\"" + layer.y + "\" scrollSpeed=\"" + layer.speed + "\" fileURL=\"" + fileURL + "\" fileType=\"" + typeID + "\" />\n");
+				sb.append("\t\t<layer offsetX=\"" + layer.x + "\" offsetY=\"" + layer.y + "\" scrollSpeed=\"" + layer.speed + "\" fileURL=\"" + fileURL + "\" fileType=\"" + typeID + "\" />\n");
 			}
 		}
 		sb.append("\t</layers>\n");
