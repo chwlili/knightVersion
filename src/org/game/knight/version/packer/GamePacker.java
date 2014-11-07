@@ -1286,7 +1286,7 @@ public class GamePacker extends Composite
 					String key = module.getName() + "_" + lang + "_" + mode;
 					if (!versionMap.containsKey(key))
 					{
-						key = module.getName() + "_" + lang + "_3d";
+						key = module.getName() + "_zh_" + mode;
 					}
 					if (!versionMap.containsKey(key))
 					{

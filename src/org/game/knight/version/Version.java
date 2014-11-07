@@ -50,21 +50,19 @@ public class Version
 	 */
 	public static void main(String[] args)
 	{
-		// XLS xls=new XLS(new
-		// File("C:\\Users\\ds\\Desktop\\街机战士-v100-字符178029-20140805-TR-中译土耳其语-20140922.xls"),
-		// new File("E:\\projects\\knight\\codes\\client\\nls\\tr.xls"));
-		// try
-		// {
-		// xls.run();
-		// }
-		// catch (FileNotFoundException e1)
-		// {
-		// e1.printStackTrace();
-		// }
-		// catch (IOException e1)
-		// {
-		// e1.printStackTrace();
-		// }
+//		XLS xls = new XLS(new File("C:\\Users\\ds\\Desktop\\街机战士-v100-字符178029-20140805-TR-中译土耳其语-20140922.xls"), new File("C:\\Users\\ds\\Desktop\\街机战士_tr_2.xls"));
+//		try
+//		{
+//			xls.run();
+//		}
+//		catch (FileNotFoundException e1)
+//		{
+//			e1.printStackTrace();
+//		}
+//		catch (IOException e1)
+//		{
+//			e1.printStackTrace();
+//		}
 
 		try
 		{
