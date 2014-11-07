@@ -446,7 +446,7 @@ public class WorldTable extends BaseWriter
 	 * 生成场景信息
 	 * 
 	 * @param document
-	 * @param root
+	 * @param outputFolder
 	 */
 	private Scene buildSceneInfo(ProjectFile file, Document document)
 	{

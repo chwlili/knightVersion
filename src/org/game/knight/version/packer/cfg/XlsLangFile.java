@@ -20,7 +20,7 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.hssf.util.HSSFColor;
 import org.xml2as.builder.LangTable;
 
-public class XlsLangTable extends LangTable
+public class XlsLangFile extends LangTable
 {
 	private HSSFWorkbook xls;
 	private File xlsFile;
@@ -38,7 +38,7 @@ public class XlsLangTable extends LangTable
 	 * @throws IOException
 	 * @throws FileNotFoundException
 	 */
-	public XlsLangTable(File xlsFile) throws FileNotFoundException, IOException
+	public XlsLangFile(File xlsFile) throws FileNotFoundException, IOException
 	{
 		this.xlsFile = xlsFile;
 		if (xlsFile != null && xlsFile.exists() && xlsFile.length() > 0)
