@@ -167,12 +167,12 @@ public class WorldTable extends BaseWriter
 					{
 						// 热区
 						@SuppressWarnings("rawtypes")
-						List hotNodes = document.selectNodes("sceneData/hots/hot");
+						List hotNodes = sceneDom.selectNodes("sceneData/hots/hot");
 						for (int k = 0; k < hotNodes.size(); k++)
 						{
 							Element hotNode = (Element) hotNodes.get(k);
 
-							String key = hotNode.attributeValue("hash");
+							String key = sceneID + "#" + hotNode.attributeValue("label");
 							boolean isFrom = hotNode.attributeValue("type").equals("0");
 							boolean isDest = hotNode.attributeValue("type").equals("1");
 
@@ -791,11 +791,11 @@ public class WorldTable extends BaseWriter
 		{
 			node = (Element) list.get(i);
 
-			String key = node.attributeValue("hash");
+			String key = sceneID+"#"+node.attributeValue("label");
 			boolean isFrom = node.attributeValue("type").equals("0");
 			boolean isDest = node.attributeValue("type").equals("1");
 
-			// String name = node.attributeValue("label");
+			String name = node.attributeValue("label");
 			int width = XmlUtil.parseInt(node.attributeValue("width"), 0);
 			int height = XmlUtil.parseInt(node.attributeValue("height"), 0);
 			int x = XmlUtil.parseInt(node.attributeValue("x"), 0) - width / 2;
@@ -831,6 +831,11 @@ public class WorldTable extends BaseWriter
 
 			if (isFrom)
 			{
+				int doorX = 0;
+				int doorY = 0;
+				int doorDir = 1;
+				Attire attire = null;
+
 				for (SceneNpc npc : npcs)
 				{
 					// 转换ID为0名称为跳转点的的NPC到传送门列表
@@ -838,23 +843,28 @@ public class WorldTable extends BaseWriter
 					{
 						deledNPC.add(npc);
 
-						ArrayList<SceneHotLink> hotLinks = new ArrayList<SceneHotLink>();
-						for (SceneLink link : links)
-						{
-							if (link.from.hash.equals(key))
-							{
-								hotLinks.add(new SceneHotLink(link.dest.sceneID, link.dest.sceneName, link.dest.x, link.dest.y));
-							}
-						}
-						SceneHotLink[] hotLinkArray = hotLinks.toArray(new SceneHotLink[hotLinks.size()]);
-						SceneHot sceneHot = new SceneHot(x, y, width, height, acceptableQuestList, acceptedQuestList, submitableQuestList, submitedQuestList, hotLinkArray);
-						doors.add(new SceneDoor(npc.x, npc.y, npc.direction, npc.attire, sceneHot));
+						doorX = npc.x;
+						doorY = npc.y;
+						doorDir = npc.direction;
+						attire = npc.attire;
+						break;
 					}
 				}
+
+				ArrayList<SceneHotLink> hotLinks = new ArrayList<SceneHotLink>();
+				for (SceneLink link : links)
+				{
+					if (link.from.hash.equals(key))
+					{
+						hotLinks.add(new SceneHotLink(link.dest.sceneID, link.dest.sceneName, link.dest.x, link.dest.y));
+					}
+				}
+				SceneHotLink[] hotLinkArray = hotLinks.toArray(new SceneHotLink[hotLinks.size()]);
+				SceneHot sceneHot = new SceneHot(name, x, y, width, height, acceptableQuestList, acceptedQuestList, submitableQuestList, submitedQuestList, hotLinkArray);
+				doors.add(new SceneDoor(doorX, doorY, doorDir, attire, sceneHot));
 			}
 			else if (isDest)
 			{
-
 			}
 		}
 
@@ -871,16 +881,7 @@ public class WorldTable extends BaseWriter
 			{
 				deledNPC.add(npc);
 
-				if (npc.name.equals("跳转点"))
-				{
-					SceneHotLink[] hotLinkArray = new SceneHotLink[] {};
-					SceneHot sceneHot = new SceneHot(0, 0, 0, 0, "", "", "", "", hotLinkArray);
-					doors.add(new SceneDoor(npc.x, npc.y, npc.direction, npc.attire, sceneHot));
-				}
-				else
-				{
-					anims.add(new SceneAnim(npc.name, npc.x, npc.y, 0, 0, npc.direction, npc.attire));
-				}
+				anims.add(new SceneAnim(npc.name, npc.x, npc.y, 0, 0, npc.direction, npc.attire));
 			}
 		}
 

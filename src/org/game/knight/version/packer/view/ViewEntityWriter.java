@@ -408,7 +408,7 @@ public class ViewEntityWriter
 			{
 				size += new File(helper.viewOutputFolder.getParentFile().getPath() + url).length();
 			}
-			sb.append(String.format("\t\t\t<viewBagFiles type=\"%s\" mb=\"%s\" size=\"%s\" files=\"%s\" />\n", type, size / 1024 / 1204, size, helper.format(urlList)));
+			sb.append(String.format("\t\t\t<viewBagFiles type=\"%s\" size=\"%s\" files=\"%s\" />\n", type, size, helper.format(urlList)));
 		}
 		sb.append("\t\t</viewBags>\n");
 		sb.append("\t</project>\n");

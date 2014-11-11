@@ -125,9 +125,9 @@ public class ViewEntity
 	public boolean open(String lang) throws Exception
 	{
 		close();
-		
-		this.lang=lang;
-		
+
+		this.lang = lang;
+
 		if (isCfg)
 		{
 			// ´´½¨DOM
@@ -878,11 +878,13 @@ public class ViewEntity
 			for (ViewEntityBag bag : group.getBags())
 			{
 				String url = bag.getOutputPath();
-				File file = new File(manager.getViewOutputFolder() + url);
-				if (!urlSet.contains(url))
+				File file = new File(manager.getViewOutputFolder().getPath() + url);
+
+				String rootURL = "/" + manager.getViewOutputFolder().getName() + url;
+				if (!urlSet.contains(rootURL))
 				{
 					size += file.length();
-					urlSet.add("/" + manager.getViewOutputFolder().getName() + url);
+					urlSet.add(rootURL);
 				}
 			}
 		}
