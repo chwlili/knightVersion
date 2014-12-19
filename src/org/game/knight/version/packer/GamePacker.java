@@ -1009,7 +1009,7 @@ public class GamePacker extends Composite
 				String iconOutput = cdnPath + File.separatorChar + "icons";
 				String fileOutput = cdnPath + File.separatorChar + "files";
 				String gameOutput = cdnPath + File.separatorChar + "games";
-				String viewOutput = cdnPath + File.separatorChar + "views";
+				String viewOutput = cdnPath + File.separatorChar + "uis";
 				String worldOutput = cdnPath + File.separatorChar + "world";
 
 				GamePackerHelper helper = new GamePackerHelper(cfgSelected, cfgPath, cfgOutput, iconSelected, iconPath, iconOutput, fileSelected, filePath, fileOutput, codeSelected, codePath, gameOutput, viewSelected, viewPath, viewOutput, worldSelected, worldPath, worldOutput, cdnPath, xml2Path, nls2Path);

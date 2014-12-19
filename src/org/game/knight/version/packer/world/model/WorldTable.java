@@ -791,7 +791,7 @@ public class WorldTable extends BaseWriter
 		{
 			node = (Element) list.get(i);
 
-			String key = sceneID+"#"+node.attributeValue("label");
+			String key = sceneID + "#" + node.attributeValue("label");
 			boolean isFrom = node.attributeValue("type").equals("0");
 			boolean isDest = node.attributeValue("type").equals("1");
 
@@ -831,8 +831,8 @@ public class WorldTable extends BaseWriter
 
 			if (isFrom)
 			{
-				int doorX = 0;
-				int doorY = 0;
+				int doorX = x + width / 2;
+				int doorY = y + height / 2;
 				int doorDir = 1;
 				Attire attire = null;
 

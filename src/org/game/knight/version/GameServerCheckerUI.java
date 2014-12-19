@@ -244,19 +244,19 @@ public class GameServerCheckerUI extends Composite implements Runnable
 			{
 				if (element instanceof GameServerChecker.GameArea)
 				{
-					return ((GameServerChecker.GameArea) element).serverID;
+					return "s" + ((GameServerChecker.GameArea) element).serverID + ".app1101079868.qqopenapp.com";
 				}
 				return "";
 			}
 		});
 		trclmnNewColumn_3 = treeViewerColumn_3.getColumn();
 		trclmnNewColumn_3.setWidth(100);
-		trclmnNewColumn_3.setText("ID");
+		trclmnNewColumn_3.setText("\u767B\u5F55\u57DF\u540D");
 
 		treeViewerColumn_2 = new TreeViewerColumn(verTreeViewer, SWT.NONE);
 		trclmnNewColumn_2 = treeViewerColumn_2.getColumn();
 		trclmnNewColumn_2.setWidth(100);
-		trclmnNewColumn_2.setText("\u670D\u52A1");
+		trclmnNewColumn_2.setText("\u670D\u52A1\u5668\u57DF\u540D");
 		treeViewerColumn_2.setLabelProvider(new ColumnLabelProvider()
 		{
 			public Image getImage(Object element)
@@ -305,6 +305,27 @@ public class GameServerCheckerUI extends Composite implements Runnable
 		trclmnNewColumn_4 = treeViewerColumn_4.getColumn();
 		trclmnNewColumn_4.setWidth(100);
 		trclmnNewColumn_4.setText("\u4E16\u754C");
+		
+				treeViewerColumn_7 = new TreeViewerColumn(megerTreeViewer, SWT.NONE);
+				treeViewerColumn_7.setLabelProvider(new ColumnLabelProvider()
+				{
+					public Image getImage(Object element)
+					{
+						return null;
+					}
+
+					public String getText(Object element)
+					{
+						if (element instanceof GameServerChecker.GameArea)
+						{
+							return ((GameServerChecker.GameArea) element).version;
+						}
+						return "";
+					}
+				});
+				trclmnNewColumn_7 = treeViewerColumn_7.getColumn();
+				trclmnNewColumn_7.setWidth(100);
+				trclmnNewColumn_7.setText("\u7248\u672C");
 
 		treeViewerColumn_5 = new TreeViewerColumn(megerTreeViewer, SWT.NONE);
 		treeViewerColumn_5.setLabelProvider(new ColumnLabelProvider()
@@ -318,35 +339,14 @@ public class GameServerCheckerUI extends Composite implements Runnable
 			{
 				if (element instanceof GameServerChecker.GameArea)
 				{
-					return ((GameServerChecker.GameArea) element).serverID;
+					return "s" + ((GameServerChecker.GameArea) element).serverID + ".app1101079868.qqopenapp.com";
 				}
 				return "";
 			}
 		});
 		trclmnNewColumn_5 = treeViewerColumn_5.getColumn();
 		trclmnNewColumn_5.setWidth(100);
-		trclmnNewColumn_5.setText("ID");
-
-		treeViewerColumn_7 = new TreeViewerColumn(megerTreeViewer, SWT.NONE);
-		treeViewerColumn_7.setLabelProvider(new ColumnLabelProvider()
-		{
-			public Image getImage(Object element)
-			{
-				return null;
-			}
-
-			public String getText(Object element)
-			{
-				if (element instanceof GameServerChecker.GameArea)
-				{
-					return ((GameServerChecker.GameArea) element).version;
-				}
-				return "";
-			}
-		});
-		trclmnNewColumn_7 = treeViewerColumn_7.getColumn();
-		trclmnNewColumn_7.setWidth(100);
-		trclmnNewColumn_7.setText("\u7248\u672C");
+		trclmnNewColumn_5.setText("\u767B\u5F55\u57DF\u540D");
 
 		treeViewerColumn_8 = new TreeViewerColumn(megerTreeViewer, SWT.NONE);
 		treeViewerColumn_8.setLabelProvider(new ColumnLabelProvider()
@@ -368,7 +368,7 @@ public class GameServerCheckerUI extends Composite implements Runnable
 		});
 		trclmnNewColumn_8 = treeViewerColumn_8.getColumn();
 		trclmnNewColumn_8.setWidth(100);
-		trclmnNewColumn_8.setText("\u670D\u52A1");
+		trclmnNewColumn_8.setText("\u670D\u52A1\u5668\u57DF\u540D");
 		megerTreeViewer.setContentProvider(new TreeContentProvider());
 
 		Composite composite_2 = new Composite(group, SWT.NONE);

@@ -82,6 +82,10 @@ public class ViewEntityWriter
 		String typeName = oldZip.getTypeName(key);
 		if (typeName == null)
 		{
+			typeName = newZip.getTypeName(key);
+		}
+		if (typeName == null)
+		{
 			typeName = "FILE_" + oldZip.getVersionNextTypeID();
 		}
 		newZip.setTypeName(key, typeName);
@@ -98,6 +102,10 @@ public class ViewEntityWriter
 	public String getFileOutputPath(String key, String ext)
 	{
 		String filePath = oldZip.getGameFiles().get(key);
+		if (filePath == null)
+		{
+			filePath = newZip.getGameFiles().get(key);
+		}
 		if (filePath == null)
 		{
 			filePath = oldZip.getVersionNextGameFileURL(ext);
@@ -230,13 +238,6 @@ public class ViewEntityWriter
 					}
 				}
 
-				// 确定输出类名
-				for (int i = 0; i < views.length; i++)
-				{
-					ViewEntity view = views[i];
-					view.getOutputTypeName();
-				}
-
 				// 资源分组、资源分包
 				HashMap<String, ViewEntityGroup> group_views = new HashMap<String, ViewEntityGroup>();
 				for (int i = 0; i < views.length; i++)
@@ -269,6 +270,16 @@ public class ViewEntityWriter
 					if (GamePacker.isCancel())
 					{
 						return false;
+					}
+				}
+
+				// 确定输出类名
+				for (int i = 0; i < views.length; i++)
+				{
+					ViewEntity view = views[i];
+					if (view.getGroupName() != null)
+					{
+						view.getOutputTypeName();
 					}
 				}
 

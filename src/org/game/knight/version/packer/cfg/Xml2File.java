@@ -22,6 +22,10 @@ public class Xml2File
 
 	public void buildClassTable() throws Exception
 	{
+		if(file.getName().endsWith("astrologyDB.xml2"))
+		{
+			System.out.println("..");
+		}
 		classTable = new ClassTable(file);
 	}
 

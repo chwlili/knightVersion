@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
@@ -293,11 +294,16 @@ public class ZipConfig
 			// versionFiles
 			if (versionFiles != null)
 			{
+				HashSet<String> lineSet = new HashSet<String>();
 				Collections.sort(versionFiles);
 				StringBuilder sb = new StringBuilder();
 				for (String line : versionFiles)
 				{
-					sb.append(line + "\n");
+					if (!lineSet.contains(line))
+					{
+						sb.append(line + "\n");
+						lineSet.add(line);
+					}
 				}
 				setEntry("core/versionFiles.txt", sb.toString().getBytes("UTF-8"));
 			}

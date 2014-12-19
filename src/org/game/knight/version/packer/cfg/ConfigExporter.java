@@ -262,7 +262,6 @@ public class ConfigExporter
 
 			XmlFile xml = items.get(0).xmlFile;
 			Xml2File xml2 = items.get(0).xml2File;
-
 			UnitConfigBuilder builder = null;
 			if (xml2 != null)
 			{
